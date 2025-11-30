@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wally Atkins | Creator & Enabler</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Social Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="#hero" class="logo">WA</a>
+        <div class="nav-links">
+            <a href="#about">About</a>
+            <a href="#work">Work</a>
+            <a href="#process">Process</a>
+            <a href="#contact">Contact</a>
+        </div>
+    </nav>
+
+    <main>
+        <section id="hero" class="hero-section">
+            <div class="hero-content">
+                <h1 class="hero-title">Hello, I'm <br><span class="highlight">Wally.</span></h1>
+                <p class="hero-subtitle">Creator. Technologist. Enabler.<br>Fusing creativity with logic.</p>
+            </div>
+            <div class="hero-image-container">
+                <img src="profile.jpg" alt="Wally Atkins" class="hero-image">
+            </div>
+        </section>
+
+        <section id="about" class="content-section">
+            <h2 class="section-title">About Me</h2>
+            <div class="about-grid">
+                <div class="about-text">
+                    <p class="lead">I am an Enabler—using creativity, logic, and technology to empower others.</p>
+                    <p>My roots are in the creative arts—starting as an art major with a passion for drawing, pen & ink,
+                        and charcoal. I blend this artistic foundation with a rigorous analytical mind, honed through a
+                        lifelong dedication to athletics (basketball, soccer, track, volleyball, cheerleading) and
+                        statistical analysis.</p>
+                    <p>I believe in "teaching a man to fish." My mission is to leverage technology not just for
+                        efficiency, but to enable others to build, create, and improve. Guided by my Christian faith, I
+                        view my work as a way to serve and move society forward.</p>
+                </div>
+                <div class="about-stats">
+                    <div class="stat-item">
+                        <h3>Identity</h3>
+                        <p>The Enabler</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3>Foundation</h3>
+                        <p>Art & Logic</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3>Faith</h3>
+                        <p>Christian</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="work" class="content-section">
+            <h2 class="section-title">Open Source Projects</h2>
+            <div class="project-list">
+                <div class="project-item">
+                    <span class="project-category">Web Service</span>
+                    <div class="project-info">
+                        <h3 class="project-name">Story Prompts</h3>
+                        <p class="project-desc">A video-sharing service for 1-on-1 storytelling. Designed to foster
+                            controlled, meaningful interactions rather than broad social networking.</p>
+                    </div>
+                    <a href="https://github.com/wallyatkins" target="_blank" class="project-link"><i
+                            class="fab fa-github"></i></a>
+                </div>
+                <div class="project-item">
+                    <span class="project-category">AI Workflow</span>
+                    <div class="project-info">
+                        <h3 class="project-name">Zaltar</h3>
+                        <p class="project-desc">An agentic "magic genie" workflow. It leverages AI and complex
+                            automation to grant user "wishes" and execute tasks.</p>
+                    </div>
+                    <a href="https://github.com/wallyatkins" target="_blank" class="project-link"><i
+                            class="fab fa-github"></i></a>
+                </div>
+                <div class="project-item">
+                    <span class="project-category">Platform</span>
+                    <div class="project-info">
+                        <h3 class="project-name">Community</h3>
+                        <p class="project-desc">An open-source, bulletin-board style platform. A deployable blueprint
+                            for building small-scale digital communities.</p>
+                    </div>
+                    <a href="https://github.com/wallyatkins" target="_blank" class="project-link"><i
+                            class="fab fa-github"></i></a>
+                </div>
+                <div class="project-item">
+                    <span class="project-category">Analytics</span>
+                    <div class="project-info">
+                        <h3 class="project-name">Sports Analysis</h3>
+                        <p class="project-desc">Developing improved statistical methodologies for athletic performance.
+                        </p>
+                    </div>
+                    <a href="https://github.com/wallyatkins" target="_blank" class="project-link"><i
+                            class="fab fa-github"></i></a>
+                </div>
+            </div>
+        </section>
+
+        <section id="process" class="content-section">
+            <h2 class="section-title">The Process</h2>
+            <div class="process-content">
+                <p>This website is a product of <strong>collaboration with intelligence.</strong></p>
+                <p>Built using <strong>Google Antigravity</strong>, it represents a modern approach to development—where
+                    human creativity directs AI capability. I am committed to experimenting with agentic workflows and
+                    constantly iterating to find robust, web-based solutions that anyone can deploy.</p>
+            </div>
+        </section>
+
+        <section id="contact" class="content-section">
+            <h2 class="section-title">Get in Touch</h2>
+            <div class="contact-container">
+                <form class="contact-form" action="#" method="POST">
+                    <div class="form-group">
+                        <label for="name">Name</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Message</label>
+                        <textarea id="message" name="message" rows="5" required></textarea>
+                    </div>
+                    <!-- Honeypot for spam protection -->
+                    <div style="display:none;">
+                        <label for="honeypot">Do not fill this out</label>
+                        <input type="text" id="honeypot" name="honeypot">
+                    </div>
+                    <button type="submit" class="submit-btn">Send Message</button>
+                </form>
+
+                <div class="social-links">
+                    <a href="https://github.com/wallyatkins" target="_blank" aria-label="GitHub"><i
+                            class="fab fa-github"></i> GitHub</a>
+                    <a href="https://linkedin.com/in/wallyatkins" target="_blank" aria-label="LinkedIn"><i
+                            class="fab fa-linkedin"></i> LinkedIn</a>
+                    <a href="https://instagram.com/wallyatkins" target="_blank" aria-label="Instagram"><i
+                            class="fab fa-instagram"></i> Instagram</a>
+                    <a href="https://facebook.com/wallyatkins" target="_blank" aria-label="Facebook"><i
+                            class="fab fa-facebook"></i> Facebook</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta-section">
+            <div class="cta-content">
+                <h2>Principles for Action.</h2>
+                <p>Make the most of your time. Prioritize meaningful relationships. Collaborate to improve the world.
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p>&copy; 2024 Wally Atkins. Built with Antigravity.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
