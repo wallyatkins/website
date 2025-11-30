@@ -120,7 +120,7 @@
             <h2 class="section-title">The Process</h2>
             <div class="process-content">
                 <p>This website is a product of <strong>collaboration with intelligence.</strong></p>
-                <p>Built using <strong>AI/LLMs/Agent</strong>, it represents a modern approach to development—where
+                <p>Built using <strong>AI/LLMs/Agents</strong>, it represents a modern approach to development—where
                     human creativity directs AI capability. I am committed to experimenting with agentic workflows and
                     constantly iterating to find robust, web-based solutions that anyone can deploy.</p>
             </div>
@@ -169,11 +169,34 @@
                 <p>Make the most of your time. Prioritize meaningful relationships. Collaborate to improve the world.
                 </p>
             </div>
+
+            <!-- Easter Egg: D-Pad Interface -->
+            <div id="dpad-container" class="hidden">
+                <div class="dpad">
+                    <div class="dpad-up" data-key="up"></div>
+                    <div class="dpad-right" data-key="right"></div>
+                    <div class="dpad-down" data-key="down"></div>
+                    <div class="dpad-left" data-key="left"></div>
+                    <div class="dpad-center"></div>
+                </div>
+                <p class="dpad-hint">Unlock the Secret</p>
+            </div>
+
+            <!-- Easter Egg: Block Blast Game -->
+            <div id="game-container" class="hidden">
+                <div class="game-header">
+                    <h3>Block Blast</h3>
+                    <div class="score-box">Score: <span id="score">0</span></div>
+                </div>
+                <div id="game-grid"></div>
+                <div id="block-options"></div>
+                <button id="restart-btn">Play Again</button>
+            </div>
         </section>
     </main>
 
     <footer class="site-footer">
-        <p>&copy; 2025 Wally Atkins. Built with AI/LLMs/Agent.</p>
+        <p>&copy; 2025 Wally Atkins. Built with AI/LLMs/Agents.</p>
     </footer>
 
     <script src="script.js"></script>
