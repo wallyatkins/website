@@ -55,6 +55,21 @@ document.addEventListener('DOMContentLoaded', () => {
         observer.observe(el);
     });
 
+    // Light/Dark Mode Toggle
+    const heroImage = document.querySelector('.hero-image');
+    if (heroImage) {
+        heroImage.addEventListener('dblclick', () => {
+            document.body.classList.toggle('light-mode');
+
+            // Swap image
+            if (document.body.classList.contains('light-mode')) {
+                heroImage.src = 'profile-white.jpg';
+            } else {
+                heroImage.src = 'profile-black.jpg';
+            }
+        });
+    }
+
     // Custom animation class logic
     document.addEventListener('scroll', () => {
         animatedElements.forEach(el => {

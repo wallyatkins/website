@@ -27,5 +27,6 @@ jobs:
           state-name: .ftp-deploy-sync-state.json
           exclude: |
             **/.git*
+            **/.github/**
             **/.ftp-deploy-sync-state.json
           log-level: verbose # Optional: Increase logging for debugging

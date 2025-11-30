@@ -24,6 +24,13 @@ body {
     font-family: var(--font-main);
     line-height: 1.6;
     overflow-x: hidden;
+    transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+body.light-mode {
+    --bg-color: #ffffff;
+    --text-color: #0a0a0a;
+    --text-secondary: #555555;
 }
 
 /* Typography */
