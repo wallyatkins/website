@@ -9,6 +9,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Mobile Menu Toggle
+    const mobileBtn = document.querySelector('.mobile-menu-btn');
+    const navLinks = document.querySelector('.nav-links');
+
+    if (mobileBtn) {
+        mobileBtn.addEventListener('click', () => {
+            mobileBtn.classList.toggle('active');
+            navLinks.classList.toggle('active');
+            document.body.style.overflow = navLinks.classList.contains('active') ? 'hidden' : 'auto';
+        });
+
+        // Close menu when clicking a link
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileBtn.classList.remove('active');
+                navLinks.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            });
+        });
+    }
+
     // Intersection Observer for fade-in animations
     const observerOptions = {
         threshold: 0.1
@@ -24,7 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }, observerOptions);
 
     // Add fade-in class to elements we want to animate
-    const animatedElements = document.querySelectorAll('.hero-content, .hero-image-container, .about-text, .project-item, .contact-link');
+    // Removed hero elements to ensure they are always visible on load
+    const animatedElements = document.querySelectorAll('.about-text, .project-item, .contact-link');
 
     animatedElements.forEach(el => {
         el.style.opacity = '0';
