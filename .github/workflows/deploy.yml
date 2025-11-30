@@ -1,0 +1,51 @@
+name: Deploy to Hosting
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js (if your project requires it for building)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Specify the Node.js version your project uses
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: client
+
+      - name: Build project
+        run: npm run build
+        working-directory: client
+
+      - name: Copy PHP backend
+        run: |
+          cp -r api uploads metadata build/
+          cp config.php .htaccess build/
+
+      - name: Deploy to Bluehost via FTP/SFTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: 21
+          protocol: ftp
+          local-dir: ./build/
+          state-name: .ftp-deploy-sync-state.json
+          exclude: |
+            **/.git*
+            **/.ftp-deploy-sync-state.json
+            **/node_modules/**
+            .env
+          log-level: verbose # Optional: Increase logging for debugging
