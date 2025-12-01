@@ -121,36 +121,99 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 2. Logic & Art Easter Egg
+    // 2. Logic & Art Easter Egg (Rotatable Trigger)
     const themeTrigger = document.getElementById('theme-trigger');
 
     if (themeTrigger) {
-        themeTrigger.addEventListener('click', () => {
+        let isDragging = false;
+        let startX = 0;
+        let currentRotation = 0;
+        let startRotation = 0;
+
+        const startRotate = (e) => {
+            isDragging = true;
+            startX = e.touches ? e.touches[0].clientX : e.clientX;
+            startRotation = currentRotation;
+            themeTrigger.style.cursor = 'grabbing';
+            e.preventDefault(); // Prevent text selection
+        };
+
+        const doRotate = (e) => {
+            if (!isDragging) return;
+
+            const x = e.touches ? e.touches[0].clientX : e.clientX;
+            const deltaX = x - startX;
+
+            // Map drag distance to rotation (sensitivity: 2px = 1deg)
+            currentRotation = startRotation + (deltaX / 2);
+            themeTrigger.style.transform = `rotate(${currentRotation}deg)`;
+
+            // Check for Trigger (Upside down approx 180 deg)
+            // Allow flexibility: 170 to 190, or -170 to -190
+            const absRot = Math.abs(currentRotation % 360);
+            if (absRot > 170 && absRot < 190) {
+                triggerEasterEgg();
+                isDragging = false; // Stop dragging
+                themeTrigger.style.cursor = 'default';
+            }
+        };
+
+        const stopRotate = () => {
+            isDragging = false;
+            themeTrigger.style.cursor = 'default';
+
+            // Optional: Snap back if not triggered? 
+            // User said "when turned upside down... trigger". 
+            // If they let go at 90deg, maybe it stays or snaps back.
+            // Let's snap back to 0 for polish if not triggered.
+            if (Math.abs(currentRotation % 360) < 170) {
+                themeTrigger.style.transition = 'transform 0.5s ease';
+                currentRotation = 0;
+                themeTrigger.style.transform = `rotate(0deg)`;
+                setTimeout(() => {
+                    themeTrigger.style.transition = ''; // Remove transition for next drag
+                }, 500);
+            }
+        };
+
+        themeTrigger.addEventListener('mousedown', startRotate);
+        themeTrigger.addEventListener('touchstart', startRotate);
+
+        document.addEventListener('mousemove', doRotate);
+        document.addEventListener('touchmove', doRotate, { passive: false });
+
+        document.addEventListener('mouseup', stopRotate);
+        document.addEventListener('touchend', stopRotate);
+
+        function triggerEasterEgg() {
             const isArtMode = document.body.classList.toggle('art-mode');
 
-            // Text Swap
-            themeTrigger.textContent = isArtMode ? "Art & Logic" : "Logic & Art";
+            // Reset Rotation & Swap Text
+            themeTrigger.style.transition = 'transform 0.5s ease';
+            themeTrigger.style.transform = `rotate(${currentRotation > 0 ? 360 : -360}deg)`; // Complete the spin
+
+            setTimeout(() => {
+                themeTrigger.textContent = isArtMode ? "Art & Logic" : "Logic & Art";
+                themeTrigger.style.transition = '';
+                currentRotation = 0;
+                themeTrigger.style.transform = 'rotate(0deg)';
+            }, 500);
 
             // Transition Effects
             const sections = document.querySelectorAll('section, .navbar');
             const animationClass = isArtMode ? 'whimsical-transition' : 'rigid-transition';
 
             sections.forEach((section, index) => {
-                // Reset animation
                 section.classList.remove('whimsical-transition', 'rigid-transition');
-                void section.offsetWidth; // Trigger reflow
-
-                // Apply new animation with delay
+                void section.offsetWidth;
                 section.style.animationDelay = `${index * 0.2}s`;
                 section.classList.add(animationClass);
-
-                // Cleanup after animation
                 section.addEventListener('animationend', () => {
                     section.classList.remove(animationClass);
-                    section.style.opacity = ''; // Ensure visibility persists
+                    section.style.opacity = '';
                 }, { once: true });
             });
-        });
+        }
     }
 
 
