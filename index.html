@@ -192,6 +192,51 @@
                 <div id="block-options"></div>
                 <button id="restart-btn">Play Again</button>
             </div>
+
+            <!-- Easter Egg: Zoltar Overlay -->
+            <div id="zoltar-overlay" class="hidden">
+                <div class="zoltar-machine">
+                    <svg viewBox="0 0 200 300" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Booth -->
+                        <rect x="20" y="20" width="160" height="260" fill="#2c3e50" stroke="#f1c40f" stroke-width="5" />
+                        <rect x="30" y="30" width="140" height="180" fill="#000" opacity="0.3" />
+
+                        <!-- Zoltar Body -->
+                        <g id="zoltar-body">
+                            <path d="M50 250 L150 250 L140 180 L60 180 Z" fill="#c0392b" />
+                        </g>
+
+                        <!-- Zoltar Head Group -->
+                        <g id="zoltar-head-group">
+                            <!-- Turban -->
+                            <path d="M60 110 Q100 70 140 110 L140 130 L60 130 Z" fill="#f1c40f" />
+                            <circle cx="100" cy="100" r="10" fill="#e74c3c" />
+
+                            <!-- Face -->
+                            <rect x="70" y="130" width="60" height="70" rx="10" fill="#e6c2a0" />
+
+                            <!-- Eyes -->
+                            <circle cx="85" cy="150" r="3" fill="#000" />
+                            <circle cx="115" cy="150" r="3" fill="#000" />
+
+                            <!-- Mustache -->
+                            <path d="M80 170 Q100 160 120 170" stroke="#000" stroke-width="2" fill="none" />
+
+                            <!-- Beard -->
+                            <path d="M95 190 L100 210 L105 190 Z" fill="#000" />
+
+                            <!-- Mouth -->
+                            <g id="zoltar-mouth">
+                                <rect x="90" y="175" width="20" height="5" rx="2" fill="#000" />
+                            </g>
+                        </g>
+
+                        <!-- Glass Reflection -->
+                        <path d="M30 30 L170 30 L30 170 Z" fill="#fff" opacity="0.1" />
+                    </svg>
+                    <div class="zoltar-text">YOUR WISH IS GRANTED</div>
+                </div>
+            </div>
         </section>
     </main>
 

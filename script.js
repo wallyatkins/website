@@ -498,4 +498,65 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateScore() {
         document.getElementById('score').textContent = score;
     }
+
+    // --- ZOLTAR EASTER EGG ---
+    const zoltarTitle = document.querySelector('.project-name:contains("Zoltar")') ||
+        Array.from(document.querySelectorAll('.project-name')).find(el => el.textContent.includes('Zoltar'));
+
+    if (zoltarTitle) {
+        let rubCount = 0;
+        let lastX = 0;
+        let lastDirection = 0; // -1 left, 1 right
+        let rubTimer;
+        let isZoltarActive = false;
+
+        const handleRub = (x) => {
+            if (isZoltarActive) return;
+
+            const delta = x - lastX;
+            const direction = delta > 0 ? 1 : -1;
+
+            if (Math.abs(delta) > 2) { // Minimum movement threshold
+                if (direction !== lastDirection) {
+                    rubCount++;
+                    lastDirection = direction;
+
+                    // Reset count if stop rubbing
+                    clearTimeout(rubTimer);
+                    rubTimer = setTimeout(() => {
+                        rubCount = 0;
+                    }, 500); // Reset if pause > 500ms
+                }
+            }
+
+            lastX = x;
+
+            if (rubCount > 10) { // Threshold for activation
+                activateZoltar();
+            }
+        };
+
+        zoltarTitle.addEventListener('mousemove', (e) => handleRub(e.clientX));
+        zoltarTitle.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // Prevent scroll while rubbing
+            handleRub(e.touches[0].clientX);
+        }, { passive: false });
+
+        // Reset on leave
+        zoltarTitle.addEventListener('mouseleave', () => { rubCount = 0; });
+        zoltarTitle.addEventListener('touchend', () => { rubCount = 0; });
+    }
+
+    function activateZoltar() {
+        isZoltarActive = true;
+        const overlay = document.getElementById('zoltar-overlay');
+        overlay.classList.remove('hidden');
+
+        // Auto-close after animation? Or click to close
+        overlay.addEventListener('click', () => {
+            overlay.classList.add('hidden');
+            isZoltarActive = false;
+            rubCount = 0;
+        });
+    }
 });
