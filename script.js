@@ -192,6 +192,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const restartBtn = document.getElementById('restart-btn');
         restartBtn.replaceWith(restartBtn.cloneNode(true)); // Clear listeners
         document.getElementById('restart-btn').addEventListener('click', initGame);
+
+        // Setup Close
+        const closeBtn = document.getElementById('game-close-btn');
+        closeBtn.onclick = () => {
+            document.getElementById('game-container').classList.add('hidden');
+            // Optional: Reset game state or pause?
+        };
     }
 
     function spawnBlocks() {
@@ -209,9 +216,6 @@ document.addEventListener('DOMContentLoaded', () => {
             [[1, 1, 0], [0, 1, 1]], // Z-shape
             [[1, 0], [1, 0], [1, 1]] // L-shape
         ];
-
-        // Check for Game Over before spawning? No, check after spawn if any can fit.
-        // Actually, check if *previous* blocks are all used first.
 
         for (let i = 0; i < 3; i++) {
             const shape = shapes[Math.floor(Math.random() * shapes.length)];
@@ -247,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setupDrag(element, shape, color) {
         let isDragging = false;
-        let startX, startY, initialLeft, initialTop;
+        let startX, startY;
         let ghostCells = [];
 
         const startDrag = (e) => {
@@ -275,11 +279,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
+            // Offset by 80px upwards so finger doesn't cover block
+            const offsetY = 80;
+
             element.style.left = `${clientX - startX}px`;
-            element.style.top = `${clientY - startY}px`;
+            element.style.top = `${clientY - startY - offsetY}px`;
 
             // Ghost Preview
-            updateGhost(clientX, clientY, shape);
+            // We need to check the point UNDER the finger/cursor, not the offset block
+            // But visually the user is placing the block where it IS.
+            // So we should check the point under the BLOCK's new position (top-left or center)
+            // Let's check the center of the dragged block
+            const blockCenterX = clientX - startX + (element.offsetWidth / 2);
+            const blockCenterY = clientY - startY - offsetY + (element.offsetHeight / 2);
+
+            updateGhost(blockCenterX, blockCenterY, shape);
         };
 
         const endDrag = (e) => {
@@ -296,28 +310,22 @@ document.addEventListener('DOMContentLoaded', () => {
             document.removeEventListener('touchend', endDrag);
 
             // Try to place
-            const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
-            const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+            if (validGhostPlacement) {
+                placeBlock(validGhostPlacement.r, validGhostPlacement.c, shape, color);
 
-            const target = document.elementFromPoint(clientX, clientY);
-            const gridCell = target ? target.closest('.grid-cell') : null;
+                // Static Layout: Hide instead of remove
+                element.style.visibility = 'hidden';
+                element.style.pointerEvents = 'none';
+                element.classList.add('used');
 
-            if (gridCell) {
-                const r = parseInt(gridCell.dataset.r);
-                const c = parseInt(gridCell.dataset.c);
-                // Adjust for offset (user drags by a specific part of block)
-                // Simplified: Assume user drops top-left of block on cell
-                // Better: Calculate nearest valid placement based on center
+                // Check if all used
+                const allOptions = document.querySelectorAll('.option-block');
+                const allUsed = Array.from(allOptions).every(opt => opt.classList.contains('used'));
 
-                // For now, let's use the ghost logic to confirm placement
-                if (validGhostPlacement) {
-                    placeBlock(validGhostPlacement.r, validGhostPlacement.c, shape, color);
-                    element.remove();
-                    if (document.getElementById('block-options').children.length === 0) {
-                        spawnBlocks();
-                    } else {
-                        checkGameOver();
-                    }
+                if (allUsed) {
+                    spawnBlocks();
+                } else {
+                    checkGameOver();
                 }
             }
 
@@ -334,14 +342,12 @@ document.addEventListener('DOMContentLoaded', () => {
         clearGhost();
         validGhostPlacement = null;
 
-        // Find grid cell under pointer
-        // We need to offset based on the block's center or top-left. 
-        // Let's assume the pointer is roughly the center of the dragged block.
-        // To make it intuitive, we check which cell is closest to the top-left of the dragged element.
+        // Hide dragging element momentarily to find what's underneath?
+        // No, we passed x/y coordinates.
+        // Use elementFromPoint
 
-        // Actually, let's use elementFromPoint on the top-left of the dragged element
-        // But the element itself is under the pointer. We need to hide it momentarily or calculate offset.
-        // Simpler: Just check the cell under the pointer and treat it as the "anchor" (e.g., top-left or center block cell)
+        // We need to be careful. elementFromPoint might hit the dragging element if we didn't offset enough or if pointerEvents isn't none.
+        // .dragging has pointer-events: none in CSS, so we are good.
 
         const target = document.elementFromPoint(x, y);
         const cell = target ? target.closest('.grid-cell') : null;
@@ -350,9 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const r = parseInt(cell.dataset.r);
             const c = parseInt(cell.dataset.c);
 
-            // Try to center the shape on the cursor? Or top-left?
-            // Let's try top-left alignment for simplicity first.
-            // Adjust r/c to center:
+            // Center alignment
             const rOffset = Math.floor(shape.length / 2);
             const cOffset = Math.floor(shape[0].length / 2);
 
@@ -441,9 +445,6 @@ document.addEventListener('DOMContentLoaded', () => {
             score += linesCleared * 100;
             updateScore();
 
-            // Change color palette?
-            // currentColor = colors[Math.floor(Math.random() * colors.length)];
-
             allCellsToClear.forEach(key => {
                 const [r, c] = key.split(',');
                 const cell = document.querySelector(`.grid-cell[data-r="${r}"][data-c="${c}"]`);
@@ -457,7 +458,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function checkGameOver() {
-        const options = document.querySelectorAll('.option-block');
+        const options = document.querySelectorAll('.option-block:not(.used)');
         if (options.length === 0) return; // Should allow spawn first
 
         let canMove = false;

@@ -577,6 +577,23 @@ section {
     padding: 2rem;
 }
 
+#game-close-btn {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    font-size: 3rem;
+    color: #fff;
+    cursor: pointer;
+    line-height: 1;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    z-index: 201;
+}
+
+#game-close-btn:hover {
+    opacity: 1;
+}
+
 .game-header {
     display: flex;
     justify-content: space-between;
@@ -613,6 +630,8 @@ section {
     width: 100%;
     height: 100%;
     transition: background-color 0.2s;
+    border: 2px solid transparent;
+    /* Prevent growth when ghost border is added */
 }
 
 .grid-cell.filled {
@@ -646,13 +665,15 @@ section {
 }
 
 #block-options {
-    display: flex;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    /* Fixed 3 columns */
     gap: 2rem;
     width: 100%;
     max-width: 500px;
     min-height: 120px;
     align-items: center;
+    justify-items: center;
 }
 
 .option-block {
@@ -675,6 +696,7 @@ section {
     z-index: 300;
     opacity: 0.9;
     transform: scale(1.2);
+    /* Offset handled in JS now, but scale helps visibility */
 }
 
 .block-cell {
