@@ -499,64 +499,180 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('score').textContent = score;
     }
 
-    // --- ZOLTAR EASTER EGG ---
+    // --- ZOLTAR EASTER EGG (COIN GAME) ---
     const zoltarTitle = Array.from(document.querySelectorAll('.project-name'))
         .find(el => el.textContent.includes('Zoltar'));
 
     if (zoltarTitle) {
         let rubCount = 0;
         let lastX = 0;
-        let lastDirection = 0; // -1 left, 1 right
+        let lastDirection = 0;
         let rubTimer;
         let isZoltarActive = false;
 
+        // Rub Detection
         const handleRub = (x) => {
             if (isZoltarActive) return;
-
             const delta = x - lastX;
             const direction = delta > 0 ? 1 : -1;
-
-            if (Math.abs(delta) > 2) { // Minimum movement threshold
+            if (Math.abs(delta) > 2) {
                 if (direction !== lastDirection) {
                     rubCount++;
                     lastDirection = direction;
-
-                    // Reset count if stop rubbing
                     clearTimeout(rubTimer);
-                    rubTimer = setTimeout(() => {
-                        rubCount = 0;
-                    }, 500); // Reset if pause > 500ms
+                    rubTimer = setTimeout(() => { rubCount = 0; }, 500);
                 }
             }
-
             lastX = x;
-
-            if (rubCount > 10) { // Threshold for activation
-                activateZoltar();
+            if (rubCount > 10) {
+                startZoltarGame();
             }
         };
 
         zoltarTitle.addEventListener('mousemove', (e) => handleRub(e.clientX));
         zoltarTitle.addEventListener('touchmove', (e) => {
-            e.preventDefault(); // Prevent scroll while rubbing
+            e.preventDefault();
             handleRub(e.touches[0].clientX);
         }, { passive: false });
-
-        // Reset on leave
         zoltarTitle.addEventListener('mouseleave', () => { rubCount = 0; });
         zoltarTitle.addEventListener('touchend', () => { rubCount = 0; });
     }
 
-    function activateZoltar() {
+    function startZoltarGame() {
         isZoltarActive = true;
         const overlay = document.getElementById('zoltar-overlay');
         overlay.classList.remove('hidden');
 
-        // Auto-close after animation? Or click to close
-        overlay.addEventListener('click', () => {
-            overlay.classList.add('hidden');
-            isZoltarActive = false;
-            rubCount = 0;
-        });
+        // Game State
+        let gameState = 'AIMING'; // AIMING -> READY -> FIRING -> END
+        let rampAngle = 0;
+        const ramp = document.getElementById('ramp-container');
+        const signAim = document.getElementById('sign-aim');
+        const signBtn = document.getElementById('sign-button');
+        const btn = document.getElementById('zoltar-button');
+        const coin = document.getElementById('game-coin');
+        const eyes = document.querySelectorAll('#eye-left, #eye-right');
+
+        // Reset UI
+        signAim.classList.add('flashing');
+        signBtn.classList.remove('flashing');
+        btn.classList.remove('active');
+        btn.disabled = true;
+        coin.classList.add('hidden');
+        document.getElementById('ticket').classList.remove('dispensed');
+        eyes.forEach(eye => eye.classList.remove('glowing-red'));
+
+        // 1. Aiming Logic
+        const updateRamp = (e) => {
+            if (gameState !== 'AIMING' && gameState !== 'READY') return;
+
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const centerX = window.innerWidth / 2;
+            const delta = clientX - centerX;
+
+            // Map delta to angle (-30 to 30 degrees)
+            rampAngle = Math.max(-30, Math.min(30, delta / 10));
+            ramp.style.transform = `translateX(-50%) rotate(${rampAngle}deg)`;
+        };
+
+        document.addEventListener('mousemove', updateRamp);
+        document.addEventListener('touchmove', updateRamp);
+
+        // 2. Timer to Ready State
+        setTimeout(() => {
+            if (!isZoltarActive) return;
+            gameState = 'READY';
+            signAim.classList.remove('flashing');
+            signBtn.classList.add('flashing');
+            btn.classList.add('active');
+            btn.disabled = false;
+
+            // Eyes Glow
+            eyes.forEach(eye => eye.classList.add('glowing-red'));
+        }, 5000);
+
+        // 3. Fire Logic
+        btn.onclick = () => {
+            if (gameState !== 'READY') return;
+            gameState = 'FIRING';
+            btn.classList.remove('active');
+            signBtn.classList.remove('flashing');
+
+            // Show Coin
+            coin.classList.remove('hidden');
+            coin.style.bottom = '20px';
+            coin.style.left = '50%';
+
+            // Animate Coin
+            // Simple physics: move up at angle
+            const speed = 10;
+            const rad = (rampAngle - 90) * (Math.PI / 180); // -90 because 0 is right, we want up
+            let posX = 0; // Relative to center
+            let posY = 20;
+
+            const animateCoin = () => {
+                posY += speed;
+                posX += Math.cos(rad) * speed; // Wrong math for vertical 0, but let's simplify
+                // Actually: 0deg is vertical up in our CSS rotation context?
+                // CSS rotate(0) is vertical. rotate(-30) is left.
+                // So x component is sin(angle), y is cos(angle)
+
+                const rads = rampAngle * (Math.PI / 180);
+                const stepY = Math.cos(rads) * 5;
+                const stepX = Math.sin(rads) * 5;
+
+                // We need to track actual DOM position
+                const currentBottom = parseFloat(coin.style.bottom) || 20;
+                const currentLeft = parseFloat(coin.style.left) || 50; // %
+
+                // Convert % to px for calc?
+                // Let's use transform translate instead for smoother animation
+                // But we need to detect collision with mouth rect
+
+                // Simplified: Just check angle on click
+                // Target is roughly center (0 deg) +/- 5 deg
+                const isWin = Math.abs(rampAngle) < 5;
+
+                // Visual Animation
+                coin.style.transition = 'all 1s ease-out';
+                coin.style.bottom = '260px'; // Mouth height
+                coin.style.transform = `translateX(calc(-50% + ${rampAngle * 3}px))`; // Approx deviation
+
+                setTimeout(() => {
+                    if (isWin) {
+                        // WIN
+                        document.getElementById('zoltar-mouth-group').innerHTML =
+                            `<ellipse cx="150" cy="265" rx="15" ry="10" fill="#000"/>`; // Open mouth
+                        coin.style.opacity = '0'; // Swallowed
+
+                        setTimeout(() => {
+                            document.getElementById('ticket').classList.add('dispensed');
+                        }, 500);
+                    } else {
+                        // LOSE - Bounce
+                        coin.style.transition = 'all 0.5s ease-in';
+                        coin.style.bottom = '20px';
+                        coin.style.opacity = '0';
+
+                        setTimeout(() => {
+                            alert("Zoltar rejects your offering. Try again.");
+                            startZoltarGame(); // Restart
+                        }, 1000);
+                    }
+                }, 1000);
+            };
+
+            animateCoin();
+        };
+
+        // Close handler
+        overlay.onclick = (e) => {
+            if (e.target === overlay) {
+                overlay.classList.add('hidden');
+                isZoltarActive = false;
+                document.removeEventListener('mousemove', updateRamp);
+                document.removeEventListener('touchmove', updateRamp);
+            }
+        };
     }
 });

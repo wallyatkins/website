@@ -197,46 +197,90 @@
 
             <!-- Easter Egg: Zoltar Overlay -->
             <div id="zoltar-overlay" class="hidden">
-                <div class="zoltar-machine">
-                    <svg viewBox="0 0 200 300" xmlns="http://www.w3.org/2000/svg">
-                        <!-- Booth -->
-                        <rect x="20" y="20" width="160" height="260" fill="#2c3e50" stroke="#f1c40f" stroke-width="5" />
-                        <rect x="30" y="30" width="140" height="180" fill="#000" opacity="0.3" />
+                <div class="zoltar-booth">
+                    <div class="booth-header">
+                        <div class="sign-box left">
+                            <div id="sign-aim" class="sign-text">AIM RAMP<br>AT ZOLTAR</div>
+                        </div>
+                        <div class="sign-box right">
+                            <div id="sign-button" class="sign-text">PRESS RED<br>BUTTON</div>
+                        </div>
+                    </div>
 
-                        <!-- Zoltar Body -->
-                        <g id="zoltar-body">
-                            <path d="M50 250 L150 250 L140 180 L60 180 Z" fill="#c0392b" />
-                        </g>
+                    <div class="zoltar-window">
+                        <svg class="zoltar-svg" viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Background/Curtains -->
+                            <rect width="300" height="400" fill="#1a0b0b" />
+                            <path d="M0 0 Q50 100 0 300" fill="#4a0e0e" />
+                            <path d="M300 0 Q250 100 300 300" fill="#4a0e0e" />
 
-                        <!-- Zoltar Head Group -->
-                        <g id="zoltar-head-group">
-                            <!-- Turban -->
-                            <path d="M60 110 Q100 70 140 110 L140 130 L60 130 Z" fill="#f1c40f" />
-                            <circle cx="100" cy="100" r="10" fill="#e74c3c" />
-
-                            <!-- Face -->
-                            <rect x="70" y="130" width="60" height="70" rx="10" fill="#e6c2a0" />
-
-                            <!-- Eyes -->
-                            <circle cx="85" cy="150" r="3" fill="#000" />
-                            <circle cx="115" cy="150" r="3" fill="#000" />
-
-                            <!-- Mustache -->
-                            <path d="M80 170 Q100 160 120 170" stroke="#000" stroke-width="2" fill="none" />
-
-                            <!-- Beard -->
-                            <path d="M95 190 L100 210 L105 190 Z" fill="#000" />
-
-                            <!-- Mouth -->
-                            <g id="zoltar-mouth">
-                                <rect x="90" y="175" width="20" height="5" rx="2" fill="#000" />
+                            <!-- Zoltar Body -->
+                            <g id="zoltar-torso">
+                                <path d="M70 400 L230 400 L210 250 L90 250 Z" fill="#8e44ad" /> <!-- Purple Robe -->
+                                <path d="M90 250 L210 250 L150 300 Z" fill="#f1c40f" /> <!-- Gold Chain/Vest -->
                             </g>
-                        </g>
 
-                        <!-- Glass Reflection -->
-                        <path d="M30 30 L170 30 L30 170 Z" fill="#fff" opacity="0.1" />
-                    </svg>
-                    <div class="zoltar-text">YOUR WISH IS GRANTED</div>
+                            <!-- Zoltar Head -->
+                            <g id="zoltar-head-group">
+                                <!-- Turban -->
+                                <path d="M80 140 Q150 80 220 140 L220 180 L80 180 Z" fill="#3498db" />
+                                <!-- Blue Turban -->
+                                <circle cx="150" cy="130" r="15" fill="#f1c40f" stroke="#e67e22" stroke-width="2" />
+                                <!-- Gem -->
+                                <path d="M150 130 L150 100" stroke="#f1c40f" stroke-width="2" /> <!-- Feather stem -->
+                                <ellipse cx="150" cy="90" rx="10" ry="20" fill="#ecf0f1" /> <!-- Feather -->
+
+                                <!-- Face -->
+                                <path d="M100 180 L200 180 L190 280 Q150 310 110 280 Z" fill="#e6c2a0" />
+
+                                <!-- Beard/Mustache -->
+                                <path d="M120 250 Q150 240 180 250" stroke="#2c3e50" stroke-width="3" fill="none" />
+                                <path d="M140 280 L150 300 L160 280 Z" fill="#2c3e50" />
+
+                                <!-- Eyes -->
+                                <g id="zoltar-eyes">
+                                    <circle cx="130" cy="210" r="6" fill="#fff" />
+                                    <circle cx="170" cy="210" r="6" fill="#fff" />
+                                    <circle id="eye-left" cx="130" cy="210" r="2" fill="#000" />
+                                    <circle id="eye-right" cx="170" cy="210" r="2" fill="#000" />
+                                </g>
+
+                                <!-- Mouth (Target) -->
+                                <g id="zoltar-mouth-group">
+                                    <rect id="mouth-target" x="135" y="260" width="30" height="10" rx="5"
+                                        fill="#3e2723" />
+                                </g>
+                            </g>
+
+                            <!-- Hands (Static for now) -->
+                            <ellipse cx="60" cy="350" rx="20" ry="15" fill="#e6c2a0" transform="rotate(-20 60 350)" />
+                            <ellipse cx="240" cy="350" rx="20" ry="15" fill="#e6c2a0" transform="rotate(20 240 350)" />
+
+                            <!-- Crystal Ball -->
+                            <circle cx="150" cy="380" r="40" fill="url(#crystal-grad)" opacity="0.8" />
+                            <defs>
+                                <radialGradient id="crystal-grad" cx="50%" cy="50%" r="50%" fx="30%" fy="30%">
+                                    <stop offset="0%" style="stop-color:rgba(255,255,255,0.8)" />
+                                    <stop offset="100%" style="stop-color:rgba(100,200,255,0.2)" />
+                                </radialGradient>
+                            </defs>
+                        </svg>
+
+                        <!-- Game Elements Overlay -->
+                        <div id="ramp-container">
+                            <div id="coin-ramp">
+                                <div class="ramp-track"></div>
+                            </div>
+                        </div>
+                        <div id="game-coin" class="hidden"></div>
+                    </div>
+
+                    <div class="booth-controls">
+                        <button id="zoltar-button" disabled>RELEASE COIN</button>
+                        <div class="ticket-slot">
+                            <div id="ticket" class="hidden">WISH GRANTED</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
