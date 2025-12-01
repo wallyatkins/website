@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.body.classList.contains('light-mode')) {
             themeToggle.src = 'profile-white.jpg';
         } else {
-            heroImage.src = 'profile-black.jpg';
+            themeToggle.src = 'profile-black.jpg';
         }
     });
 
