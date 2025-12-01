@@ -500,8 +500,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- ZOLTAR EASTER EGG ---
-    const zoltarTitle = document.querySelector('.project-name:contains("Zoltar")') ||
-        Array.from(document.querySelectorAll('.project-name')).find(el => el.textContent.includes('Zoltar'));
+    const zoltarTitle = Array.from(document.querySelectorAll('.project-name'))
+        .find(el => el.textContent.includes('Zoltar'));
 
     if (zoltarTitle) {
         let rubCount = 0;
