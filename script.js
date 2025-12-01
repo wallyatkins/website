@@ -126,13 +126,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (themeTrigger) {
         let isDragging = false;
-        let startX = 0;
+        let startY = 0;
         let currentRotation = 0;
         let startRotation = 0;
 
         const startRotate = (e) => {
             isDragging = true;
-            startX = e.touches ? e.touches[0].clientX : e.clientX;
+            startY = e.touches ? e.touches[0].clientY : e.clientY;
             startRotation = currentRotation;
             themeTrigger.style.cursor = 'grabbing';
             e.preventDefault(); // Prevent text selection
@@ -141,11 +141,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const doRotate = (e) => {
             if (!isDragging) return;
 
-            const x = e.touches ? e.touches[0].clientX : e.clientX;
-            const deltaX = x - startX;
+            const y = e.touches ? e.touches[0].clientY : e.clientY;
+            const deltaY = y - startY;
 
             // Map drag distance to rotation (sensitivity: 2px = 1deg)
-            currentRotation = startRotation + (deltaX / 2);
+            currentRotation = startRotation + (deltaY / 2);
             themeTrigger.style.transform = `rotate(${currentRotation}deg)`;
 
             // Check for Trigger (Upside down approx 180 deg)
@@ -261,44 +261,60 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isUnlocked) return;
         ctaContent.classList.add('hidden');
         dpadContainer.classList.remove('hidden');
+
+        // D-Pad Close Logic
+        const dpadCloseBtn = document.getElementById('dpad-close-btn');
+        if (dpadCloseBtn) {
+            dpadCloseBtn.onclick = () => {
+                dpadContainer.classList.add('hidden');
+                ctaContent.classList.remove('hidden');
+            };
+        }
         // Vibrate if mobile
         if (navigator.vibrate) navigator.vibrate(200);
     }
 
-    // 2. Konami Code Sequence
-    const sequence = ['up', 'up', 'down', 'down', 'left', 'right', 'left', 'right'];
-    let inputSequence = [];
+    // 2. Konami Code
+    const konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight'];
+    let konamiIndex = 0;
 
-    document.querySelectorAll('.dpad div[data-key]').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent re-triggering long press
-            const key = btn.dataset.key;
-            inputSequence.push(key);
-
-            // Visual feedback
-            btn.style.backgroundColor = '#fff';
-            setTimeout(() => btn.style.backgroundColor = '', 100);
-
-            checkSequence();
-        });
-    });
-
-    function checkSequence() {
-        // Check if the end of input matches the sequence
-        if (inputSequence.length > sequence.length) {
-            inputSequence.shift(); // Keep buffer same length
-        }
-
-        if (inputSequence.join(',') === sequence.join(',')) {
-            launchGame();
+    function checkKonami(key) {
+        // Map D-pad clicks to keys if needed, or just use key strings
+        if (key === konamiCode[konamiIndex]) {
+            konamiIndex++;
+            if (konamiIndex === konamiCode.length) {
+                unlockGame();
+                konamiIndex = 0;
+            }
+        } else {
+            konamiIndex = 0;
         }
     }
 
-    function launchGame() {
+    // D-Pad Interaction
+    document.querySelectorAll('.dpad div').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent re-triggering long press
+            const dir = e.target.className.replace('dpad-', '');
+            const keyMap = {
+                'up': 'ArrowUp',
+                'down': 'ArrowDown',
+                'left': 'ArrowLeft',
+                'right': 'ArrowRight'
+            };
+            if (keyMap[dir]) {
+                checkKonami(keyMap[dir]);
+                // Haptic feedback
+                if (navigator.vibrate) navigator.vibrate(50);
+            }
+        });
+    });
+
+    function unlockGame() {
         isUnlocked = true;
         dpadContainer.classList.add('hidden');
-        gameContainer.classList.remove('hidden');
         initGame();
+        document.getElementById('game-container').classList.remove('hidden');
     }
 
     // 3. Block Blast Game Logic (Advanced)
@@ -344,7 +360,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const closeBtn = document.getElementById('game-close-btn');
         closeBtn.onclick = () => {
             document.getElementById('game-container').classList.add('hidden');
-            // Optional: Reset game state or pause?
+            // Restore CTA content
+            const ctaContent = document.querySelector('.cta-content');
+            if (ctaContent) ctaContent.classList.remove('hidden');
+            isUnlocked = false; // Allow re-triggering
         };
     }
 

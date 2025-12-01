@@ -43,16 +43,26 @@ if (empty($name) || empty($message) || !filter_var($email, FILTER_VALIDATE_EMAIL
 
 // 5. Construct Email
 $subject = $subject_prefix . $name;
-$email_content = "Name: $name\n";
+
+// Body includes sender info for clarity
+$email_content = "You have received a new message from your website contact form.\n\n";
+$email_content .= "Name: $name\n";
 $email_content .= "Email: $email\n\n";
 $email_content .= "Message:\n$message\n";
 
-$headers = "From: $name <$email>\r\n";
-$headers .= "Reply-To: $email\r\n";
-$headers .= "X-Mailer: PHP/" . phpversion();
+// Headers for Bluehost/General Compatibility
+$from_email = 'assistant@wallyatkins.com'; // Must be a domain email
+$headers = "Return-Path: $from_email\r\n";
+$headers .= "From: Website Contact Form <$from_email>\r\n";
+$headers .= "Reply-To: $name <$email>\r\n";
+$headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
+$headers .= "MIME-Version: 1.0\r\n";
+$headers .= "Content-Transfer-Encoding: 8bit\r\n";
+$headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+$params = '-f ' . $from_email;
 
 // 6. Send Email
-if (mail($to_email, $subject, $email_content, $headers)) {
+if (mail($to_email, $subject, $email_content, $headers, $params)) {
     echo json_encode(["status" => "success", "message" => "Message sent successfully!"]);
 } else {
     http_response_code(500);
