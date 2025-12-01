@@ -323,6 +323,21 @@ section {
     transform: translateY(-2px);
 }
 
+.form-status {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    min-height: 1.5em;
+}
+
+.form-status.success {
+    color: #4caf50;
+}
+
+.form-status.error {
+    color: #f44336;
+}
+
 /* Social Links */
 .social-links {
     display: flex;
@@ -781,6 +796,88 @@ section {
     padding: 10px;
     border-bottom: 4px solid #f1c40f;
     border-radius: 12px 12px 0 0;
+}
+
+/* Logic & Art Easter Egg */
+body.art-mode {
+    --bg-color: #fdfbf7;
+    --text-color: #2c3e50;
+    --text-secondary: #5d6d7e;
+    --cta-bg: #fff0f5;
+    --font-main: 'Indie Flower', cursive;
+    background-image: radial-gradient(#e0e0e0 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+body.art-mode h1,
+body.art-mode h2,
+body.art-mode h3,
+body.art-mode .logo,
+body.art-mode .nav-links a {
+    font-family: 'Indie Flower', cursive;
+    letter-spacing: 0.05em;
+}
+
+body.art-mode .hero-image-container {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    box-shadow: 10px 10px 0px rgba(0, 0, 0, 0.1);
+    transition: all 1s ease;
+}
+
+body.art-mode .project-item {
+    border-bottom: 2px dashed var(--text-secondary);
+    transform: rotate(-1deg);
+}
+
+body.art-mode .project-item:nth-child(even) {
+    transform: rotate(1deg);
+}
+
+body.art-mode .submit-btn {
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+    box-shadow: 5px 5px 0px var(--text-color);
+    transform: rotate(-2deg);
+}
+
+/* Transitions */
+.whimsical-transition {
+    animation: whimsicalEnter 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+    opacity: 0;
+}
+
+.rigid-transition {
+    animation: rigidEnter 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    opacity: 0;
+}
+
+@keyframes whimsicalEnter {
+    0% {
+        opacity: 0;
+        transform: scale(0.8) rotate(-5deg) translateY(50px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg) translateY(0);
+    }
+}
+
+@keyframes rigidEnter {
+    0% {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Staggered Delays for Children */
+.art-mode section,
+.art-mode .navbar {
+    transition: background-color 1s ease, color 1s ease;
 }
 
 .sign-box {
