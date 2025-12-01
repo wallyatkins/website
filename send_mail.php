@@ -1,9 +1,14 @@
 <?php
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require 'vendor/autoload.php';
+
 header('Content-Type: application/json');
 
-// Configuration
-$to_email = 'wallyatkins@gmail.com'; // Replace with your actual email
-$subject_prefix = '[Personal Website Message] ';
+// Load .env variables
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->safeLoad();
 
 // 1. Check Request Method
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
@@ -14,23 +19,18 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 
 // 2. Security: Honeypot (Should be empty)
 if (!empty($_POST['website_url'])) {
-    // Silent failure for bots
     echo json_encode(["status" => "success", "message" => "Message sent successfully."]);
     exit;
 }
 
-// 3. Security: Time Trap (Check submission speed)
+// 3. Security: Time Trap
 $timestamp = isset($_POST['form_timestamp']) ? intval($_POST['form_timestamp']) : 0;
-$current_time = time();
-$min_seconds = 3;
-
-if (($current_time - $timestamp) < $min_seconds) {
-    // Too fast, likely a bot
+if ((time() - $timestamp) < 3) {
     echo json_encode(["status" => "error", "message" => "Submission too fast. Are you human?"]);
     exit;
 }
 
-// 4. Input Sanitization & Validation
+// 4. Input Sanitization
 $name = filter_var(trim($_POST["name"]), FILTER_SANITIZE_STRING);
 $email = filter_var(trim($_POST["email"]), FILTER_SANITIZE_EMAIL);
 $message = filter_var(trim($_POST["message"]), FILTER_SANITIZE_STRING);
@@ -41,31 +41,35 @@ if (empty($name) || empty($message) || !filter_var($email, FILTER_VALIDATE_EMAIL
     exit;
 }
 
-// 5. Construct Email
-$subject = $subject_prefix . $name;
+// 5. Send Email via PHPMailer
+$mail = new PHPMailer(true);
 
-// Body includes sender info for clarity
-$email_content = "You have received a new message from your website contact form.\n\n";
-$email_content .= "Name: $name\n";
-$email_content .= "Email: $email\n\n";
-$email_content .= "Message:\n$message\n";
+try {
+    // Server settings
+    $mail->isSMTP();
+    $mail->Host       = $_ENV['SMTP_HOST'];
+    $mail->SMTPAuth   = true;
+    $mail->Username   = $_ENV['SMTP_USER'];
+    $mail->Password   = $_ENV['SMTP_PASS'];
+    $mail->SMTPSecure = $_ENV['SMTP_SECURE']; // 'ssl' or 'tls'
+    $mail->Port       = $_ENV['SMTP_PORT'];
 
-// Headers for Bluehost/General Compatibility
-$from_email = 'assistant@wallyatkins.com'; // Must be a domain email
-$headers = "Return-Path: $from_email\r\n";
-$headers .= "From: Website Contact Form <$from_email>\r\n";
-$headers .= "Reply-To: $name <$email>\r\n";
-$headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
-$headers .= "MIME-Version: 1.0\r\n";
-$headers .= "Content-Transfer-Encoding: 8bit\r\n";
-$headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
-$params = '-f ' . $from_email;
+    // Recipients
+    $mail->setFrom($_ENV['FROM_EMAIL'], $_ENV['FROM_NAME']);
+    $mail->addAddress($_ENV['TO_EMAIL']);
+    $mail->addReplyTo($email, $name);
 
-// 6. Send Email
-if (mail($to_email, $subject, $email_content, $headers, $params)) {
+    // Content
+    $mail->isHTML(false);
+    $mail->Subject = "[Website Message] " . $name;
+    $mail->Body    = "Name: $name\nEmail: $email\n\nMessage:\n$message";
+
+    $mail->send();
     echo json_encode(["status" => "success", "message" => "Message sent successfully!"]);
-} else {
+} catch (Exception $e) {
     http_response_code(500);
+    // Log error internally, don't expose to user
+    error_log("Mailer Error: {$mail->ErrorInfo}");
     echo json_encode(["status" => "error", "message" => "Failed to send message. Please try again later."]);
 }
 ?>
