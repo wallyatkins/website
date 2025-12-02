@@ -161,87 +161,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Set Time Trap Timestamp
-    const timestampField = document.getElementById('form_timestamp');
-    if (timestampField) {
-        timestampField.value = Math.floor(Date.now() / 1000);
-    }
 
-    // Contact Form Handling
-    const contactForm = document.getElementById('contact-form');
-    const formStatus = document.getElementById('form-status');
 
-    if (contactForm) {
-        contactForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = contactForm.querySelector('.submit-btn');
-            const originalText = btn.textContent;
-
-            btn.disabled = true;
-            btn.textContent = 'Sending...';
-            formStatus.textContent = '';
-            formStatus.className = 'form-status';
-
-            const formData = new FormData(contactForm);
-
-            try {
-                const response = await fetch('send_mail.php', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const result = await response.json();
-
-                if (response.ok && result.status === 'success') {
-                    // Animation Sequence
-                    contactForm.classList.add('hidden'); // Hide form
-                    const envelopeContainer = document.getElementById('envelope-container');
-                    const envelope = envelopeContainer.querySelector('.envelope');
-                    const waxSeal = envelopeContainer.querySelector('.wax-seal');
-
-                    envelopeContainer.classList.remove('hidden');
-                    envelopeContainer.classList.add('active');
-
-                    // 1. Close Flap
-                    setTimeout(() => {
-                        envelope.classList.add('closed');
-
-                        // 2. Stamp Seal
-                        setTimeout(() => {
-                            waxSeal.classList.add('animate-seal');
-
-                            // 3. Slide Out
-                            setTimeout(() => {
-                                envelopeContainer.classList.add('animate-slide-out');
-
-                                // 4. Reset & Show Success Message
-                                setTimeout(() => {
-                                    envelopeContainer.classList.remove('active', 'animate-slide-out', 'hidden'); // Reset container
-                                    envelopeContainer.classList.add('hidden'); // Hide again
-                                    envelope.classList.remove('closed'); // Reset flap
-                                    waxSeal.classList.remove('animate-seal'); // Reset seal
-
-                                    contactForm.classList.remove('hidden'); // Show form again
-                                    contactForm.reset();
-                                    formStatus.textContent = "Message Sent! ✉️";
-                                    formStatus.className = 'form-status success';
-                                }, 1000); // Wait for slide out
-                            }, 1000); // Wait for seal
-                        }, 600); // Wait for flap
-                    }, 100); // Small delay start
-
-                } else {
-                    throw new Error(result.message || 'Something went wrong');
-                }
-            } catch (error) {
-                formStatus.textContent = error.message;
-                formStatus.classList.add('error');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = originalText;
-            }
-        });
-    }
 
     // 2. Logic & Art Easter Egg (Whimsical Double Click)
     const themeTrigger = document.getElementById('theme-trigger');

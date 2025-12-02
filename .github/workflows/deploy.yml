@@ -36,5 +36,6 @@ jobs:
             **/.github/**
             **/node_modules/**
             **/.env
+            **/legacy/**
             **/.ftp-deploy-sync-state.json
           log-level: verbose # Optional: Increase logging for debugging
