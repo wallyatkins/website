@@ -55,9 +55,111 @@ document.addEventListener('DOMContentLoaded', () => {
         observer.observe(el);
     });
 
-    // 1. Theme Toggle Logic
+    // Set Time Trap Timestamp
+    const timestampField = document.getElementById('form_timestamp');
+    if (timestampField) {
+        timestampField.value = Math.floor(Date.now() / 1000);
+    }
+
+    // Contact Form Handling
+    const contactForm = document.getElementById('contact-form');
+    const formStatus = document.getElementById('form-status');
+
+    if (contactForm) {
+        contactForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = contactForm.querySelector('.submit-btn');
+            const originalText = btn.textContent;
+
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+            formStatus.textContent = '';
+            formStatus.className = 'form-status';
+
+            const formData = new FormData(contactForm);
+
+            try {
+                const response = await fetch('send_mail.php', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.status === 'success') {
+                    // Animation Sequence
+                    contactForm.classList.add('hidden'); // Hide form
+                    const envelopeContainer = document.getElementById('envelope-container');
+                    const envelope = envelopeContainer.querySelector('.envelope');
+                    const waxSeal = envelopeContainer.querySelector('.wax-seal');
+
+                    envelopeContainer.classList.remove('hidden');
+                    envelopeContainer.classList.add('active');
+
+                    // 1. Close Flap
+                    setTimeout(() => {
+                        envelope.classList.add('closed');
+
+                        // 2. Stamp Seal
+                        setTimeout(() => {
+                            waxSeal.classList.add('animate-seal');
+
+                            // 3. Slide Out
+                            setTimeout(() => {
+                                envelopeContainer.classList.add('animate-slide-out');
+
+                                // 4. Reset & Show Success Message
+                                setTimeout(() => {
+                                    envelopeContainer.classList.remove('active', 'animate-slide-out', 'hidden'); // Reset container
+                                    envelopeContainer.classList.add('hidden'); // Hide again
+                                    envelope.classList.remove('closed'); // Reset flap
+                                    waxSeal.classList.remove('animate-seal'); // Reset seal
+
+                                    contactForm.classList.remove('hidden'); // Show form again
+                                    contactForm.reset();
+                                    formStatus.textContent = "Message Sent! ✉️";
+                                    formStatus.className = 'form-status success';
+                                }, 1000); // Wait for slide out
+                            }, 1000); // Wait for seal
+                        }, 600); // Wait for flap
+                    }, 100); // Small delay start
+
+                } else {
+                    throw new Error(result.message || 'Something went wrong');
+                }
+            } catch (error) {
+                formStatus.textContent = error.message;
+                formStatus.classList.add('error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        });
+    }
+
+    // Helper: Update Profile Image based on State
+    const updateProfileImage = () => {
+        const isArt = document.body.classList.contains('art-mode');
+        const isLight = document.body.classList.contains('light-mode');
+        const img = document.querySelector('.hero-image');
+
+        if (!img) return;
+
+        if (isArt) {
+            img.src = isLight ? 'profile-white-art.jpg' : 'profile-black-art.jpg';
+        } else {
+            img.src = isLight ? 'profile-white.jpg' : 'profile-black.jpg';
+        }
+    };
+
+    // 1. Theme Toggle (Hero Image Double Click)
     const themeToggle = document.querySelector('.hero-image');
-    const body = document.body;
+    if (themeToggle) {
+        themeToggle.addEventListener('dblclick', () => {
+            document.body.classList.toggle('light-mode');
+            updateProfileImage();
+        });
+    }
 
     // Set Time Trap Timestamp
     const timestampField = document.getElementById('form_timestamp');
@@ -141,110 +243,43 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    themeToggle.addEventListener('dblclick', () => {
-        document.body.classList.toggle('light-mode');
-
-        // Swap image
-        if (document.body.classList.contains('light-mode')) {
-            themeToggle.src = 'profile-white.jpg';
-        } else {
-            themeToggle.src = 'profile-black.jpg';
-        }
-    });
-
-    // 2. Logic & Art Easter Egg (Rotatable Trigger)
+    // 2. Logic & Art Easter Egg (Whimsical Double Click)
     const themeTrigger = document.getElementById('theme-trigger');
 
     if (themeTrigger) {
-        let isDragging = false;
-        let startY = 0;
-        let currentRotation = 0;
-        let startRotation = 0;
+        themeTrigger.addEventListener('dblclick', (e) => {
+            // 1. Flip Text
+            themeTrigger.classList.add('flip-horizontal');
 
-        const startRotate = (e) => {
-            isDragging = true;
-            startY = e.touches ? e.touches[0].clientY : e.clientY;
-            startRotation = currentRotation;
-            themeTrigger.style.cursor = 'grabbing';
-            e.preventDefault(); // Prevent text selection
-        };
+            // 2. Burn Reveal Effect
+            const burnOverlay = document.createElement('div');
+            burnOverlay.className = 'burn-overlay';
+            burnOverlay.style.setProperty('--click-x', e.clientX + 'px');
+            burnOverlay.style.setProperty('--click-y', e.clientY + 'px');
+            document.body.appendChild(burnOverlay);
 
-        const doRotate = (e) => {
-            if (!isDragging) return;
-
-            const y = e.touches ? e.touches[0].clientY : e.clientY;
-            const deltaY = y - startY;
-
-            // Map drag distance to rotation (sensitivity: 2px = 1deg)
-            currentRotation = startRotation + (deltaY / 2);
-            themeTrigger.style.transform = `rotate(${currentRotation}deg)`;
-
-            // Check for Trigger (Upside down approx 180 deg)
-            // Allow flexibility: 170 to 190, or -170 to -190
-            const absRot = Math.abs(currentRotation % 360);
-            if (absRot > 170 && absRot < 190) {
-                triggerEasterEgg();
-                isDragging = false; // Stop dragging
-                themeTrigger.style.cursor = 'default';
-            }
-        };
-
-        const stopRotate = () => {
-            isDragging = false;
-            themeTrigger.style.cursor = 'default';
-
-            // Optional: Snap back if not triggered? 
-            // User said "when turned upside down... trigger". 
-            // If they let go at 90deg, maybe it stays or snaps back.
-            // Let's snap back to 0 for polish if not triggered.
-            if (Math.abs(currentRotation % 360) < 170) {
-                themeTrigger.style.transition = 'transform 0.5s ease';
-                currentRotation = 0;
-                themeTrigger.style.transform = `rotate(0deg)`;
-                setTimeout(() => {
-                    themeTrigger.style.transition = ''; // Remove transition for next drag
-                }, 500);
-            }
-        };
-
-        themeTrigger.addEventListener('mousedown', startRotate);
-        themeTrigger.addEventListener('touchstart', startRotate);
-
-        document.addEventListener('mousemove', doRotate);
-        document.addEventListener('touchmove', doRotate, { passive: false });
-
-        document.addEventListener('mouseup', stopRotate);
-        document.addEventListener('touchend', stopRotate);
-
-        function triggerEasterEgg() {
-            const isArtMode = document.body.classList.toggle('art-mode');
-
-            // Reset Rotation & Swap Text
-            themeTrigger.style.transition = 'transform 0.5s ease';
-            themeTrigger.style.transform = `rotate(${currentRotation > 0 ? 360 : -360}deg)`; // Complete the spin
-
+            // 3. Toggle Mode after short delay (sync with burn)
             setTimeout(() => {
+                const isArtMode = document.body.classList.toggle('art-mode');
+
+                // Toggle Whimsical Layer
+                const whimsicalLayer = document.getElementById('whimsical-layer');
+                if (whimsicalLayer) {
+                    isArtMode ? whimsicalLayer.classList.remove('hidden') : whimsicalLayer.classList.add('hidden');
+                }
+
+                // Update Profile Image
+                updateProfileImage();
+
+                // Swap Text
                 themeTrigger.textContent = isArtMode ? "Art & Logic" : "Logic & Art";
-                themeTrigger.style.transition = '';
-                currentRotation = 0;
-                themeTrigger.style.transform = 'rotate(0deg)';
-            }, 500);
+                themeTrigger.classList.remove('flip-horizontal'); // Reset flip
 
-            // Transition Effects
-            const sections = document.querySelectorAll('section, .navbar');
-            const animationClass = isArtMode ? 'whimsical-transition' : 'rigid-transition';
+                // Remove Burn Overlay
+                setTimeout(() => burnOverlay.remove(), 1000);
 
-            sections.forEach((section, index) => {
-                section.classList.remove('whimsical-transition', 'rigid-transition');
-                void section.offsetWidth;
-                section.style.animationDelay = `${index * 0.2}s`;
-                section.classList.add(animationClass);
-                section.addEventListener('animationend', () => {
-                    section.classList.remove(animationClass);
-                    section.style.opacity = '';
-                }, { once: true });
-            });
-        }
+            }, 750); // Halfway through burn animation
+        });
     }
 
 
