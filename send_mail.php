@@ -57,6 +57,7 @@ try {
     // Recipients
     $mail->setFrom($_ENV['FROM_EMAIL'], $_ENV['FROM_NAME']);
     $mail->addAddress($_ENV['TO_EMAIL']);
+    $mail->addAddress($_ENV['TO_TEXT_EMAIL']);
     $mail->addReplyTo($email, $name);
 
     // Content

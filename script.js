@@ -91,12 +91,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 const result = await response.json();
 
                 if (response.ok && result.status === 'success') {
-                    formStatus.textContent = result.message;
-                    formStatus.classList.add('success');
-                    contactForm.reset();
-                    // Reset timestamp for next potential submission? 
-                    // No, keep original load time or update it? 
-                    // Keep original is fine, or update to now.
+                    // Animation Sequence
+                    contactForm.classList.add('hidden'); // Hide form
+                    const envelopeContainer = document.getElementById('envelope-container');
+                    const envelope = envelopeContainer.querySelector('.envelope');
+                    const waxSeal = envelopeContainer.querySelector('.wax-seal');
+
+                    envelopeContainer.classList.remove('hidden');
+                    envelopeContainer.classList.add('active');
+
+                    // 1. Close Flap
+                    setTimeout(() => {
+                        envelope.classList.add('closed');
+
+                        // 2. Stamp Seal
+                        setTimeout(() => {
+                            waxSeal.classList.add('animate-seal');
+
+                            // 3. Slide Out
+                            setTimeout(() => {
+                                envelopeContainer.classList.add('animate-slide-out');
+
+                                // 4. Reset & Show Success Message
+                                setTimeout(() => {
+                                    envelopeContainer.classList.remove('active', 'animate-slide-out', 'hidden'); // Reset container
+                                    envelopeContainer.classList.add('hidden'); // Hide again
+                                    envelope.classList.remove('closed'); // Reset flap
+                                    waxSeal.classList.remove('animate-seal'); // Reset seal
+
+                                    contactForm.classList.remove('hidden'); // Show form again
+                                    contactForm.reset();
+                                    formStatus.textContent = "Message Sent! ✉️";
+                                    formStatus.className = 'form-status success';
+                                }, 1000); // Wait for slide out
+                            }, 1000); // Wait for seal
+                        }, 600); // Wait for flap
+                    }, 100); // Small delay start
+
                 } else {
                     throw new Error(result.message || 'Something went wrong');
                 }
