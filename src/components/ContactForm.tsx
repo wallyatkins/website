@@ -7,6 +7,7 @@ export const ContactForm: React.FC = () => {
     const [isSending, setIsSending] = useState(false);
     const [showEnvelope, setShowEnvelope] = useState(false);
     const [envelopeState, setEnvelopeState] = useState(''); // closed, animate-slide-out
+    const formLoadTime = React.useRef(Math.floor(Date.now() / 1000).toString());
 
     const onSubmit = async (data: any) => {
         setIsSending(true);
@@ -14,7 +15,7 @@ export const ContactForm: React.FC = () => {
 
         const formData = new FormData();
         Object.keys(data).forEach(key => formData.append(key, data[key]));
-        formData.append('form_timestamp', Math.floor(Date.now() / 1000).toString());
+        formData.append('form_timestamp', formLoadTime.current);
 
         try {
             const response = await fetch('send_mail.php', {

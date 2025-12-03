@@ -49,7 +49,6 @@ export const Projects: React.FC = () => {
                         <h3
                             className="project-name"
                             onMouseMove={handleRub}
-                            style={{ cursor: 'grab' }}
                         >
                             Zoltar
                         </h3>

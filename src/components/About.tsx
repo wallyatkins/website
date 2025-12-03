@@ -30,7 +30,7 @@ export const About: React.FC<AboutProps> = ({ isArtMode, toggleArtMode }) => {
                         <p>
                             <span
                                 id="theme-trigger"
-                                style={{ display: 'inline-block', userSelect: 'none', cursor: 'pointer' }}
+                                style={{ display: 'inline-block', userSelect: 'none' }}
                                 onDoubleClick={toggleArtMode}
                                 className={isArtMode ? 'flip-horizontal' : ''}
                             >

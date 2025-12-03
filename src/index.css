@@ -991,3 +991,117 @@ section {
         transform: translateY(0);
     }
 }
+/* Art Mode - The Big Shift */
+body.art-mode {
+    --bg-color: #2a0a2a;
+    --text-color: #ffe6f2;
+    --text-secondary: #ffb3d9;
+    --accent-color: #ff00cc;
+    --cta-bg: #4a0e4a;
+    --font-main: 'Indie Flower', cursive;
+}
+
+body.art-mode h1, 
+body.art-mode h2, 
+body.art-mode h3 {
+    font-family: 'Bangers', cursive;
+    letter-spacing: 0.1em;
+    color: #ffcc00;
+    text-shadow: 2px 2px 0px #ff00cc;
+}
+
+body.art-mode .hero-title {
+    font-family: 'Creepster', cursive;
+    color: #00ffcc;
+    text-shadow: 4px 4px 0px #ff00cc;
+    transform: rotate(-2deg);
+}
+
+body.art-mode .hero-subtitle {
+    font-family: 'Pacifico', cursive;
+    font-size: 2rem;
+    color: #ff99cc;
+}
+
+body.art-mode .project-name {
+    font-family: 'Ruslan Display', cursive;
+}
+
+body.art-mode .navbar {
+    background: rgba(42, 10, 42, 0.9);
+    border-bottom: 2px dashed #ff00cc;
+}
+
+body.art-mode .submit-btn {
+    background: #ff00cc;
+    color: #fff;
+    font-family: 'Bangers', cursive;
+    font-size: 1.5rem;
+    border-radius: 20px;
+    transform: rotate(2deg);
+}
+
+body.art-mode .submit-btn:hover {
+    transform: rotate(-2deg) scale(1.1);
+    background: #00ffcc;
+    color: #2a0a2a;
+}
+
+/* Whimsical Layer Animations */
+#whimsical-layer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 50;
+    overflow: hidden;
+}
+
+.floating-item {
+    position: absolute;
+    font-size: 3rem;
+    opacity: 0.6;
+    animation: floatAround 10s infinite linear;
+}
+
+.unicorn { top: 20%; left: -10%; animation-duration: 15s; }
+.unicorn-2 { bottom: 30%; right: -10%; animation-duration: 12s; animation-direction: reverse; }
+.rainbow { top: 10%; right: 20%; animation: pulse 3s infinite ease-in-out; }
+.star { top: 50%; left: 50%; animation: twinkle 2s infinite alternate; }
+
+@keyframes floatAround {
+    0% { transform: translateX(0) translateY(0) rotate(0deg); }
+    100% { transform: translateX(120vw) translateY(50px) rotate(360deg); }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.5; }
+}
+
+@keyframes twinkle {
+    0% { opacity: 0.3; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1.2) rotate(45deg); }
+}
+
+/* Burn Effect */
+.burn-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle at var(--click-x) var(--click-y), transparent 0%, #000 0%);
+    z-index: 9999;
+    pointer-events: none;
+    animation: burnOut 1s forwards;
+}
+
+@keyframes burnOut {
+    0% { background: radial-gradient(circle at var(--click-x) var(--click-y), transparent 0%, #000 0%); }
+    50% { background: radial-gradient(circle at var(--click-x) var(--click-y), transparent 150%, #000 150%); }
+    100% { background: radial-gradient(circle at var(--click-x) var(--click-y), transparent 300%, transparent 300%); opacity: 0; }
+}
