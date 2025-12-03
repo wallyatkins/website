@@ -14,13 +14,32 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Node Dependencies
+        run: npm ci
+
+      - name: Build Frontend
+        run: npm run build
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
 
-      - name: Install Dependencies
+      - name: Install PHP Dependencies
         run: composer install --no-dev --optimize-autoloader
+
+      - name: Prepare Deployment Package
+        run: |
+          cp send_mail.php dist/
+          cp -r vendor dist/
+
       - name: Deploy to Bluehost via FTP/SFTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.0
         with:
@@ -29,13 +48,6 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           port: 21
           protocol: ftp
-          local-dir: ./
+          local-dir: ./dist/
           state-name: .ftp-deploy-sync-state.json
-          exclude: |
-            **/.git/**
-            **/.github/**
-            **/node_modules/**
-            **/.env
-            **/legacy/**
-            **/.ftp-deploy-sync-state.json
-          log-level: verbose # Optional: Increase logging for debugging
+          log-level: verbose
