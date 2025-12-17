@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { ChatInterface } from './ChatInterface';
 
 export const ContactForm: React.FC = () => {
     const { register, handleSubmit, reset } = useForm();
@@ -8,6 +9,9 @@ export const ContactForm: React.FC = () => {
     const [showEnvelope, setShowEnvelope] = useState(false);
     const [envelopeState, setEnvelopeState] = useState(''); // closed, animate-slide-out
     const formLoadTime = React.useRef(Math.floor(Date.now() / 1000).toString());
+
+    // Chat State
+    const [activeChat, setActiveChat] = useState<{ chatId: string, token: string } | null>(null);
 
     const onSubmit = async (data: any) => {
         setIsSending(true);
@@ -23,6 +27,15 @@ export const ContactForm: React.FC = () => {
                 body: formData
             });
             const result = await response.json();
+
+            // Check for Chat Start
+            if (response.ok && result.status === 'chat_start') {
+                setActiveChat({
+                    chatId: result.chat_id,
+                    token: result.user_token
+                });
+                return; // Stop normal envelope animation
+            }
 
             if (response.ok && result.status === 'success') {
                 setShowEnvelope(true);
@@ -53,6 +66,17 @@ export const ContactForm: React.FC = () => {
             setIsSending(false);
         }
     };
+
+    if (activeChat) {
+        return (
+            <section id="contact" className="content-section">
+                <h2 className="section-title">Live Chat</h2>
+                <div className="contact-container" style={{ minHeight: '500px' }}>
+                    <ChatInterface chatId={activeChat.chatId} token={activeChat.token} onClose={() => setActiveChat(null)} />
+                </div>
+            </section>
+        );
+    }
 
     return (
         <section id="contact" className="content-section">

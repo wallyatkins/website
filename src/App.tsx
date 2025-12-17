@@ -9,10 +9,24 @@ import { WhimsicalLayer } from './components/WhimsicalLayer';
 import { EasterEggProvider } from './context/EasterEggContext';
 import { Zoltar } from './components/easter-eggs/Zoltar';
 import { CTA } from './components/CTA';
+import { ChatInterface } from './components/ChatInterface';
 
 function App() {
   const [isLightMode, setIsLightMode] = useState(false);
   const [isArtMode, setIsArtMode] = useState(false);
+
+  // Easter Egg: Chat Mode Check
+  const params = new URLSearchParams(window.location.search);
+  const chatId = params.get('chat_id');
+  const token = params.get('token');
+
+  if (chatId && token) {
+    return (
+      <div className="chat-fullscreen-wrapper">
+        <ChatInterface chatId={chatId} token={token} />
+      </div>
+    );
+  }
 
   const toggleTheme = () => {
     setIsLightMode(!isLightMode);
