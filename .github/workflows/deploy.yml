@@ -39,6 +39,7 @@ jobs:
         run: |
           cp pine.php dist/
           cp irc.php dist/
+          cp utils.php dist/
           cp -r vendor dist/
 
       - name: Deploy to Bluehost via FTP/SFTP

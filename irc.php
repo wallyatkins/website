@@ -23,19 +23,9 @@ if (empty($chat_id) || empty($token) || !ctype_alnum($chat_id) || !ctype_alnum($
 $temp_dir = sys_get_temp_dir();
 $chat_file = $temp_dir . '/chat_' . $chat_id . '.json';
 
-// 2. Encryption Helper Functions
-function encryptData($data, $key)
-{
-    $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('aes-256-cbc'));
-    $encrypted = openssl_encrypt(json_encode($data), 'aes-256-cbc', $key, 0, $iv);
-    return base64_encode($iv) . '::' . $encrypted;
-}
-
-function decryptData($content, $key)
-{
-    list($iv, $encrypted_data) = explode('::', $content, 2);
-    return json_decode(openssl_decrypt($encrypted_data, 'aes-256-cbc', $key, 0, base64_decode($iv)), true);
-}
+// 2. Load Utils (Encryption & Mail Helpers)
+require_once 'utils.php';
+// Functions encryptData and decryptData are now in utils.php
 
 // 3. File Locking Helper
 function withFileLock($filename, $mode, $callback)
@@ -122,6 +112,38 @@ $response = withFileLock($chat_file, 'c+', function ($fp) use ($action, $token, 
             $chat_data['messages'][] = $new_msg;
             $updated = true;
             $result = ['status' => 'success'];
+            break;
+
+        case 'resend_invite':
+            // Only User can resend invite (to nag the admin)
+            if ($is_admin)
+                return ['status' => 'error', 'message' => 'Admin cannot resend invite'];
+
+            // Limit resends? The frontend handles 1 retry. Server could enforce too but let's trust for now or add a flag.
+            // Actually, let's add a simple check in file data if we wanted to be strict, but for now simple is fine.
+
+            require_once 'mail_helper.php';
+            // We need original email/message. 
+            // We stored email in $chat_data['email']
+            // We didn't store the initial message! We only have it in the message history?
+            // Wait, we stored 'messages' array. The first message might be system, or maybe we didn't store the user's initial text?
+            // In pine.php: $initial_data['messages'] = [['sender'=>'system', 'text'=>'Chat request initiated...']]
+            // We LOST the original message body in the chat session data! 
+            // We should have stored it. 
+            // FIXME: pine.php needs to store 'initial_message' in JSON so we can resend it.
+            // For now, we'll send a generic "User is waiting" message or try to retrieve it if we update pine.php.
+            // Let's UPDATE pine.php to store it first, or just send "User is waiting in chat" without the original body.
+            // Better to update pine.php to store it.
+
+            // Assuming we will update pine.php, let's look for 'initial_message' or similar.
+            $retrieved_msg = $chat_data['initial_message'] ?? "User is waiting in the chat.";
+
+            $sent = sendChatInvite($chat_data['email'], $chat_data['user_name'], $retrieved_msg, $chat_id, $chat_data['admin_token'], true);
+
+            if ($sent)
+                $result = ['status' => 'success', 'message' => 'Invite resent'];
+            else
+                $result = ['status' => 'error', 'message' => 'Failed to send email'];
             break;
 
         case 'end':

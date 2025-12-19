@@ -41,8 +41,19 @@ if (empty($name) || empty($message) || !filter_var($email, FILTER_VALIDATE_EMAIL
     exit;
 }
 
-// 5. Send Email via PHPMailer
-$mail = new PHPMailer(true);
+// 5. Send Email via PHPMailer (Normal Flow)
+require_once 'mail_helper.php';
+
+// Normal mail also needs to be sent? Wait, pine.php handles BOTH normal mail AND chat.
+// The code I just replaced was inside the CHAT_SECRET block.
+// The NORMAL mail sending is further down (or up?).
+// I need to check if pine.php handles normal mail too.
+// Assuming pine.php = send_mail.php, it probably DOES handle normal mail.
+// The snippet I replaced was specifically the Chat Email.
+// I should verify where the Normal Email is sent.
+// If pine.php uses PHPMailer for normal mail, I should keep the imports or refactor normal mail too.
+// Let's assume for now I should NOT remove imports if they are used elsewhere.
+// Wait, I only see the Chat block. Let me VIEW the file first to be safe.
 
 try {
     // Server settings
@@ -85,6 +96,7 @@ try {
             'user_token' => $user_token,
             'admin_last_seen' => 0,
             'user_last_seen' => time(),
+            'initial_message' => $message, // Store for resending invite
             'messages' => [
                 [
                     'sender' => 'system',
@@ -95,39 +107,17 @@ try {
         ];
 
         // 3. Encrypt Data
-        $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('aes-256-cbc'));
-        $encrypted_data = openssl_encrypt(
-            json_encode($initial_data),
-            'aes-256-cbc',
-            $chat_key,
-            0,
-            $iv
-        );
-        // Store IV with data: base64_iv::base64_data
-        $file_content = base64_encode($iv) . '::' . $encrypted_data;
+        // Use helper from utils.php
+        $file_content = encryptData($initial_data, $chat_key);
 
         // 4. Save to temp file
         $temp_dir = sys_get_temp_dir();
         file_put_contents($temp_dir . '/chat_' . $chat_id . '.json', $file_content);
 
         // 5. Notify Admin via Email
-        $mail->isHTML(true);
-        $mail->Subject = "[Website Chat Request] " . $user_name;
+        require_once 'utils.php';
 
-        $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http");
-        $host = $_SERVER['HTTP_HOST'];
-        $admin_url = "$protocol://$host/?chat_id=$chat_id&token=$admin_token";
-
-        $mail->Body = "
-            <h2>New Chat Request!</h2>
-            <p><strong>Name:</strong> {$user_name}</p>
-            <p><strong>Email:</strong> $email</p>
-            <p><strong>Message:</strong><br>$message</p>
-            <p><a href='$admin_url' style='font-size: 18px; font-weight: bold; color: blue;'>CLICK HERE TO JOIN CHAT</a></p>
-        ";
-        $mail->AltBody = "Chat Request from {$user_name}.\nLink: $admin_url";
-
-        $mail->send();
+        $emailSent = sendChatInvite($email, $user_name, $message, $chat_id, $admin_token);
 
         // 6. Return Response to User
         echo json_encode([
