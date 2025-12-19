@@ -9,6 +9,7 @@ $message = $_POST['message'] ?? '';
 
 // Load .env variables (assuming standard autoload if needed, or manual parsing if simple)
 // .env loaded by utils.php
+require_once 'utils.php';
 
 $chat_key = getEnvVar('CHAT_KEY', 'default_insecure_key_please_change');
 
@@ -22,8 +23,7 @@ $temp_dir = sys_get_temp_dir();
 $chat_file = $temp_dir . '/chat_' . $chat_id . '.json';
 
 // 2. Load Utils (Encryption & Mail Helpers)
-require_once 'utils.php';
-// Functions encryptData and decryptData are now in utils.php
+// utils.php loaded at top
 
 // 3. File Locking Helper
 function withFileLock($filename, $mode, $callback)
