@@ -5,8 +5,30 @@ use PHPMailer\PHPMailer\Exception;
 require 'vendor/autoload.php';
 
 // Load .env variables globally
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv->safeLoad();
+// Load .env variables globally
+try {
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+    $dotenv->safeLoad();
+} catch (Exception $e) {
+    error_log("Dotenv Load Failed: " . $e->getMessage());
+}
+
+// Helper to get ENV safely
+function getEnvVar($key, $default = null)
+{
+    if (isset($_ENV[$key]))
+        return $_ENV[$key];
+    if (isset($_SERVER[$key]))
+        return $_SERVER[$key];
+    $val = getenv($key);
+    if ($val !== false)
+        return $val;
+    return $default;
+}
+
+// DEBUG: Log Chat Key Hash to verify consistency across scripts
+$k = getEnvVar('CHAT_KEY', '');
+error_log("Utils loaded. Script: " . $_SERVER['SCRIPT_NAME'] . " | KeyHash: " . md5($k));
 
 // --- ENCRYPTION HELPERS ---
 

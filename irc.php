@@ -10,7 +10,7 @@ $message = $_POST['message'] ?? '';
 // Load .env variables (assuming standard autoload if needed, or manual parsing if simple)
 // .env loaded by utils.php
 
-$chat_key = $_ENV['CHAT_KEY'] ?? 'default_insecure_key_please_change';
+$chat_key = getEnvVar('CHAT_KEY', 'default_insecure_key_please_change');
 
 if (empty($chat_id) || empty($token) || !ctype_alnum($chat_id) || !ctype_alnum($token)) {
     http_response_code(400);
