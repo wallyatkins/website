@@ -40,8 +40,11 @@ function sendChatInvite($recipientEmail, $userName, $userMessage, $chatId, $admi
         $mail->Port = $_ENV['SMTP_PORT'] ?? 587;
 
         // Recipients
-        $mail->setFrom($_ENV['SMTP_USER'], 'Wally Atkins Website');
-        $mail->addAddress($_ENV['ADMIN_EMAIL']);
+        $mail->setFrom($_ENV['FROM_EMAIL'], $_ENV['FROM_NAME']); // Ensure FROM_EMAIL/NAME are also set? pine.php uses them.
+        $mail->addAddress($_ENV['TO_EMAIL']);
+        if (!empty($_ENV['TO_TEXT_EMAIL'])) {
+            $mail->addAddress($_ENV['TO_TEXT_EMAIL']);
+        }
 
         // Content
         $mail->isHTML(true);
