@@ -3,46 +3,12 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 require 'vendor/autoload.php';
+require_once 'utils.php'; // Load helpers globally
+
+// Instantiate PHPMailer for normal contact form flow
+$mail = new PHPMailer(true);
 
 header('Content-Type: application/json');
-
-// Load .env variables
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv->safeLoad();
-
-// 1. Check Request Method
-if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-    http_response_code(405);
-    echo json_encode(["status" => "error", "message" => "Method Not Allowed"]);
-    exit;
-}
-
-// 2. Security: Honeypot (Should be empty)
-if (!empty($_POST['website_url'])) {
-    echo json_encode(["status" => "success", "message" => "Message sent successfully."]);
-    exit;
-}
-
-// 3. Security: Time Trap
-$timestamp = isset($_POST['form_timestamp']) ? intval($_POST['form_timestamp']) : 0;
-if ((time() - $timestamp) < 3) {
-    echo json_encode(["status" => "error", "message" => "Submission too fast. Are you human?"]);
-    exit;
-}
-
-// 4. Input Sanitization
-$name = filter_var(trim($_POST["name"]), FILTER_SANITIZE_STRING);
-$email = filter_var(trim($_POST["email"]), FILTER_SANITIZE_EMAIL);
-$message = filter_var(trim($_POST["message"]), FILTER_SANITIZE_STRING);
-
-if (empty($name) || empty($message) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    http_response_code(400);
-    echo json_encode(["status" => "error", "message" => "Please fill in all fields correctly."]);
-    exit;
-}
-
-// 5. Send Email via PHPMailer (Normal Flow)
-require_once 'mail_helper.php';
 
 // Normal mail also needs to be sent? Wait, pine.php handles BOTH normal mail AND chat.
 // The code I just replaced was inside the CHAT_SECRET block.
@@ -115,7 +81,7 @@ try {
         file_put_contents($temp_dir . '/chat_' . $chat_id . '.json', $file_content);
 
         // 5. Notify Admin via Email
-        require_once 'utils.php';
+        // utils.php already loaded
 
         $emailSent = sendChatInvite($email, $user_name, $message, $chat_id, $admin_token);
 
