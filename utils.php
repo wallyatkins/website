@@ -4,6 +4,10 @@ use PHPMailer\PHPMailer\Exception;
 
 require 'vendor/autoload.php';
 
+// Load .env variables globally
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->safeLoad();
+
 // --- ENCRYPTION HELPERS ---
 
 function encryptData($data, $key)

@@ -8,9 +8,7 @@ $token = $_GET['token'] ?? '';
 $message = $_POST['message'] ?? '';
 
 // Load .env variables (assuming standard autoload if needed, or manual parsing if simple)
-require 'vendor/autoload.php';
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv->safeLoad();
+// .env loaded by utils.php
 
 $chat_key = $_ENV['CHAT_KEY'] ?? 'default_insecure_key_please_change';
 
