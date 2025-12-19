@@ -22,7 +22,7 @@ export const ContactForm: React.FC = () => {
         formData.append('form_timestamp', formLoadTime.current);
 
         try {
-            const response = await fetch('send_mail.php', {
+            const response = await fetch('pine.php', {
                 method: 'POST',
                 body: formData
             });
@@ -30,6 +30,8 @@ export const ContactForm: React.FC = () => {
 
             // Check for Chat Start
             if (response.ok && result.status === 'chat_start') {
+                // Add a small delay/animation before switching?
+                // For now, immediate switch, but the Component swap acts as transition.
                 setActiveChat({
                     chatId: result.chat_id,
                     token: result.user_token

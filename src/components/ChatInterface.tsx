@@ -16,8 +16,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId, token, onC
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputText, setInputText] = useState('');
     const [otherOnline, setOtherOnline] = useState(false);
+    const [guestName, setGuestName] = useState('');
     const [error, setError] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    // Determine if I am the Admin or the User based on context? 
+    // Actually, the API doesn't strictly say who *I* am in the response, but we can infer or simpler:
+    // If I'm the one who opened from email link, I'm Admin. If I'm on site, I'm User.
+    // However, clean way: The API returns `guest_name`.
+    // If I am User, the UI header should be "You are chatting with Wally Atkins".
+    // If I am Admin, the UI header should be "Chat with {guestName}".
+
+    // We can infer Mode from the URL. If URL has params, likely Admin. If embedded in ContactForm, User.
+    const isFullscreenAdmin = !!new URLSearchParams(window.location.search).get('chat_id');
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -25,7 +36,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId, token, onC
 
     const pollMessages = async () => {
         try {
-            const response = await fetch(`chat_api.php?action=poll&chat_id=${chatId}&token=${token}`);
+            const response = await fetch(`irc.php?action=poll&chat_id=${chatId}&token=${token}`);
             if (!response.ok) {
                 if (response.status === 404) {
                     setError('Chat ended.');
@@ -37,6 +48,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId, token, onC
             if (data.status === 'success') {
                 setMessages(data.messages);
                 setOtherOnline(data.other_online);
+                if (data.guest_name) setGuestName(data.guest_name);
             }
         } catch (e) {
             console.error("Polling error", e);
@@ -61,7 +73,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId, token, onC
             const formData = new FormData();
             formData.append('message', inputText);
 
-            await fetch(`chat_api.php?action=send&chat_id=${chatId}&token=${token}`, {
+            await fetch(`irc.php?action=send&chat_id=${chatId}&token=${token}`, {
                 method: 'POST',
                 body: formData
             });
@@ -74,7 +86,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId, token, onC
 
     const endChat = async () => {
         if (confirm("Are you sure you want to end this chat?")) {
-            await fetch(`chat_api.php?action=end&chat_id=${chatId}&token=${token}`);
+            await fetch(`irc.php?action=end&chat_id=${chatId}&token=${token}`);
             if (onClose) onClose();
             else window.location.href = '/';
         }
@@ -84,7 +96,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId, token, onC
         return (
             <div className="chat-error-container">
                 <p>{error}</p>
-                <button onClick={() => window.location.href='/'} className="chat-btn">Return Home</button>
+                <button onClick={() => window.location.href = '/'} className="chat-btn">Return Home</button>
             </div>
         );
     }
@@ -94,11 +106,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId, token, onC
             <div className="chat-header">
                 <div className="chat-status">
                     <span className={`status-dot ${otherOnline ? 'online' : 'offline'}`}></span>
-                    {otherOnline ? 'Other Person is Online' : 'Waiting for connection...'}
+                    <span className="chat-title-text">
+                        {isFullscreenAdmin
+                            ? `Chatting with ${guestName || 'Guest'}`
+                            : "You are now chatting with Wally Atkins"}
+                    </span>
                 </div>
                 <button onClick={endChat} className="chat-close-btn" title="End Chat">✕</button>
             </div>
-            
+
             <div className="chat-messages">
                 {messages.map((msg, idx) => (
                     <div key={idx} className={`chat-bubble ${msg.sender}`}>
@@ -112,11 +128,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId, token, onC
             </div>
 
             <form className="chat-input-area" onSubmit={sendMessage}>
-                <input 
-                    type="text" 
-                    value={inputText} 
-                    onChange={(e) => setInputText(e.target.value)} 
-                    placeholder="Type a message..." 
+                <input
+                    type="text"
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    placeholder="Type a message..."
                     autoFocus
                 />
                 <button type="submit" disabled={!inputText.trim()}>Send</button>

@@ -37,7 +37,8 @@ jobs:
 
       - name: Prepare Deployment Package
         run: |
-          cp send_mail.php dist/
+          cp pine.php dist/
+          cp irc.php dist/
           cp -r vendor dist/
 
       - name: Deploy to Bluehost via FTP/SFTP
