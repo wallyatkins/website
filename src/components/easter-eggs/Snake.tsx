@@ -19,7 +19,7 @@ export const Snake: React.FC = () => {
     const foodRef = useRef<Point>({ x: 15, y: 10 });
     const directionRef = useRef<Point>({ x: 0, y: 0 }); // Start stationary
     const pendingDirectionRef = useRef<Point>({ x: 0, y: 0 });
-    const gameLoopRef = useRef<number>();
+    const gameLoopRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
     // Init High Score
     useEffect(() => {
@@ -28,7 +28,7 @@ export const Snake: React.FC = () => {
     }, []);
 
     const spawnFood = useCallback(() => {
-        let newFood;
+        let newFood: Point;
         while (true) {
             newFood = {
                 x: Math.floor(Math.random() * (CANVAS_SIZE / GRID_SIZE)),
