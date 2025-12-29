@@ -21,7 +21,20 @@ export default defineConfig({
       stringArray: true,
       stringArrayEncoding: ['rc4'],
       stringArrayThreshold: 0.75,
-      unicodeEscapeSequence: false
+      unicodeEscapeSequence: false,
+      exclude: ['node_modules/@ruffle-rs/ruffle/**/*']
     })
   ],
+  optimizeDeps: {
+    exclude: ['@ruffle-rs/ruffle']
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          ruffle: ['@ruffle-rs/ruffle']
+        }
+      }
+    }
+  }
 })

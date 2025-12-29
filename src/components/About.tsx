@@ -1,11 +1,11 @@
 import React from 'react';
 
 interface AboutProps {
-    isArtMode: boolean;
-    toggleArtMode: (e: React.MouseEvent) => void;
+    isCreativeMode: boolean;
+    toggleCreativeMode: (e: React.MouseEvent) => void;
 }
 
-export const About: React.FC<AboutProps> = ({ isArtMode, toggleArtMode }) => {
+export const About: React.FC<AboutProps> = ({ isCreativeMode, toggleCreativeMode }) => {
     return (
         <section id="about" className="content-section">
             <h2 className="section-title">About Me</h2>
@@ -31,10 +31,10 @@ export const About: React.FC<AboutProps> = ({ isArtMode, toggleArtMode }) => {
                             <span
                                 id="theme-trigger"
                                 style={{ display: 'inline-block', userSelect: 'none' }}
-                                onDoubleClick={toggleArtMode}
-                                className={isArtMode ? 'flip-horizontal' : ''}
+                                onDoubleClick={toggleCreativeMode}
+                                className={isCreativeMode ? 'flip-horizontal' : ''}
                             >
-                                {isArtMode ? "Art & Logic" : "Logic & Art"}
+                                {isCreativeMode ? "Art & Logic" : "Logic & Art"}
                             </span>
                         </p>
                     </div>

@@ -427,6 +427,7 @@ section {
         width: 100%;
         height: 100vh;
         background-color: var(--bg-color);
+        display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
@@ -1001,38 +1002,38 @@ body.art-mode {
     --font-main: 'Indie Flower', cursive;
 }
 
-body.art-mode h1, 
-body.art-mode h2, 
-body.art-mode h3 {
+body.creative-mode h1, 
+body.creative-mode h2, 
+body.creative-mode h3 {
     font-family: 'Bangers', cursive;
     letter-spacing: 0.1em;
     color: #ffcc00;
     text-shadow: 2px 2px 0px #ff00cc;
 }
 
-body.art-mode .hero-title {
+body.creative-mode .hero-title {
     font-family: 'Creepster', cursive;
     color: #00ffcc;
     text-shadow: 4px 4px 0px #ff00cc;
     transform: rotate(-2deg);
 }
 
-body.art-mode .hero-subtitle {
+body.creative-mode .hero-subtitle {
     font-family: 'Pacifico', cursive;
     font-size: 2rem;
     color: #ff99cc;
 }
 
-body.art-mode .project-name {
+body.creative-mode .project-name {
     font-family: 'Ruslan Display', cursive;
 }
 
-body.art-mode .navbar {
+body.creative-mode .navbar {
     background: rgba(42, 10, 42, 0.9);
     border-bottom: 2px dashed #ff00cc;
 }
 
-body.art-mode .submit-btn {
+body.creative-mode .submit-btn {
     background: #ff00cc;
     color: #fff;
     font-family: 'Bangers', cursive;
@@ -1041,7 +1042,7 @@ body.art-mode .submit-btn {
     transform: rotate(2deg);
 }
 
-body.art-mode .submit-btn:hover {
+body.creative-mode .submit-btn:hover {
     transform: rotate(-2deg) scale(1.1);
     background: #00ffcc;
     color: #2a0a2a;
@@ -1354,5 +1355,6 @@ body.art-mode .submit-btn:hover {
          b a c k g r o u n d - c o l o r :   o r a n g e ; 
          b o x - s h a d o w :   0   0   5 p x   o r a n g e ; 
  } 
-  
+ 
+ 
  

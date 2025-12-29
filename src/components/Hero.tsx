@@ -2,12 +2,12 @@ import React from 'react';
 
 interface HeroProps {
     isLightMode: boolean;
-    isArtMode: boolean;
+    isCreativeMode: boolean;
     toggleTheme: () => void;
 }
 
-export const Hero: React.FC<HeroProps> = ({ isLightMode, isArtMode, toggleTheme }) => {
-    const profileImage = isArtMode
+export const Hero: React.FC<HeroProps> = ({ isLightMode, isCreativeMode, toggleTheme }) => {
+    const profileImage = isCreativeMode
         ? (isLightMode ? 'profile-white-art.jpg' : 'profile-black-art.jpg')
         : (isLightMode ? 'profile-white.jpg' : 'profile-black.jpg');
 

@@ -10,29 +10,29 @@ import { EasterEggProvider } from './context/EasterEggContext';
 import { Zoltar } from './components/easter-eggs/Zoltar';
 import { CTA } from './components/CTA';
 import { ChatInterface } from './components/ChatInterface';
+import { Fhqwhgads } from './components/easter-eggs/Fhqwhgads';
 
 function App() {
+
   const [isLightMode, setIsLightMode] = useState(false);
-  const [isArtMode, setIsArtMode] = useState(false);
+  const [isCreativeMode, setIsCreativeMode] = useState(false);
 
   // Easter Egg: Chat Mode Check
   const params = new URLSearchParams(window.location.search);
   const chatId = params.get('chat_id');
   const token = params.get('token');
 
-  if (chatId && token) {
-    return (
-      <div className="chat-fullscreen-wrapper">
-        <ChatInterface chatId={chatId} token={token} />
-      </div>
-    );
-  }
+  // Sync body classes
+  useEffect(() => {
+    document.body.classList.toggle('light-mode', isLightMode);
+    document.body.classList.toggle('creative-mode', isCreativeMode);
+  }, [isLightMode, isCreativeMode]);
 
   const toggleTheme = () => {
     setIsLightMode(!isLightMode);
   };
 
-  const toggleArtMode = (e: React.MouseEvent) => {
+  const toggleCreativeMode = (e: React.MouseEvent) => {
     // 2. Burn Reveal Effect
     const burnOverlay = document.createElement('div');
     burnOverlay.className = 'burn-overlay';
@@ -42,36 +42,39 @@ function App() {
 
     // 3. Toggle Mode after delay
     setTimeout(() => {
-      setIsArtMode(prev => !prev);
+      setIsCreativeMode(prev => !prev);
       // Remove Burn Overlay
       setTimeout(() => burnOverlay.remove(), 1000);
     }, 750);
   };
 
-  // Sync body classes
-  useEffect(() => {
-    document.body.classList.toggle('light-mode', isLightMode);
-    document.body.classList.toggle('art-mode', isArtMode);
-  }, [isLightMode, isArtMode]);
+  if (chatId && token) {
+    return (
+      <div className="chat-fullscreen-wrapper">
+        <ChatInterface chatId={chatId} token={token} />
+      </div>
+    );
+  }
 
   return (
     <EasterEggProvider>
       <Layout>
-        <WhimsicalLayer isVisible={isArtMode} />
+        <WhimsicalLayer isVisible={isCreativeMode} />
         <Hero
           isLightMode={isLightMode}
-          isArtMode={isArtMode}
+          isCreativeMode={isCreativeMode}
           toggleTheme={toggleTheme}
         />
         <About
-          isArtMode={isArtMode}
-          toggleArtMode={toggleArtMode}
+          isCreativeMode={isCreativeMode}
+          toggleCreativeMode={toggleCreativeMode}
         />
         <Projects />
         <Process />
         <ContactForm />
         <CTA />
         <Zoltar />
+        <Fhqwhgads />
       </Layout>
     </EasterEggProvider>
   );
