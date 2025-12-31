@@ -9,7 +9,7 @@ import { WhimsicalLayer } from './components/WhimsicalLayer';
 import { EasterEggProvider } from './context/EasterEggContext';
 import { Zoltar } from './components/easter-eggs/Zoltar';
 import { CTA } from './components/CTA';
-import { ChatInterface } from './components/ChatInterface';
+import { IRCInterface } from './components/IRCInterface';
 import { Fhqwhgads } from './components/easter-eggs/Fhqwhgads';
 
 function App() {
@@ -17,9 +17,9 @@ function App() {
   const [isLightMode, setIsLightMode] = useState(false);
   const [isCreativeMode, setIsCreativeMode] = useState(false);
 
-  // Easter Egg: Chat Mode Check
+  // Easter Egg: IRC Mode Check
   const params = new URLSearchParams(window.location.search);
-  const chatId = params.get('chat_id');
+  const ircId = params.get('irc_id');
   const token = params.get('token');
 
   // Sync body classes
@@ -48,10 +48,10 @@ function App() {
     }, 750);
   };
 
-  if (chatId && token) {
+  if (ircId && token) {
     return (
       <div className="chat-fullscreen-wrapper">
-        <ChatInterface chatId={chatId} token={token} />
+        <IRCInterface ircId={ircId} token={token} />
       </div>
     );
   }

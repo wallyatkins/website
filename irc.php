@@ -3,7 +3,7 @@ header('Content-Type: application/json');
 
 // 1. Basic Security & Config
 $action = $_GET['action'] ?? '';
-$chat_id = $_GET['chat_id'] ?? '';
+$irc_id = $_GET['irc_id'] ?? '';
 $token = $_GET['token'] ?? '';
 $message = $_POST['message'] ?? '';
 
@@ -11,16 +11,16 @@ $message = $_POST['message'] ?? '';
 // .env loaded by utils.php
 require_once 'utils.php';
 
-$chat_key = getEnvVar('CHAT_KEY', 'default_insecure_key_please_change');
+$irc_key = getEnvVar('IRC_KEY', 'default_insecure_key_please_change');
 
-if (empty($chat_id) || empty($token) || !ctype_alnum($chat_id) || !ctype_alnum($token)) {
+if (empty($irc_id) || empty($token) || !ctype_alnum($irc_id) || !ctype_alnum($token)) {
     http_response_code(400);
-    echo json_encode(['status' => 'error', 'message' => 'Invalid Chat ID or Token']);
+    echo json_encode(['status' => 'error', 'message' => 'Invalid IRC ID or Token']);
     exit;
 }
 
 $temp_dir = sys_get_temp_dir();
-$chat_file = $temp_dir . '/chat_' . $chat_id . '.json';
+$irc_file = $temp_dir . '/irc_' . $irc_id . '.json';
 
 // 2. Load Utils (Encryption & Mail Helpers)
 // utils.php loaded at top
@@ -49,27 +49,27 @@ function withFileLock($filename, $mode, $callback)
 }
 
 // 4. Handle Actions
-if (!file_exists($chat_file)) {
+if (!file_exists($irc_file)) {
     http_response_code(404);
-    echo json_encode(['status' => 'error', 'message' => 'Chat session not found or expired.']);
+    echo json_encode(['status' => 'error', 'message' => 'IRC session not found or expired.']);
     exit;
 }
 
 // WRAPPER for safe access
-$response = withFileLock($chat_file, 'c+', function ($fp) use ($action, $token, $message, $chat_key, $chat_file) {
+$response = withFileLock($irc_file, 'c+', function ($fp) use ($action, $token, $message, $irc_key, $irc_file, $irc_id) {
     // Read & Decrypt
     rewind($fp);
     $content = stream_get_contents($fp);
     if (!$content)
-        return ['status' => 'error', 'message' => 'Empty chat file'];
+        return ['status' => 'error', 'message' => 'Empty IRC file'];
 
-    $chat_data = decryptData($content, $chat_key);
-    if (!$chat_data)
+    $irc_data = decryptData($content, $irc_key);
+    if (!$irc_data)
         return ['status' => 'error', 'message' => 'Decryption failed'];
 
     // Verify Token
-    $is_admin = ($token === $chat_data['admin_token']);
-    $is_user = ($token === $chat_data['user_token']);
+    $is_admin = ($token === $irc_data['admin_token']);
+    $is_user = ($token === $irc_data['user_token']);
 
     if (!$is_admin && !$is_user) {
         return ['status' => 'error', 'code' => 403, 'message' => 'Unauthorized'];
@@ -81,19 +81,19 @@ $response = withFileLock($chat_file, 'c+', function ($fp) use ($action, $token, 
     switch ($action) {
         case 'poll':
             if ($is_admin)
-                $chat_data['admin_last_seen'] = $now;
+                $irc_data['admin_last_seen'] = $now;
             else
-                $chat_data['user_last_seen'] = $now;
+                $irc_data['user_last_seen'] = $now;
 
-            $other_last_seen = $is_admin ? $chat_data['user_last_seen'] : $chat_data['admin_last_seen'];
+            $other_last_seen = $is_admin ? $irc_data['user_last_seen'] : $irc_data['admin_last_seen'];
             $is_other_online = ($now - $other_last_seen) < 10;
             $updated = true;
 
             $result = [
                 'status' => 'success',
-                'messages' => $chat_data['messages'],
+                'messages' => $irc_data['messages'],
                 'other_online' => $is_other_online,
-                'guest_name' => $chat_data['user_name'] // Send guest name for Host UI
+                'guest_name' => $irc_data['user_name'] // Send guest name for Host UI
             ];
             break;
 
@@ -107,7 +107,7 @@ $response = withFileLock($chat_file, 'c+', function ($fp) use ($action, $token, 
                 'time' => time()
             ];
 
-            $chat_data['messages'][] = $new_msg;
+            $irc_data['messages'][] = $new_msg;
             $updated = true;
             $result = ['status' => 'success'];
             break;
@@ -117,26 +117,9 @@ $response = withFileLock($chat_file, 'c+', function ($fp) use ($action, $token, 
             if ($is_admin)
                 return ['status' => 'error', 'message' => 'Admin cannot resend invite'];
 
-            // Limit resends? The frontend handles 1 retry. Server could enforce too but let's trust for now or add a flag.
-            // Actually, let's add a simple check in file data if we wanted to be strict, but for now simple is fine.
+            $retrieved_msg = $irc_data['initial_message'] ?? "User is waiting in the IRC.";
 
-            require_once 'mail_helper.php';
-            // We need original email/message. 
-            // We stored email in $chat_data['email']
-            // We didn't store the initial message! We only have it in the message history?
-            // Wait, we stored 'messages' array. The first message might be system, or maybe we didn't store the user's initial text?
-            // In pine.php: $initial_data['messages'] = [['sender'=>'system', 'text'=>'Chat request initiated...']]
-            // We LOST the original message body in the chat session data! 
-            // We should have stored it. 
-            // FIXME: pine.php needs to store 'initial_message' in JSON so we can resend it.
-            // For now, we'll send a generic "User is waiting" message or try to retrieve it if we update pine.php.
-            // Let's UPDATE pine.php to store it first, or just send "User is waiting in chat" without the original body.
-            // Better to update pine.php to store it.
-
-            // Assuming we will update pine.php, let's look for 'initial_message' or similar.
-            $retrieved_msg = $chat_data['initial_message'] ?? "User is waiting in the chat.";
-
-            $sent = sendChatInvite($chat_data['email'], $chat_data['user_name'], $retrieved_msg, $chat_id, $chat_data['admin_token'], true);
+            $sent = sendIRCInvite($irc_data['email'], $irc_data['user_name'], $retrieved_msg, $irc_id, $irc_data['admin_token'], true);
 
             if ($sent)
                 $result = ['status' => 'success', 'message' => 'Invite resent'];
@@ -145,10 +128,6 @@ $response = withFileLock($chat_file, 'c+', function ($fp) use ($action, $token, 
             break;
 
         case 'end':
-            // Logic handled outside lock usually to unlink, but here we can just signal or truncate
-            // Actually, best to return a signal to unlink AFTER closing handle, 
-            // BUT unlink while locked is tricky on some OS.
-            // Let's just truncate and mark as ended or delete.
             return ['status' => 'server_action_delete'];
 
         default:
@@ -158,7 +137,7 @@ $response = withFileLock($chat_file, 'c+', function ($fp) use ($action, $token, 
     if ($updated) {
         ftruncate($fp, 0);
         rewind($fp);
-        fwrite($fp, encryptData($chat_data, $chat_key));
+        fwrite($fp, encryptData($irc_data, $irc_key));
     }
 
     return $result;
@@ -172,8 +151,8 @@ if ($response === false) {
     http_response_code($response['code']);
     echo json_encode(['status' => $response['status'], 'message' => $response['message']]);
 } elseif ($response['status'] === 'server_action_delete') {
-    unlink($chat_file);
-    echo json_encode(['status' => 'success', 'message' => 'Chat ended']);
+    unlink($irc_file);
+    echo json_encode(['status' => 'success', 'message' => 'IRC ended']);
 } else {
     echo json_encode($response);
 }

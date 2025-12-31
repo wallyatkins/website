@@ -26,8 +26,8 @@ function getEnvVar($key, $default = null)
     return $default;
 }
 
-// DEBUG: Log Chat Key Hash to verify consistency across scripts
-$k = getEnvVar('CHAT_KEY', '');
+// DEBUG: Log IRC Key Hash to verify consistency across scripts
+$k = getEnvVar('IRC_KEY', '');
 error_log("Utils loaded. Script: " . $_SERVER['SCRIPT_NAME'] . " | KeyHash: " . md5($k));
 
 // --- ENCRYPTION HELPERS ---
@@ -47,7 +47,7 @@ function decryptData($content, $key)
 
 // --- EMAIL HELPERS ---
 
-function sendChatInvite($recipientEmail, $userName, $userMessage, $chatId, $adminToken, $resend = false)
+function sendIRCInvite($recipientEmail, $userName, $userMessage, $ircId, $adminToken, $resend = false)
 {
     $mail = new PHPMailer(true);
 
@@ -62,7 +62,7 @@ function sendChatInvite($recipientEmail, $userName, $userMessage, $chatId, $admi
         $mail->Port = $_ENV['SMTP_PORT'] ?? 587;
 
         // Recipients
-        $mail->setFrom($_ENV['FROM_EMAIL'], $_ENV['FROM_NAME']); // Ensure FROM_EMAIL/NAME are also set? pine.php uses them.
+        $mail->setFrom($_ENV['FROM_EMAIL'], $_ENV['FROM_NAME']);
         $mail->addAddress($_ENV['TO_EMAIL']);
         if (!empty($_ENV['TO_TEXT_EMAIL'])) {
             $mail->addAddress($_ENV['TO_TEXT_EMAIL']);
@@ -73,26 +73,26 @@ function sendChatInvite($recipientEmail, $userName, $userMessage, $chatId, $admi
 
         $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http");
         $host = $_SERVER['HTTP_HOST'];
-        $admin_url = "$protocol://$host/?chat_id=$chatId&token=$adminToken";
+        $admin_url = "$protocol://$host/?irc_id=$ircId&token=$adminToken";
 
         $subjectPrefix = $resend ? "[REMINDER] " : "";
-        $mail->Subject = $subjectPrefix . "[Website Chat Request] " . $userName;
+        $mail->Subject = $subjectPrefix . "[Website IRC Request] " . $userName;
 
         $bodyIntro = $resend
-            ? "<h2 style='color: red;'>Chat Request REMINDER!</h2><p>The user is still waiting...</p>"
-            : "<h2>New Chat Request!</h2>";
+            ? "<h2 style='color: red;'>IRC Request REMINDER!</h2><p>The user is still waiting...</p>"
+            : "<h2>New IRC Request!</h2>";
 
         $mail->Body = "
             $bodyIntro
             <p><strong>Name:</strong> {$userName}</p>
             <p><strong>Email:</strong> $recipientEmail</p>
             <p><strong>Message:</strong><br>$userMessage</p>
-            <p><a href='$admin_url' style='font-size: 18px; font-weight: bold; color: blue;'>CLICK HERE TO JOIN CHAT</a></p>
+            <p><a href='$admin_url' style='font-size: 18px; font-weight: bold; color: blue;'>CLICK HERE TO JOIN IRC</a></p>
             <hr>
             <small>If you do not reply, the session will expire.</small>
         ";
 
-        $mail->AltBody = ($resend ? "REMINDER: " : "") . "Chat Request from {$userName}.\nLink: $admin_url";
+        $mail->AltBody = ($resend ? "REMINDER: " : "") . "IRC Request from {$userName}.\nLink: $admin_url";
 
         $mail->send();
         return true;

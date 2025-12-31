@@ -129,10 +129,10 @@ test.describe('Easter Eggs', () => {
     test('IRC Mode (Contact Form Secret)', async ({ page }) => {
         await page.route('**/pine.php', async route => {
             const json = {
-                status: 'chat_start',
-                chat_id: 'test_chat_id',
+                status: 'irc_start',
+                irc_id: 'test_irc_id',
                 user_token: 'test_user_token',
-                message: 'Secret detected! Chat initialized.'
+                message: 'Secret detected! IRC initialized.'
             };
             await route.fulfill({ json });
         });
@@ -146,7 +146,10 @@ test.describe('Easter Eggs', () => {
 
         await page.locator('button[type="submit"]').click();
 
-        await expect(page.locator('.contact-container .chat-messages')).toBeVisible({ timeout: 5000 });
+        // Expect redirect to fullscreen IRC
+        await page.waitForURL(/irc_id=test_irc_id/);
+        await expect(page).toHaveURL(/role=guest/);
+        await expect(page.locator('.chat-fullscreen-wrapper')).toBeVisible();
     });
 
 });

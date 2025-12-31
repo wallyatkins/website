@@ -59,18 +59,18 @@ try {
     }
     $mail->addReplyTo($email, $name);
 
-    // --- EASTER EGG: CHAT CHECK ---
+    // --- EASTER EGG: IRC CHECK ---
     // Check if the secret is at the end of the name
-    $chat_secret = $_ENV['CHAT_SECRET'] ?? 'CHAT_SECRET_NOT_SET';
-    $chat_key = $_ENV['CHAT_KEY'] ?? 'default_insecure_key_please_change';
+    $irc_secret = $_ENV['IRC_SECRET'] ?? 'IRC_SECRET_NOT_SET';
+    $irc_key = $_ENV['IRC_KEY'] ?? 'default_insecure_key_please_change';
 
-    if (!empty($chat_secret) && str_contains($name, $chat_secret)) {
+    if (!empty($irc_secret) && str_contains($name, $irc_secret)) {
         // 1. Clean Name (Remove Secret)
-        $user_name = trim(str_ireplace($chat_secret, '', $name));
+        $user_name = trim(str_ireplace($irc_secret, '', $name));
         $user_name = trim(str_replace(['[', ']'], '', $user_name));
 
-        // 2. Initialize Chat Session
-        $chat_id = bin2hex(random_bytes(8));
+        // 2. Initialize IRC Session
+        $irc_id = bin2hex(random_bytes(8));
         $admin_token = bin2hex(random_bytes(16));
         $user_token = bin2hex(random_bytes(16));
 
@@ -86,26 +86,26 @@ try {
             'messages' => [
                 [
                     'sender' => 'system',
-                    'text' => 'Chat request initiated. Waiting for connection...',
+                    'text' => 'IRC request initiated. Waiting for connection...',
                     'time' => time()
                 ]
             ]
         ];
 
         // 3. Encrypt & Save
-        $file_content = encryptData($initial_data, $chat_key);
+        $file_content = encryptData($initial_data, $irc_key);
         $temp_dir = sys_get_temp_dir();
-        file_put_contents($temp_dir . '/chat_' . $chat_id . '.json', $file_content);
+        file_put_contents($temp_dir . '/irc_' . $irc_id . '.json', $file_content);
 
         // 4. Notify Admin (using utils.php)
-        sendChatInvite($email, $user_name, $message, $chat_id, $admin_token);
+        sendIRCInvite($email, $user_name, $message, $irc_id, $admin_token);
 
         // 5. Response
         echo json_encode([
-            "status" => "chat_start",
-            "chat_id" => $chat_id,
+            "status" => "irc_start",
+            "irc_id" => $irc_id,
             "user_token" => $user_token,
-            "message" => "Secret detected! Chat initialized."
+            "message" => "Secret detected! IRC initialized."
         ]);
         exit;
     }

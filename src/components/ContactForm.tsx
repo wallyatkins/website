@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { ChatInterface } from './ChatInterface';
+
 
 export const ContactForm: React.FC = () => {
     const { register, handleSubmit, reset } = useForm();
@@ -11,7 +11,7 @@ export const ContactForm: React.FC = () => {
     const formLoadTime = React.useRef(Math.floor(Date.now() / 1000).toString());
 
     // Chat State
-    const [activeChat, setActiveChat] = useState<{ chatId: string, token: string } | null>(null);
+
 
     const onSubmit = async (data: any) => {
         setIsSending(true);
@@ -28,15 +28,11 @@ export const ContactForm: React.FC = () => {
             });
             const result = await response.json();
 
-            // Check for Chat Start
-            if (response.ok && result.status === 'chat_start') {
-                // Add a small delay/animation before switching?
-                // For now, immediate switch, but the Component swap acts as transition.
-                setActiveChat({
-                    chatId: result.chat_id,
-                    token: result.user_token
-                });
-                return; // Stop normal envelope animation
+            // Check for IRC Start
+            if (response.ok && result.status === 'irc_start') {
+                // Redirect to fullscreen IRC mode as Guest
+                window.location.href = `/?irc_id=${result.irc_id}&token=${result.user_token}&role=guest`;
+                return;
             }
 
             if (response.ok && result.status === 'success') {
@@ -69,16 +65,7 @@ export const ContactForm: React.FC = () => {
         }
     };
 
-    if (activeChat) {
-        return (
-            <section id="contact" className="content-section">
-                <h2 className="section-title">Live Chat</h2>
-                <div className="contact-container" style={{ minHeight: '500px' }}>
-                    <ChatInterface chatId={activeChat.chatId} token={activeChat.token} onClose={() => setActiveChat(null)} />
-                </div>
-            </section>
-        );
-    }
+
 
     return (
         <section id="contact" className="content-section">
