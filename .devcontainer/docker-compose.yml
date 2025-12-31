@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  workspace:
+    image: mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm
+    volumes:
+      - ../:/workspace:cached
+    command: sleep infinity
+    working_dir: /workspace
+    # Ensure dist folder exists and is writable by node user
+    user: node
+
+  web:
+    image: php:8.2-apache
+    volumes:
+      - ../:/var/www/html:ro
+    ports:
+      - "8080:80"
+    environment:
+      - APACHE_DOCUMENT_ROOT=/var/www/html/dist
+    # Enable mod_rewrite and configure DocumentRoot
+    command: >
+      bash -c "sed -ri -e 's!/var/www/html!/var/www/html/dist!g' /etc/apache2/sites-available/*.conf
+      && sed -ri -e 's!/var/www/html!/var/www/html/dist!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+      && a2enmod rewrite
+      && apache2-foreground"

@@ -22,21 +22,34 @@ export const Fhqwhgads: React.FC = () => {
 
         const loadRuffle = async () => {
             try {
-                // Dynamic import for side effects (loading polyfills etc)
-                await import('@ruffle-rs/ruffle');
+                // Set configuration BEFORE loading Ruffle
+                (window as any).RufflePlayer = (window as any).RufflePlayer || {};
+                (window as any).RufflePlayer.config = {
+                    publicPath: '/ruffle/',
+                    autoplay: 'on',
+                    unmuteOverlay: 'hidden', // Hide "Click to unmute"
+                };
 
-                // Access via window object as per Ruffle documentation for self-hosted
-                const RufflePlayer = (window as any).RufflePlayer;
-
-                if (!RufflePlayer) {
-                    throw new Error('RufflePlayer not found on window');
+                // Check if already loaded
+                if (!(window as any).RufflePlayer.newest) {
+                    await new Promise<void>((resolve, reject) => {
+                        const script = document.createElement('script');
+                        script.src = '/ruffle/ruffle.js';
+                        script.onload = () => resolve();
+                        script.onerror = (e) => reject(e);
+                        document.head.appendChild(script);
+                    });
                 }
+
+                // Wait a tick for Ruffle to initialize
+                const RufflePlayer = (window as any).RufflePlayer;
+                if (!RufflePlayer) throw new Error('RufflePlayer failed to initialize');
 
                 const ruffle = RufflePlayer.newest();
                 const player = ruffle.createPlayer();
 
                 if (active && containerRef.current) {
-                    containerRef.current.innerHTML = ''; // Clear any previous
+                    containerRef.current.innerHTML = '';
                     containerRef.current.appendChild(player);
                     player.load('/fhqwhgads.swf');
                     playerRef.current = player;

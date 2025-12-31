@@ -1,0 +1,16 @@
+{
+    "name": "Website Dev",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "workspace",
+    "workspaceFolder": "/workspace",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode",
+                "ms-playwright.playwright"
+            ]
+        }
+    },
+    "remoteUser": "node"
+}

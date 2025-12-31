@@ -1,0 +1,15 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  
+  # Allow access to backend endpoints
+  RewriteRule ^(pine|irc)\.php$ - [L]
+
+  # Allow access to snake game if it were separate, but here it's SPA
+  # Allow access to assets
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Fallback to index.html for SPA routing
+  RewriteRule ^ index.html [L]
+</IfModule>

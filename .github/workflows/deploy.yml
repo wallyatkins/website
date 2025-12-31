@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install Node Dependencies
@@ -36,10 +36,8 @@ jobs:
         run: composer install --no-dev --optimize-autoloader
 
       - name: Prepare Deployment Package
+        # Only vendor needs partial copy now, everything else is in dist via build script
         run: |
-          cp pine.php dist/
-          cp irc.php dist/
-          cp utils.php dist/
           cp -r vendor dist/
 
       - name: Deploy to Bluehost via FTP/SFTP

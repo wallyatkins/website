@@ -1,73 +1,85 @@
-# React + TypeScript + Vite
+# Wally Atkins' Portfolio Website
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, interactive personal portfolio website built with React, TypeScript, and Vite. Features a playful "Creative Mode" with hidden Easter eggs, a custom Snake game, and a secure PHP contact backend.
 
-Currently, two official plugins are available:
+## 🚀 Key Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Modern Tech Stack**: React 19, TypeScript, Vite 7.
+- **Creative Mode**: Toggle between a professional minimalist view and a whimsical creative interface.
+- **Easter Eggs**: Hidden interactive elements including:
+  - **Snake Game**: A fully playable classic Snake game (Unlock via D-Pad).
+  - **Fhqwhgads**: A tribute to Homestar Runner (Typed secret).
+  - **Zoltar**: Interactive fortune teller (Mouse gesture).
+  - See [EASTER.md](./EASTER.md) for full details.
+- **Secure Contact Form**: PHP backend (`pine.php`) with honeypot and time-trap spam protection.
+- **Responsive Design**: Optimized for all devices with specific mobile enhancements.
 
-## React Compiler
+## 📂 Project Structure
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **`src/`**: React frontend source code.
+  - `components/`: Reusable UI components and Easter egg logic.
+  - `context/`: State management (e.g., `EasterEggContext`).
+- **`public/`**: Static assets served directly (images, SWF files).
+  - `.htaccess`: Apache configuration for SPA routing and backend access.
+  - `pine.php`: Backend logic (copied to root of `dist` during build).
+- **`dist/`**: Production build output (Deploy this folder).
+- **`.devcontainer/`**: Docker configuration for a consistent local development environment.
+- **`tests/`**: Playwright End-to-End tests.
 
-## Expanding the ESLint configuration
+## 🛠️ Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Recommended: DevContainer (Docker)
+This project includes a DevContainer configuration that closely simulates the production environment (Apache/PHP).
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+1. Ensure **Docker Desktop** is running.
+2. Open the project in **VS Code**.
+3. Click "Reopen in Container" when prompted (or use the Command Palette).
+4. Inside the container:
+   - **Build**: `npm run build` (Generates `dist/` and copies backend files).
+   - **Serve**: The Apache server automatically serves the `dist/` folder at `http://localhost:8080`.
+   - **Routing**: `.htaccess` rules are active, simulating the live server.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Manual Setup (Node.js)
+If you prefer running without Docker:
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
+2. **Run Development Server**:
+   ```bash
+   npm run dev
+   ```
+   *Note: The PHP contact form (`pine.php`) will not work in this mode as Vite Dev Server does not process PHP.*
+
+## 📦 Building for Production
+
+To create a production build ready for deployment:
+
+```bash
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+This command:
+1. Compiles TypeScript and builds the React app using Vite.
+2. Optimizes assets.
+3. Copies `pine.php` from root to `dist/`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+**Deployment**: Upload the contents of the `dist/` directory to your web server's `public_html` folder.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 🧪 Testing
+
+The project uses **Playwright** for End-to-End testing.
+
+```bash
+npx playwright test
 ```
+
+Tests cover:
+- Easter egg triggers (Konami code, gestures, typing).
+- Game functionality (Snake, Block Blast).
+- Creative mode toggles.
+- Contact form submission (mocked).
+
+## 📄 License
+Private (© Wally Atkins)
