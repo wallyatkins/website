@@ -152,4 +152,18 @@ test.describe('Easter Eggs', () => {
         await expect(page.locator('.chat-fullscreen-wrapper')).toBeVisible();
     });
 
+    test('Fhqwhgads Trigger via Contact Form', async ({ page }) => {
+        const contactSection = page.locator('#contact');
+        await contactSection.scrollIntoViewIfNeeded();
+
+        // Type secret in Name field
+        await page.locator('#name').fill('Strongbad fhqwhgads');
+
+        // Expect Ruffle to appear
+        await expect(page.locator('ruffle-player')).toBeVisible({ timeout: 10000 });
+
+        // Form should be reset (empty name)
+        await expect(page.locator('#name')).toBeEmpty();
+    });
+
 });

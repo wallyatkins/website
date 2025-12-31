@@ -1,16 +1,34 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-
+import { useEasterEgg } from '../context/EasterEggContext';
 
 export const ContactForm: React.FC = () => {
-    const { register, handleSubmit, reset } = useForm();
+    const { register, handleSubmit, reset, watch } = useForm();
     const [status, setStatus] = useState<{ message: string; type: 'success' | 'error' | '' }>({ message: '', type: '' });
     const [isSending, setIsSending] = useState(false);
     const [showEnvelope, setShowEnvelope] = useState(false);
     const [envelopeState, setEnvelopeState] = useState(''); // closed, animate-slide-out
     const formLoadTime = React.useRef(Math.floor(Date.now() / 1000).toString());
 
-    // Chat State
+    // Easter Egg Context
+    const { activateFhqwhgads } = useEasterEgg();
+
+    // Watch inputs for "fhqwhgads" trigger
+    const nameValue = watch("name");
+    const emailValue = watch("email");
+    const messageValue = watch("message");
+
+    React.useEffect(() => {
+        const checkTrigger = (val: string) => {
+            if (val && val.toLowerCase().includes('fhqwhgads')) {
+                activateFhqwhgads();
+                reset(); // Optional: clear form to avoid accidental submits or double triggers
+            }
+        };
+        checkTrigger(nameValue);
+        checkTrigger(emailValue);
+        checkTrigger(messageValue);
+    }, [nameValue, emailValue, messageValue, activateFhqwhgads, reset]);
 
 
     const onSubmit = async (data: any) => {
