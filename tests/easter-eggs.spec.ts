@@ -100,6 +100,8 @@ test.describe('Easter Eggs', () => {
         const snakeContainer = page.locator('#snake-container');
         await expect(snakeContainer).toBeVisible();
         await expect(page.locator('#snake-canvas')).toBeVisible();
+        await expect(page.locator('.controls-hint')).toContainText("Use WASD or Arrow Keys");
+        await expect(page.locator('#snake-container #dpad-container')).toBeVisible();
 
         // Close Snake
         await page.locator('#snake-container #game-close-btn').click();

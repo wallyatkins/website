@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useEasterEgg } from '../../context/EasterEggContext';
+import { DirectionalPad } from './DPad';
 
 const GRID_SIZE = 20;
 const CANVAS_SIZE = 400; // 20x20 grid
@@ -145,24 +146,50 @@ export const Snake: React.FC = () => {
         }
     }, [isGameUnlocked, activeGame]);
 
+    // Handle Direction Change
+    const handleDirection = (newDir: 'up' | 'down' | 'left' | 'right') => {
+        const dir = directionRef.current;
+        switch (newDir) {
+            case 'up':
+                if (dir.y === 0) pendingDirectionRef.current = { x: 0, y: -1 };
+                break;
+            case 'down':
+                if (dir.y === 0) pendingDirectionRef.current = { x: 0, y: 1 };
+                break;
+            case 'left':
+                if (dir.x === 0) pendingDirectionRef.current = { x: -1, y: 0 };
+                break;
+            case 'right':
+                if (dir.x === 0) pendingDirectionRef.current = { x: 1, y: 0 };
+                break;
+        }
+    };
+
     // Input Handling
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
             if (activeGame !== 'SNAKE') return;
 
-            const dir = directionRef.current;
             switch (e.key) {
                 case 'ArrowUp':
-                    if (dir.y === 0) pendingDirectionRef.current = { x: 0, y: -1 };
+                case 'w':
+                case 'W':
+                    handleDirection('up');
                     break;
                 case 'ArrowDown':
-                    if (dir.y === 0) pendingDirectionRef.current = { x: 0, y: 1 };
+                case 's':
+                case 'S':
+                    handleDirection('down');
                     break;
                 case 'ArrowLeft':
-                    if (dir.x === 0) pendingDirectionRef.current = { x: -1, y: 0 };
+                case 'a':
+                case 'A':
+                    handleDirection('left');
                     break;
                 case 'ArrowRight':
-                    if (dir.x === 0) pendingDirectionRef.current = { x: 1, y: 0 };
+                case 'd':
+                case 'D':
+                    handleDirection('right');
                     break;
             }
         };
@@ -188,7 +215,11 @@ export const Snake: React.FC = () => {
                 height={CANVAS_SIZE}
                 id="snake-canvas"
             />
-            <div className="controls-hint">Use Arrow Keys to Move</div>
+            <div className="controls-hint">Use WASD or Arrow Keys</div>
+
+            <div className="snake-dpad-wrapper">
+                <DirectionalPad onPress={handleDirection} showHint={false} className="snake-dpad" />
+            </div>
 
             {gameOver && (
                 <div id="game-over-msg" style={{ display: 'block' }}>
@@ -213,6 +244,7 @@ export const Snake: React.FC = () => {
                     align-items: center;
                     justify-content: center;
                     gap: 1rem;
+                    overflow: hidden; /* Prevent scrolling on mobile dpad use */
                 }
                 #snake-canvas {
                     border: 2px solid #333;
@@ -222,8 +254,26 @@ export const Snake: React.FC = () => {
                 .controls-hint {
                     color: #666;
                     font-family: monospace;
-                    margin-top: 10px;
+                    margin-top: 5px;
+                    font-size: 0.9rem;
                 }
+                /* Snake DPad Overrides */
+                .snake-dpad-wrapper {
+                    margin-top: 10px;
+                    position: relative;
+                    height: 150px;
+                    width: 150px;
+                }
+                .snake-dpad {
+                    transform: scale(0.8); /* Make it slightly smaller */
+                }
+                /* Reuse DPad Styles but ensure relative positioning context works */
+                .snake-dpad #dpad-container {
+                     position: relative;
+                     bottom: auto;
+                     right: auto;
+                }
+
                 .restart-btn {
                      background: #333;
                     color: #fff;

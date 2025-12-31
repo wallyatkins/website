@@ -22,10 +22,16 @@ export const Fhqwhgads: React.FC = () => {
 
         const loadRuffle = async () => {
             try {
-                // Dynamic import
-                const module = await import('@ruffle-rs/ruffle');
-                // Ensure Ruffle is ready
-                const RufflePlayer = module.default || module;
+                // Dynamic import for side effects (loading polyfills etc)
+                await import('@ruffle-rs/ruffle');
+
+                // Access via window object as per Ruffle documentation for self-hosted
+                const RufflePlayer = (window as any).RufflePlayer;
+
+                if (!RufflePlayer) {
+                    throw new Error('RufflePlayer not found on window');
+                }
+
                 const ruffle = RufflePlayer.newest();
                 const player = ruffle.createPlayer();
 

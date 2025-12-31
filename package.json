@@ -10,13 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@ruffle-rs/ruffle": "0.2.0-nightly.2025.12.29",
+    "@ruffle-rs/ruffle": "0.2.0-nightly.2025.12.31",
     "@types/canvas-confetti": "1.9.0",
     "canvas-confetti": "1.9.4",
     "framer-motion": "12.23.25",
     "javascript-obfuscator": "4.2.0",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
     "react-hook-form": "7.67.0"
   },
   "devDependencies": {
@@ -33,7 +33,7 @@
     "rollup-plugin-javascript-obfuscator": "1.0.4",
     "typescript": "5.9.3",
     "typescript-eslint": "8.46.4",
-    "vite": "7.2.4"
+    "vite": "7.3.0"
   },
   "overrides": {
     "rollup-plugin-javascript-obfuscator": {
