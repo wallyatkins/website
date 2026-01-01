@@ -7,9 +7,10 @@ $irc_id = $_GET['irc_id'] ?? '';
 $token = $_GET['token'] ?? '';
 $message = $_POST['message'] ?? '';
 
-// Load .env variables (assuming standard autoload if needed, or manual parsing if simple)
+// 1. Basic Security & Config
 // .env loaded by utils.php
 require_once 'utils.php';
+require_once 'pine_transport.php';
 
 $irc_key = getEnvVar('IRC_KEY', 'default_insecure_key_please_change');
 
@@ -119,7 +120,7 @@ $response = withFileLock($irc_file, 'c+', function ($fp) use ($action, $token, $
 
             $retrieved_msg = $irc_data['initial_message'] ?? "User is waiting in the IRC.";
 
-            $sent = sendIRCInvite($irc_data['email'], $irc_data['user_name'], $retrieved_msg, $irc_id, $irc_data['admin_token'], true);
+            $sent = sendIRCPine($irc_data['email'], $irc_data['user_name'], $retrieved_msg, $irc_id, $irc_data['admin_token'], true);
 
             if ($sent)
                 $result = ['status' => 'success', 'message' => 'Invite resent'];

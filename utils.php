@@ -47,57 +47,5 @@ function decryptData($content, $key)
 
 // --- EMAIL HELPERS ---
 
-function sendIRCInvite($recipientEmail, $userName, $userMessage, $ircId, $adminToken, $resend = false)
-{
-    $mail = new PHPMailer(true);
-
-    try {
-        // Server settings
-        $mail->isSMTP();
-        $mail->Host = $_ENV['SMTP_HOST'];
-        $mail->SMTPAuth = true;
-        $mail->Username = $_ENV['SMTP_USER'];
-        $mail->Password = $_ENV['SMTP_PASS'];
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = $_ENV['SMTP_PORT'] ?? 587;
-
-        // Recipients
-        $mail->setFrom($_ENV['FROM_EMAIL'], $_ENV['FROM_NAME']);
-        $mail->addAddress($_ENV['TO_EMAIL']);
-        if (!empty($_ENV['TO_TEXT_EMAIL'])) {
-            $mail->addAddress($_ENV['TO_TEXT_EMAIL']);
-        }
-
-        // Content
-        $mail->isHTML(true);
-
-        $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http");
-        $host = $_SERVER['HTTP_HOST'];
-        $admin_url = "$protocol://$host/?irc_id=$ircId&token=$adminToken";
-
-        $subjectPrefix = $resend ? "[REMINDER] " : "";
-        $mail->Subject = $subjectPrefix . "[Website IRC Request] " . $userName;
-
-        $bodyIntro = $resend
-            ? "<h2 style='color: red;'>IRC Request REMINDER!</h2><p>The user is still waiting...</p>"
-            : "<h2>New IRC Request!</h2>";
-
-        $mail->Body = "
-            $bodyIntro
-            <p><strong>Name:</strong> {$userName}</p>
-            <p><strong>Email:</strong> $recipientEmail</p>
-            <p><strong>Message:</strong><br>$userMessage</p>
-            <p><a href='$admin_url' style='font-size: 18px; font-weight: bold; color: blue;'>CLICK HERE TO JOIN IRC</a></p>
-            <hr>
-            <small>If you do not reply, the session will expire.</small>
-        ";
-
-        $mail->AltBody = ($resend ? "REMINDER: " : "") . "IRC Request from {$userName}.\nLink: $admin_url";
-
-        $mail->send();
-        return true;
-    } catch (Exception $e) {
-        return false;
-    }
-}
+// --- EMAIL HELPERS MOVED TO mail_helper.php ---
 ?>
