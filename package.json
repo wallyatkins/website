@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && cp pine.php irc.php utils.php dist/",
+    "build": "tsc -b && vite build && cp pine.php irc.php utils.php pine_logic.php pine_transport.php dist/",
     "lint": "eslint .",
     "preview": "vite preview"
   },
