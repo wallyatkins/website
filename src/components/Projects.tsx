@@ -8,8 +8,14 @@ export const Projects: React.FC = () => {
     const lastDirection = useRef(0);
     const rubTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const handleRub = (e: React.MouseEvent) => {
-        const x = e.clientX;
+    const handleRub = (e: React.MouseEvent | React.TouchEvent) => {
+        let x: number;
+        if ('touches' in e) {
+            x = e.touches[0].clientX;
+        } else {
+            x = e.clientX;
+        }
+
         const delta = x - lastX.current;
         const direction = delta > 0 ? 1 : -1;
 
@@ -49,6 +55,7 @@ export const Projects: React.FC = () => {
                         <h3
                             className="project-name"
                             onMouseMove={handleRub}
+                            onTouchMove={handleRub}
                         >
                             Zoltar
                         </h3>

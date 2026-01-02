@@ -6,24 +6,50 @@ test.describe('Easter Eggs', () => {
         await page.goto('/');
     });
 
-    test('Creative Mode Trigger (Double Click and Rename)', async ({ page }) => {
+    test('Creative Mode Trigger (Drag and Drop)', async ({ page }) => {
         const aboutSection = page.locator('#about');
         await aboutSection.scrollIntoViewIfNeeded();
 
-        // The trigger text depends on mode, initial is "Logic & Art"
-        const trigger = page.locator('#theme-trigger');
-        await expect(trigger).toContainText('Logic & Art');
+        // Locators for the draggable words
+        const logicWord = page.locator('.trigger-logic');
+        const artWord = page.locator('.trigger-art');
 
-        await trigger.dblclick();
+        // Initial State: Logic & Art
+        await expect(logicWord).toBeVisible();
+        await expect(artWord).toBeVisible();
 
-        // Wait for transition/burn effect
+        // Get positions
+        const logicBox = await logicWord.boundingBox();
+        const artBox = await artWord.boundingBox();
+
+        if (!logicBox || !artBox) throw new Error('Trigger words not found');
+
+        // Verify Logic is to the left of Art initially
+        expect(logicBox.x).toBeLessThan(artBox.x);
+
+        // Perform Drag: Drag "Logic" (left) to the right (past "Art")
+        // We'll drag it by its width + gap + art width to be safe
+        await page.mouse.move(logicBox.x + logicBox.width / 2, logicBox.y + logicBox.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(artBox.x + artBox.width, logicBox.y + logicBox.height / 2, { steps: 10 });
+        await page.mouse.up();
+
+        // Wait for state change / animation
         await page.waitForTimeout(1000);
 
-        // Check body class
+        // Check body class for creative mode
         await expect(page.locator('body')).toHaveClass(/creative-mode/, { timeout: 5000 });
 
-        // Check text swap
-        await expect(trigger).toContainText('Art & Logic');
+        // Verify positions swapped: visible by text order check or just visual snapshot, 
+        // but physically in DOM they reorder because of the map in React
+        // Re-locate boxes
+        const logicBox2 = await logicWord.boundingBox();
+        const artBox2 = await artWord.boundingBox();
+
+        if (!logicBox2 || !artBox2) throw new Error('Trigger words not found after swap');
+
+        // New state: Art & Logic (Art should be to the left of Logic)
+        expect(artBox2.x).toBeLessThan(logicBox2.x);
     });
 
     test('Zoltar Trigger (Rubbing)', async ({ page }) => {

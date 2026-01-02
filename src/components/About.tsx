@@ -1,4 +1,5 @@
 import React from 'react';
+import { ThemeTrigger } from './ThemeTrigger';
 
 interface AboutProps {
     isCreativeMode: boolean;
@@ -28,14 +29,10 @@ export const About: React.FC<AboutProps> = ({ isCreativeMode, toggleCreativeMode
                     <div className="stat-item">
                         <h3>Foundation</h3>
                         <p>
-                            <span
-                                id="theme-trigger"
-                                style={{ display: 'inline-block', userSelect: 'none' }}
-                                onDoubleClick={toggleCreativeMode}
-                                className={isCreativeMode ? 'flip-horizontal' : ''}
-                            >
-                                {isCreativeMode ? "Art & Logic" : "Logic & Art"}
-                            </span>
+                            <ThemeTrigger
+                                isCreativeMode={isCreativeMode}
+                                onToggle={() => toggleCreativeMode({} as React.MouseEvent)}
+                            />
                         </p>
                     </div>
                     <div className="stat-item">
