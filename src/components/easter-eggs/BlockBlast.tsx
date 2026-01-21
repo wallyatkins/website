@@ -14,7 +14,7 @@ interface OptionBlock {
 }
 
 export const BlockBlast: React.FC = () => {
-    const { isGameUnlocked, closeGame } = useEasterEgg();
+    const { isGameUnlocked, returnToMenu } = useEasterEgg();
     const [grid, setGrid] = useState<(string | null)[][]>([]);
     const [score, setScore] = useState(0);
     const [options, setOptions] = useState<OptionBlock[]>([]);
@@ -277,7 +277,7 @@ export const BlockBlast: React.FC = () => {
 
     return (
         <div id="game-container">
-            <div id="game-close-btn" onClick={closeGame}>&times;</div>
+            <div id="game-close-btn" onClick={returnToMenu}>&times;</div>
             <div className="game-header">
                 <h3>Block Blast</h3>
                 <div className="score-box">Score: <span id="score">{score}</span></div>

@@ -8,7 +8,7 @@ const CANVAS_SIZE = 400; // 20x20 grid
 type Point = { x: number; y: number };
 
 export const Snake: React.FC = () => {
-    const { isGameUnlocked, activeGame, closeGame } = useEasterEgg();
+    const { isGameUnlocked, activeGame, returnToMenu } = useEasterEgg();
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [score, setScore] = useState(0);
     const [highScore, setHighScore] = useState(0);
@@ -50,7 +50,7 @@ export const Snake: React.FC = () => {
         setGameOver(false);
         setIsPaused(false);
         spawnFood();
-        startGameLoop();
+        // Loop will start automatically via useEffect when gameOver becomes false
     };
 
     const gameOverHandler = () => {
@@ -125,24 +125,29 @@ export const Snake: React.FC = () => {
         }
     };
 
-    const startGameLoop = () => {
-        if (gameLoopRef.current) clearInterval(gameLoopRef.current);
-        gameLoopRef.current = window.setInterval(() => {
-            update();
-            draw();
-        }, 100); // Speed 100ms
-    };
+    // Saved callback for game loop to access fresh state
+    const savedCallback = useRef<() => void>(() => { });
+
+    useEffect(() => {
+        savedCallback.current = update;
+    });
+
+    useEffect(() => {
+        if (isGameUnlocked && activeGame === 'SNAKE' && !gameOver && !isPaused) {
+            // Reset game state if starting fresh? No, resetGame handles that.
+            // Just start the loop
+            const tick = () => {
+                savedCallback.current();
+            }
+            const id = setInterval(tick, 100);
+            return () => clearInterval(id);
+        }
+    }, [isGameUnlocked, activeGame, gameOver, isPaused]);
 
     useEffect(() => {
         if (isGameUnlocked && activeGame === 'SNAKE') {
-            resetGame();
             // Initial Draw
             setTimeout(draw, 0);
-        } else {
-            if (gameLoopRef.current) clearInterval(gameLoopRef.current);
-        }
-        return () => {
-            if (gameLoopRef.current) clearInterval(gameLoopRef.current);
         }
     }, [isGameUnlocked, activeGame]);
 
@@ -202,7 +207,7 @@ export const Snake: React.FC = () => {
 
     return (
         <div id="snake-container">
-            <div id="game-close-btn" onClick={closeGame}>&times;</div>
+            <div id="game-close-btn" onClick={returnToMenu}>&times;</div>
 
             <div className="game-header">
                 <div className="score-box">SCORE: {score}</div>
@@ -226,7 +231,7 @@ export const Snake: React.FC = () => {
                     <h2>GAME OVER</h2>
                     <p>Final Score: {score}</p>
                     <button id="restart-btn" style={{ display: 'inline-block', marginTop: '1rem' }} onClick={resetGame}>Try Again</button>
-                    <button id="quit-btn" style={{ display: 'inline-block', marginTop: '1rem', marginLeft: '1rem' }} onClick={closeGame} className="restart-btn">Quit</button>
+                    <button id="quit-btn" style={{ display: 'inline-block', marginTop: '1rem', marginLeft: '1rem' }} onClick={returnToMenu} className="restart-btn">Quit</button>
                 </div>
             )}
 

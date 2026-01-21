@@ -12,6 +12,7 @@ interface EasterEggContextType {
     unlockGame: () => void;
     selectGame: (game: 'BLOCK_BLAST' | 'SNAKE') => void;
     closeGame: () => void;
+    returnToMenu: () => void;
     isFhqwhgadsActive: boolean;
     activateFhqwhgads: () => void;
     closeFhqwhgads: () => void;
@@ -47,6 +48,10 @@ export const EasterEggProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setActiveGame('NONE');
     };
 
+    const returnToMenu = () => {
+        setActiveGame('SELECT');
+    };
+
     const activateFhqwhgads = () => setIsFhqwhgadsActive(true);
     const closeFhqwhgads = () => setIsFhqwhgadsActive(false);
 
@@ -54,7 +59,7 @@ export const EasterEggProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         <EasterEggContext.Provider value={{
             isZoltarActive, activateZoltar, closeZoltar,
             isDPadActive, activateDPad, closeDPad,
-            isGameUnlocked, activeGame, unlockGame, selectGame, closeGame,
+            isGameUnlocked, activeGame, unlockGame, selectGame, closeGame, returnToMenu,
             isFhqwhgadsActive, activateFhqwhgads, closeFhqwhgads
         }}>
             {children}

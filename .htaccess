@@ -1,0 +1,13 @@
+RewriteEngine On
+
+# Force HTTPS
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Optional: Strict Transport Security (HSTS)
+# Uncomment the following line only if you are sure you want to force HTTPS for the next year
+# Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+
+# Handle Authorization Header
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
