@@ -112,7 +112,20 @@ export const BlockBlast: React.FC = () => {
         dragOffset.current = { x: clientX - rect.left, y: clientY - rect.top };
 
         target.classList.add('dragging');
-        target.style.width = `${rect.width}px`;
+
+        // Calculate target width based on game grid cells
+        const gridCell = document.querySelector('.grid-cell');
+        if (gridCell) {
+            const cellRect = gridCell.getBoundingClientRect();
+            // Use 4px gap as defined in CSS #game-grid gap: 4px
+            const GAP = 4;
+            const cols = block.shape[0].length;
+            const newWidth = (cols * cellRect.width) + ((cols - 1) * GAP);
+            target.style.width = `${newWidth}px`;
+        } else {
+            // Fallback if grid not found (shouldn't happen)
+            target.style.width = `${rect.width}px`;
+        }
 
         window.addEventListener('mousemove', handleDragMove);
         window.addEventListener('touchmove', handleDragMove, { passive: false });

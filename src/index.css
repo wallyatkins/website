@@ -711,8 +711,13 @@ section {
     pointer-events: none;
     z-index: 300;
     opacity: 0.9;
-    transform: scale(1.2);
-    /* Offset handled in JS now, but scale helps visibility */
+    /* Removed transform: scale(1.2) to allow precise sizing */
+}
+
+.option-block.dragging .block-cell {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 1;
 }
 
 .block-cell {
