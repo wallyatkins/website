@@ -18,6 +18,9 @@ export const GameSelection: React.FC = () => {
                     <button onClick={() => selectGame('SNAKE')} className="game-btn">
                         Snake
                     </button>
+                    <button onClick={() => selectGame('GEOMETRY_DASH')} className="game-btn" style={{ borderColor: '#00f3ff', color: '#00f3ff' }}>
+                        GeoDash
+                    </button>
                 </div>
             </div>
             <style>{`

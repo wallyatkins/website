@@ -1,9 +1,11 @@
-import React, { useRef } from 'react';
+import React, { useRef, Suspense } from 'react';
 import { useEasterEgg } from '../context/EasterEggContext';
 import { DPad } from './easter-eggs/DPad';
-import { BlockBlast } from './easter-eggs/BlockBlast';
 import { GameSelection } from './easter-eggs/GameSelection';
-import { Snake } from './easter-eggs/Snake';
+
+const BlockBlast = React.lazy(() => import('./easter-eggs/BlockBlast').then(module => ({ default: module.BlockBlast })));
+const Snake = React.lazy(() => import('./easter-eggs/Snake').then(module => ({ default: module.Snake })));
+const GeometryDash = React.lazy(() => import('./easter-eggs/GeometryDash').then(module => ({ default: module.GeometryDash })));
 
 export const CTA: React.FC = () => {
     const { activateDPad, isDPadActive, isGameUnlocked } = useEasterEgg();
@@ -39,8 +41,12 @@ export const CTA: React.FC = () => {
             <DPad />
 
             <GameSelection />
-            <BlockBlast />
-            <Snake />
+
+            <Suspense fallback={<div style={{ position: 'fixed', top: 0, left: 0, zIndex: 9999 }}></div>}>
+                <BlockBlast />
+                <Snake />
+                <GeometryDash />
+            </Suspense>
         </section>
     );
 };

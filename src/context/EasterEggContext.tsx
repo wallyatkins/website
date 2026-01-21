@@ -8,9 +8,9 @@ interface EasterEggContextType {
     activateDPad: () => void;
     closeDPad: () => void;
     isGameUnlocked: boolean;
-    activeGame: 'NONE' | 'SELECT' | 'BLOCK_BLAST' | 'SNAKE';
+    activeGame: 'NONE' | 'SELECT' | 'BLOCK_BLAST' | 'SNAKE' | 'GEOMETRY_DASH';
     unlockGame: () => void;
-    selectGame: (game: 'BLOCK_BLAST' | 'SNAKE') => void;
+    selectGame: (game: 'BLOCK_BLAST' | 'SNAKE' | 'GEOMETRY_DASH') => void;
     closeGame: () => void;
     returnToMenu: () => void;
     isFhqwhgadsActive: boolean;
@@ -24,7 +24,7 @@ export const EasterEggProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const [isZoltarActive, setIsZoltarActive] = useState(false);
     const [isDPadActive, setIsDPadActive] = useState(false);
     const [isGameUnlocked, setIsGameUnlocked] = useState(false);
-    const [activeGame, setActiveGame] = useState<'NONE' | 'SELECT' | 'BLOCK_BLAST' | 'SNAKE'>('NONE');
+    const [activeGame, setActiveGame] = useState<'NONE' | 'SELECT' | 'BLOCK_BLAST' | 'SNAKE' | 'GEOMETRY_DASH'>('NONE');
     const [isFhqwhgadsActive, setIsFhqwhgadsActive] = useState(false);
 
     const activateZoltar = () => setIsZoltarActive(true);
@@ -39,7 +39,7 @@ export const EasterEggProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setActiveGame('SELECT');
     };
 
-    const selectGame = (game: 'BLOCK_BLAST' | 'SNAKE') => {
+    const selectGame = (game: 'BLOCK_BLAST' | 'SNAKE' | 'GEOMETRY_DASH') => {
         setActiveGame(game);
     };
 
