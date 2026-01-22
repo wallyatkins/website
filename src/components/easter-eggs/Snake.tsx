@@ -206,12 +206,12 @@ export const Snake: React.FC = () => {
     if (!isGameUnlocked || activeGame !== 'SNAKE') return null;
 
     return (
-        <div id="snake-container">
-            <div id="game-close-btn" onClick={returnToMenu}>&times;</div>
+        <div className="ee-container" id="snake-container">
+            <div className="ee-close-btn" onClick={returnToMenu}>&times;</div>
 
-            <div className="game-header">
-                <div className="score-box">SCORE: {score}</div>
-                <div className="score-box">HIGH: {highScore}</div>
+            <div className="ee-header">
+                <div className="ee-score-box">SCORE: {score}</div>
+                <div className="ee-score-box">HIGH: {highScore}</div>
             </div>
 
             <canvas
@@ -220,20 +220,21 @@ export const Snake: React.FC = () => {
                 height={CANVAS_SIZE}
                 id="snake-canvas"
             />
-            <div className="controls-hint">Use WASD or Arrow Keys</div>
+            <div className="controls-hint" style={{ fontFamily: '"Press Start 2P", monospace', fontSize: '0.8rem', color: '#888' }}>Use WASD or Arrow Keys</div>
 
             <div className="snake-dpad-wrapper">
                 <DirectionalPad onPress={handleDirection} showHint={false} className="snake-dpad" />
             </div>
 
             {gameOver && (
-                <div id="game-over-msg" style={{ display: 'block' }}>
+                <div className="ee-overlay" style={{ display: 'flex' }}>
                     <h2>GAME OVER</h2>
-                    <p>Final Score: {score}</p>
-                    <button id="restart-btn" style={{ display: 'inline-block', marginTop: '1rem' }} onClick={resetGame}>Try Again</button>
-                    <button id="quit-btn" style={{ display: 'inline-block', marginTop: '1rem', marginLeft: '1rem' }} onClick={returnToMenu} className="restart-btn">Quit</button>
+                    <p>SCORE: {score}</p>
+                    <button className="ee-btn" onClick={resetGame}>TRY AGAIN</button>
+                    <button className="ee-btn" style={{ marginTop: '1rem' }} onClick={returnToMenu}>QUIT</button>
                 </div>
             )}
+
 
             <style>{`
                 #snake-container {

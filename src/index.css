@@ -997,6 +997,7 @@ section {
         transform: translateY(0);
     }
 }
+
 /* Art Mode - The Big Shift */
 body.art-mode {
     --bg-color: #2a0a2a;
@@ -1007,8 +1008,8 @@ body.art-mode {
     --font-main: 'Indie Flower', cursive;
 }
 
-body.creative-mode h1, 
-body.creative-mode h2, 
+body.creative-mode h1,
+body.creative-mode h2,
 body.creative-mode h3 {
     font-family: 'Bangers', cursive;
     letter-spacing: 0.1em;
@@ -1072,25 +1073,68 @@ body.creative-mode .submit-btn:hover {
     animation: floatAround 10s infinite linear;
 }
 
-.unicorn { top: 20%; left: -10%; animation-duration: 15s; }
-.unicorn-2 { bottom: 30%; right: -10%; animation-duration: 12s; animation-direction: reverse; }
-.rainbow { top: 10%; right: 20%; animation: pulse 3s infinite ease-in-out; }
-.star { top: 50%; left: 50%; animation: twinkle 2s infinite alternate; }
+.unicorn {
+    top: 20%;
+    left: -10%;
+    animation-duration: 15s;
+}
+
+.unicorn-2 {
+    bottom: 30%;
+    right: -10%;
+    animation-duration: 12s;
+    animation-direction: reverse;
+}
+
+.rainbow {
+    top: 10%;
+    right: 20%;
+    animation: pulse 3s infinite ease-in-out;
+}
+
+.star {
+    top: 50%;
+    left: 50%;
+    animation: twinkle 2s infinite alternate;
+}
 
 @keyframes floatAround {
-    0% { transform: translateX(0) translateY(0) rotate(0deg); }
-    100% { transform: translateX(120vw) translateY(50px) rotate(360deg); }
+    0% {
+        transform: translateX(0) translateY(0) rotate(0deg);
+    }
+
+    100% {
+        transform: translateX(120vw) translateY(50px) rotate(360deg);
+    }
 }
 
 @keyframes pulse {
-    0% { transform: scale(1); opacity: 0.5; }
-    50% { transform: scale(1.2); opacity: 1; }
-    100% { transform: scale(1); opacity: 0.5; }
+    0% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+
+    50% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
 }
 
 @keyframes twinkle {
-    0% { opacity: 0.3; transform: scale(0.8); }
-    100% { opacity: 1; transform: scale(1.2) rotate(45deg); }
+    0% {
+        opacity: 0.3;
+        transform: scale(0.8);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1.2) rotate(45deg);
+    }
 }
 
 /* Burn Effect */
@@ -1107,9 +1151,18 @@ body.creative-mode .submit-btn:hover {
 }
 
 @keyframes burnOut {
-    0% { background: radial-gradient(circle at var(--click-x) var(--click-y), transparent 0%, #000 0%); }
-    50% { background: radial-gradient(circle at var(--click-x) var(--click-y), transparent 150%, #000 150%); }
-    100% { background: radial-gradient(circle at var(--click-x) var(--click-y), transparent 300%, transparent 300%); opacity: 0; }
+    0% {
+        background: radial-gradient(circle at var(--click-x) var(--click-y), transparent 0%, #000 0%);
+    }
+
+    50% {
+        background: radial-gradient(circle at var(--click-x) var(--click-y), transparent 150%, #000 150%);
+    }
+
+    100% {
+        background: radial-gradient(circle at var(--click-x) var(--click-y), transparent 300%, transparent 300%);
+        opacity: 0;
+    }
 }
 
 /* Chat Easter Egg */
@@ -1136,7 +1189,7 @@ body.creative-mode .submit-btn:hover {
     border-radius: 12px;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     overflow: hidden;
 }
 
@@ -1238,7 +1291,7 @@ body.creative-mode .submit-btn:hover {
 
 .bubble-time {
     font-size: 0.7rem;
-    color: rgba(255,255,255,0.4);
+    color: rgba(255, 255, 255, 0.4);
     text-align: right;
     margin-top: 4px;
 }
@@ -1313,7 +1366,8 @@ body.creative-mode .submit-btn:hover {
     top: 0;
     left: 0;
     width: 100vw;
-    height: 100dvh; /* Dynamic viewport height for mobile browsers */
+    height: 100dvh;
+    /* Dynamic viewport height for mobile browsers */
     z-index: 9999;
     background: var(--bg-color, #1a1a1a);
     display: flex;
@@ -1330,7 +1384,8 @@ body.creative-mode .submit-btn:hover {
 }
 
 .chat-input-area {
-    padding: 15px; /* Ensure spacing on small screens */
+    padding: 15px;
+    /* Ensure spacing on small screens */
     background: var(--bg-secondary, #2a2a2a);
 }
 
@@ -1357,7 +1412,124 @@ body.creative-mode .submit-btn:hover {
     color: white;
 }
 
-.status-dot.orange {
-    background-color: orange;
-    box-shadow: 0 0 5px orange;
+/* Shared Easter Egg UI */
+.ee-font {
+    font-family: 'Press Start 2P', monospace;
+    text-transform: uppercase;
+}
+
+.ee-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #0c0c0c;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    animation: fadeIn 0.5s ease;
+}
+
+.ee-header {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 500px;
+    align-items: center;
+    color: #fff;
+    padding: 0 1rem;
+}
+
+.ee-header h3 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1.2rem;
+    color: #fff;
+    text-shadow: 2px 2px 0 #333;
+}
+
+.ee-score-box {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.9rem;
+    background: #222;
+    padding: 0.8rem 1.2rem;
+    border-radius: 8px;
+    border: 2px solid #444;
+    color: #00f3ff;
+}
+
+.ee-btn {
+    background: #333;
+    color: #fff;
+    border: 2px solid #555;
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    cursor: pointer;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    transition: all 0.2s;
+}
+
+.ee-btn:hover {
+    background: #fff;
+    color: #000;
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+.ee-close-btn {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    font-size: 3rem;
+    color: #fff;
+    cursor: pointer;
+    line-height: 1;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    z-index: 201;
+    font-family: sans-serif;
+    /* Keep X simple */
+}
+
+.ee-close-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.ee-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.95);
+    padding: 3rem;
+    border-radius: 16px;
+    text-align: center;
+    z-index: 400;
+    border: 4px solid #fff;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    min-width: 300px;
+}
+
+.ee-overlay h2 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 2rem;
+    color: #ff0055;
+    margin-bottom: 0.5rem;
+    text-shadow: 3px 3px 0 #333;
+}
+
+.ee-overlay p {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1rem;
+    color: #fff;
+    margin-bottom: 1rem;
 }

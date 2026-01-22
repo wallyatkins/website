@@ -276,11 +276,11 @@ export const BlockBlast: React.FC = () => {
     if (!isGameUnlocked) return null;
 
     return (
-        <div id="game-container">
-            <div id="game-close-btn" onClick={returnToMenu}>&times;</div>
-            <div className="game-header">
-                <h3>Block Blast</h3>
-                <div className="score-box">Score: <span id="score">{score}</span></div>
+        <div className="ee-container" id="game-container">
+            <div className="ee-close-btn" onClick={returnToMenu}>&times;</div>
+            <div className="ee-header">
+                <h3>BLOCK BLAST</h3>
+                <div className="ee-score-box">SCORE: {score}</div>
             </div>
 
             <div id="game-grid">
@@ -320,9 +320,11 @@ export const BlockBlast: React.FC = () => {
             </div>
 
             {gameOver && (
-                <div id="game-over-msg" style={{ display: 'block' }}>
-                    <h2>Game Over</h2>
-                    <button id="restart-btn" style={{ display: 'block' }} onClick={initGame}>Play Again</button>
+                <div className="ee-overlay" style={{ display: 'flex' }}>
+                    <h2>GAME OVER</h2>
+                    <p>SCORE: {score}</p>
+                    <button className="ee-btn" onClick={initGame}>TRY AGAIN</button>
+                    <button className="ee-btn" style={{ marginTop: '1rem' }} onClick={returnToMenu}>QUIT</button>
                 </div>
             )}
         </div>
