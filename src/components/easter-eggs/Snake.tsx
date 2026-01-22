@@ -142,7 +142,7 @@ export const Snake: React.FC = () => {
             const id = setInterval(tick, 100);
             return () => clearInterval(id);
         }
-    }, [isGameUnlocked, activeGame, gameOver, isPaused]);
+    }, [isGameUnlocked, activeGame, gameOver, isPaused]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         if (isGameUnlocked && activeGame === 'SNAKE') {

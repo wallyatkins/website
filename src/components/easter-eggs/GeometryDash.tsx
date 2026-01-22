@@ -116,7 +116,6 @@ export const GeometryDash: React.FC = () => {
         }
 
         let nextY = player.current.y + player.current.dy * deltaTime;
-        let nextX = 100 + BLOCK_SIZE; // Right edge of player
 
         // Ground Collision
         if (nextY >= groundY - BLOCK_SIZE) {
@@ -367,6 +366,7 @@ export const GeometryDash: React.FC = () => {
             cancelAnimationFrame(frameRef.current);
         }
         return () => cancelAnimationFrame(frameRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isGameUnlocked, activeGame]);
 
     useEffect(() => {
@@ -404,6 +404,7 @@ export const GeometryDash: React.FC = () => {
             window.removeEventListener('mousedown', handleInput);
             window.removeEventListener('touchstart', handleInput);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeGame, gameStatus]);
 
 
