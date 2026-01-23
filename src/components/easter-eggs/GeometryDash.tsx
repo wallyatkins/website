@@ -1,22 +1,26 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useEasterEgg } from '../../context/EasterEggContext';
+import { level1 } from './levels/level1';
+import { level2 } from './levels/level2';
+import type { LevelData, LevelObstacle } from './levels/types';
 
 const GRAVITY = 0.6;
 const JUMP_FORCE = -11; // Slightly stronger jump for platforms
 const BLOCK_SIZE = 30;
 
 // Level Configuration
-const LEVELS = [
-    { id: 1, speed: 5, length: 1000, color: '#00f3ff' }, // Easy
-    { id: 2, speed: 6, length: 1500, color: '#00ffaa' },
-    { id: 3, speed: 7, length: 2000, color: '#aaff00' },
-    { id: 4, speed: 8, length: 2500, color: '#ffff00' }, // Platforms start
-    { id: 5, speed: 9, length: 3000, color: '#ffaa00' },
-    { id: 6, speed: 10, length: 3500, color: '#ff0055' },
-    { id: 7, speed: 11, length: 4000, color: '#ff00aa' },
-    { id: 8, speed: 12, length: 4500, color: '#aa00ff' }, // Hard
-    { id: 9, speed: 13, length: 5000, color: '#5500ff' },
-    { id: 10, speed: 14, length: 6000, color: '#ffffff' } // Insane
+const LEVELS: LevelData[] = [
+    level1,
+    level2,
+    // Fallback for higher levels if needed, or just loop/cap
+    { ...level1, id: 3, speed: 9, color: '#aaff00' }, 
+    { ...level2, id: 4, speed: 10, color: '#ffff00' },
+    { ...level1, id: 5, speed: 11, color: '#ffaa00' },
+    { ...level2, id: 6, speed: 12, color: '#ff0055' },
+    { ...level1, id: 7, speed: 13, color: '#ff00aa' },
+    { ...level2, id: 8, speed: 14, color: '#aa00ff' },
+    { ...level1, id: 9, speed: 15, color: '#5500ff' },
+    { ...level2, id: 10, speed: 16, color: '#ffffff' }
 ];
 
 export const GeometryDash: React.FC = () => {
@@ -24,32 +28,79 @@ export const GeometryDash: React.FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [score, setScore] = useState(0);
     const [gameStatus, setGameStatus] = useState<'PLAYING' | 'GAME_OVER' | 'LEVEL_COMPLETE'>('PLAYING');
+    const gameStatusRef = useRef<'PLAYING' | 'GAME_OVER' | 'LEVEL_COMPLETE'>('PLAYING');
     const [level, setLevel] = useState(1);
     const [maxLevel, setMaxLevel] = useState(1);
+    const [attempts, setAttempts] = useState(1);
+    const pulseRef = useRef(0);
+    const shakeRef = useRef(0);
 
     // Game State
-    const player = useRef({ y: 0, dy: 0, grounded: false, rotation: 0, onPlatform: false });
-    const obstacles = useRef<{ x: number, type: 'spike' | 'block' | 'platform' | 'finish', w: number, h: number, y?: number }[]>([]);
+    const player = useRef({ 
+        y: 0, 
+        dy: 0, 
+        grounded: false, 
+        rotation: 0, 
+        onPlatform: false,
+        trail: [] as { x: number, y: number }[],
+        mode: 'CUBE' as 'CUBE' | 'SHIP'
+    });
+    // Use the type from types.ts, adapted for internal state if needed
+    const obstacles = useRef<LevelObstacle[]>([]); 
     const particles = useRef<{ x: number, y: number, vx: number, vy: number, life: number, color: string }[]>([]);
+    const backgroundElements = useRef<{ x: number, y: number, size: number, speed: number }[]>([]);
 
     const frameRef = useRef<number>(0);
     const lastTime = useRef<number>(0);
     const distanceRef = useRef(0);
+    const isJumpPressed = useRef(false);
 
     // Init Max Level
     useEffect(() => {
         const saved = localStorage.getItem('geodash-maxlevel');
         if (saved) setMaxLevel(parseInt(saved, 10));
+
+        // Init background stars/elements
+        backgroundElements.current = Array.from({ length: 20 }, () => ({
+            x: Math.random() * 800,
+            y: Math.random() * 300,
+            size: 2 + Math.random() * 4,
+            speed: 0.5 + Math.random() * 1
+        }));
     }, []);
 
     const resetGame = (lvl: number = level) => {
         const groundY = 400 - 50;
-        player.current = { y: groundY - BLOCK_SIZE, dy: 0, grounded: true, rotation: 0, onPlatform: false };
-        obstacles.current = [];
+        setAttempts(prev => lvl === level ? prev + 1 : 1);
+        pulseRef.current = 0;
+        player.current = { 
+            y: groundY - BLOCK_SIZE, 
+            dy: 0, 
+            grounded: true, 
+            rotation: 0, 
+            onPlatform: false,
+            trail: [],
+            mode: 'CUBE'
+        };
+        
+        // Load Level Obstacles (Deep Copy)
+        const currentLevelConfig = LEVELS[lvl - 1] || LEVELS[0];
+        obstacles.current = currentLevelConfig.obstacles.map(o => ({ ...o }));
+        
+        // Add Finish Line
+        obstacles.current.push({
+            x: currentLevelConfig.length,
+            type: 'finish',
+            w: 50,
+            h: 400,
+            y: 0
+        });
+
         particles.current = [];
         distanceRef.current = 0;
         setScore(0);
         setGameStatus('PLAYING');
+        gameStatusRef.current = 'PLAYING';
         setLevel(lvl);
         lastTime.current = performance.now();
 
@@ -92,10 +143,51 @@ export const GeometryDash: React.FC = () => {
         const h = canvasRef.current.height;
         const groundY = h - 50;
         const currentLevelConfig = LEVELS[level - 1];
+        const isPlaying = gameStatusRef.current === 'PLAYING';
+        pulseRef.current = (pulseRef.current + 0.05 * deltaTime) % (Math.PI * 2);
+        const pulse = Math.sin(pulseRef.current) * 0.5 + 0.5;
 
-        // Clear
+        // --- Shake ---
+        ctx.save();
+        if (shakeRef.current > 0) {
+            const sx = (Math.random() - 0.5) * shakeRef.current;
+            const sy = (Math.random() - 0.5) * shakeRef.current;
+            ctx.translate(sx, sy);
+            shakeRef.current -= deltaTime;
+        }
+
+        // --- Background & Grid ---
         ctx.fillStyle = '#0a0a0a';
         ctx.fillRect(0, 0, w, h);
+
+        // Pulsing background color tint
+        ctx.fillStyle = `${currentLevelConfig.color}${Math.floor(pulse * 20).toString(16).padStart(2, '0')}`;
+        ctx.fillRect(0, 0, w, h);
+
+        // Draw Parallax Stars
+        backgroundElements.current.forEach(el => {
+            el.x -= el.speed * deltaTime;
+            if (el.x < -10) el.x = w + 10;
+            ctx.fillStyle = `${currentLevelConfig.color}44`;
+            ctx.fillRect(el.x, el.y, el.size, el.size);
+        });
+
+        // Draw Grid
+        const gridOffset = (distanceRef.current * 0.5) % 100;
+        ctx.strokeStyle = `${currentLevelConfig.color}22`;
+        ctx.lineWidth = 1;
+        for (let x = -gridOffset; x < w; x += 100) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, groundY);
+            ctx.stroke();
+        }
+        for (let y = 0; y < groundY; y += 100) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(w, y);
+            ctx.stroke();
+        }
 
         // Draw Ground
         ctx.fillStyle = currentLevelConfig.color;
@@ -104,99 +196,90 @@ export const GeometryDash: React.FC = () => {
         ctx.fillRect(0, groundY, w, 50);
         ctx.shadowBlur = 0;
 
+        // Ground secondary layer
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.fillRect(0, groundY + 5, w, 45);
+
         // --- Physics ---
-        if (!player.current.grounded) {
-            player.current.dy += GRAVITY * deltaTime;
-            player.current.rotation += 5 * deltaTime;
-        } else {
-            // Snap rotation to nearest 90
-            const nearest90 = Math.round(player.current.rotation / 90) * 90;
-            player.current.rotation += (nearest90 - player.current.rotation) * 0.2;
-            player.current.dy = 0;
+        if (player.current.mode === 'CUBE') {
+            if (isJumpPressed.current && player.current.grounded) {
+                jump();
+            }
+            if (!player.current.grounded) {
+                player.current.dy += GRAVITY * deltaTime;
+                player.current.rotation += 6 * deltaTime;
+            } else {
+                const nearest90 = Math.round(player.current.rotation / 90) * 90;
+                player.current.rotation += (nearest90 - player.current.rotation) * 0.3;
+                player.current.dy = 0;
+            }
+        } else if (player.current.mode === 'SHIP') {
+            player.current.grounded = false; // Never grounded in ship mode unless hitting floor/ceiling
+            const thrust = isJumpPressed.current ? -0.8 : 0.4;
+            player.current.dy += thrust * deltaTime;
+            // Cap speed
+            player.current.dy = Math.max(Math.min(player.current.dy, 8), -8);
+            // Rotate based on velocity
+            player.current.rotation = player.current.dy * 5;
         }
 
         let nextY = player.current.y + player.current.dy * deltaTime;
 
-        // Ground Collision
+        // Ground/Ceiling Collision
         if (nextY >= groundY - BLOCK_SIZE) {
             nextY = groundY - BLOCK_SIZE;
             player.current.grounded = true;
             player.current.onPlatform = false;
+            if (player.current.mode === 'SHIP') player.current.dy = 0;
+        }
+        if (nextY <= 0) {
+            nextY = 0;
+            player.current.dy = 0;
+            if (player.current.mode === 'SHIP') {
+                // In ship mode hitting ceiling is death usually, but let's be lenient or check for blocks
+            }
+        }
+
+        // Update Trail
+        if (isPlaying) {
+            player.current.trail.push({ x: 100 + BLOCK_SIZE / 2, y: player.current.y + BLOCK_SIZE / 2 });
+            if (player.current.trail.length > 20) player.current.trail.shift();
         }
 
         // --- Obstacle Spawning ---
-        // Only spawn if we haven't spawned the finish line yet
-        const hasFinish = obstacles.current.some(o => o.type === 'finish');
-
-        if (!hasFinish) {
-            if (distanceRef.current >= currentLevelConfig.length) {
-                // Spawn Finish Line
-                obstacles.current.push({
-                    x: w + 500, // Give some buffer
-                    type: 'finish',
-                    w: 50,
-                    h: 400 // Full height portal
-                });
-            } else if (Math.random() < (0.02 + level * 0.002) * deltaTime && obstacles.current.length < 5) { // More obstacles on higher levels
-                const minGap = 200 + (14 - currentLevelConfig.speed) * 10;
-                const lastObs = obstacles.current[obstacles.current.length - 1];
-
-                if (!lastObs || (w - lastObs.x > minGap)) {
-                    const r = Math.random();
-                    // Platforms start at level 4
-                    if (level >= 4 && r > 0.7) {
-                        // Spawn Platform
-                        const height = BLOCK_SIZE * 3; // Height from ground
-                        obstacles.current.push({
-                            x: w,
-                            type: 'platform',
-                            w: BLOCK_SIZE * 3, // Wide platform
-                            h: BLOCK_SIZE,
-                            y: groundY - height
-                        });
-                    } else {
-                        // Spike or Block
-                        obstacles.current.push({
-                            x: w,
-                            type: Math.random() > 0.5 ? 'spike' : 'block',
-                            w: BLOCK_SIZE,
-                            h: BLOCK_SIZE,
-                            y: groundY // Ground obstacles sit on ground
-                        });
-                    }
-                }
-            }
-        }
+        // (Removed: obstacles are now pre-loaded from level files)
 
         // --- Collision Loop ---
         let onAnyPlatform = false;
         let crashed = false;
         let finished = false;
 
-        // Player Bounds
         const pLeft = 100;
         const pRight = 100 + BLOCK_SIZE;
         const pTop = nextY;
         const pBottom = nextY + BLOCK_SIZE;
-        const pPrevBottom = player.current.y + BLOCK_SIZE; // For checking if we came from above
+        const pPrevBottom = player.current.y + BLOCK_SIZE;
 
         obstacles.current.forEach(obs => {
-            // Update Position first
-            obs.x -= currentLevelConfig.speed * deltaTime;
+            if (isPlaying) {
+                obs.x -= currentLevelConfig.speed * deltaTime;
+            }
 
-            // Obs Bounds
-            // For spikes/blocks y is implicit groundY usually, unless platform which has explicit y
             const obsY = obs.y !== undefined ? obs.y : (groundY - obs.h);
             const obsRight = obs.x + obs.w;
             const obsLeft = obs.x;
-            const obsTop = (obs.type === 'spike') ? obsY + 10 : obsY; // Spikes hit box is smaller? 
+            const obsTop = (obs.type === 'spike') ? obsY + 8 : obsY;
             const obsBottom = obsY + obs.h;
 
-            // AABB Check
-            if (pRight > obsLeft + 5 && pLeft < obsRight - 5 && pBottom > obsTop + 5 && pTop < obsBottom - 5) {
+            if (isPlaying && pRight > obsLeft + 5 && pLeft < obsRight - 5 && pBottom > obsTop + 5 && pTop < obsBottom - 5) {
 
                 if (obs.type === 'finish') {
                     finished = true;
+                    return;
+                }
+
+                if (obs.type === 'portal') {
+                    player.current.mode = obs.portalType!;
                     return;
                 }
 
@@ -205,20 +288,14 @@ export const GeometryDash: React.FC = () => {
                     return;
                 }
 
-                // Block or Platform Logic
                 if (obs.type === 'block' || obs.type === 'platform') {
-                    // Check if landing on top
-                    // We must have been ABOVE the obstacle previously AND falling (dy >= 0)
-                    // And we are somewhat within horizontal bounds
-                    if (pPrevBottom <= obsTop + 10 && player.current.dy >= 0) {
-                        // LANDED
+                    if (pPrevBottom <= obsTop + 15 && player.current.dy >= 0) {
                         nextY = obsTop - BLOCK_SIZE;
                         player.current.grounded = true;
-                        player.current.onPlatform = true; // Mark as on platform so we don't fall immediately
+                        player.current.onPlatform = true;
                         onAnyPlatform = true;
                         player.current.dy = 0;
                     } else {
-                        // HIT SIDE / BOTTOM
                         crashed = true;
                     }
                 }
@@ -230,13 +307,18 @@ export const GeometryDash: React.FC = () => {
 
         if (crashed) {
             setGameStatus('GAME_OVER');
+            gameStatusRef.current = 'GAME_OVER';
+            shakeRef.current = 20;
             spawnParticles(100, player.current.y, '#ff0055', 30);
             cancelAnimationFrame(frameRef.current);
+            // Still need to draw one last frame with shake or handle it in a way it shows
+            frameRef.current = requestAnimationFrame(gameLoop);
             return;
         }
 
         if (finished) {
             setGameStatus('LEVEL_COMPLETE');
+            gameStatusRef.current = 'LEVEL_COMPLETE';
             spawnParticles(100, player.current.y, '#00ff00', 50);
             cancelAnimationFrame(frameRef.current);
             return;
@@ -252,35 +334,109 @@ export const GeometryDash: React.FC = () => {
 
         // --- Drawing ---
 
+        // Progress Bar
+        const progress = Math.min(distanceRef.current / currentLevelConfig.length, 1);
+        ctx.fillStyle = '#222';
+        ctx.fillRect(w / 4, 20, w / 2, 10);
+        ctx.fillStyle = currentLevelConfig.color;
+        ctx.shadowColor = currentLevelConfig.color;
+        ctx.shadowBlur = 10;
+        ctx.fillRect(w / 4, 20, (w / 2) * progress, 10);
+        ctx.shadowBlur = 0;
+
+        // Trail
+        if (player.current.trail.length > 1) {
+            ctx.beginPath();
+            ctx.strokeStyle = `${currentLevelConfig.color}88`;
+            ctx.shadowColor = currentLevelConfig.color;
+            ctx.shadowBlur = 10;
+            ctx.lineWidth = 12;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.moveTo(player.current.trail[0].x, player.current.trail[0].y);
+            for (let i = 1; i < player.current.trail.length; i++) {
+                // Adjust trail x based on speed to make it look like it's staying in place
+                const trailX = player.current.trail[i].x - (player.current.trail.length - i) * currentLevelConfig.speed * 0.2;
+                ctx.lineTo(trailX, player.current.trail[i].y);
+            }
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+
         // Player (Cute Face)
         ctx.save();
         ctx.translate(100 + BLOCK_SIZE / 2, player.current.y + BLOCK_SIZE / 2);
         ctx.rotate((player.current.rotation * Math.PI) / 180);
 
-        // Body
-        ctx.fillStyle = '#ff0055';
-        ctx.shadowColor = '#ff0055';
-        ctx.shadowBlur = 10;
-        ctx.fillRect(-BLOCK_SIZE / 2, -BLOCK_SIZE / 2, BLOCK_SIZE, BLOCK_SIZE);
-        ctx.shadowBlur = 0;
+        if (player.current.mode === 'CUBE') {
+            // Body
+            ctx.fillStyle = '#ff0055';
+            ctx.shadowColor = '#ff0055';
+            ctx.shadowBlur = 10;
+            ctx.fillRect(-BLOCK_SIZE / 2, -BLOCK_SIZE / 2, BLOCK_SIZE, BLOCK_SIZE);
+            ctx.shadowBlur = 0;
 
-        // Face (Eyes)
-        ctx.fillStyle = '#fff';
-        // Left Eye
-        ctx.beginPath();
-        ctx.arc(-5, -5, 3, 0, Math.PI * 2);
-        ctx.fill();
-        // Right Eye
-        ctx.beginPath();
-        ctx.arc(8, -5, 3, 0, Math.PI * 2);
-        ctx.fill();
+            // Face (Eyes)
+            ctx.fillStyle = '#fff';
+            // Left Eye
+            ctx.beginPath();
+            ctx.arc(-5, -5, 3, 0, Math.PI * 2);
+            ctx.fill();
+            // Right Eye
+            ctx.beginPath();
+            ctx.arc(8, -5, 3, 0, Math.PI * 2);
+            ctx.fill();
 
-        // Mouth (Smile)
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(1.5, 2, 6, 0.2, Math.PI - 0.2);
-        ctx.stroke();
+            // Mouth (Smile)
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(1.5, 2, 6, 0.2, Math.PI - 0.2);
+            ctx.stroke();
+        } else {
+            // Ship Vehicle
+            ctx.fillStyle = '#ff0055';
+            ctx.shadowColor = '#ff0055';
+            ctx.shadowBlur = 10;
+            
+            // Main hull
+            ctx.beginPath();
+            ctx.moveTo(-15, 0);
+            ctx.lineTo(15, -5);
+            ctx.lineTo(15, 5);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Wings
+            ctx.beginPath();
+            ctx.moveTo(-10, 0);
+            ctx.lineTo(-20, -15);
+            ctx.lineTo(0, -5);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(-10, 0);
+            ctx.lineTo(-20, 15);
+            ctx.lineTo(0, 5);
+            ctx.fill();
+            
+            // Cockpit
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(5, 0, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Flame
+            if (isJumpPressed.current) {
+                ctx.fillStyle = '#ffaa00';
+                ctx.beginPath();
+                ctx.moveTo(-15, 0);
+                ctx.lineTo(-25 - Math.random() * 10, 0);
+                ctx.lineTo(-15, 5);
+                ctx.fill();
+            }
+            
+            ctx.shadowBlur = 0;
+        }
 
         ctx.restore();
 
@@ -289,32 +445,71 @@ export const GeometryDash: React.FC = () => {
             const y = obs.y !== undefined ? obs.y : (groundY - obs.h);
 
             if (obs.type === 'spike') {
-                ctx.fillStyle = '#ffdd00';
+                const gradient = ctx.createLinearGradient(obs.x, y, obs.x, y + obs.h);
+                gradient.addColorStop(0, '#fff');
+                gradient.addColorStop(1, '#ffdd00');
+                ctx.fillStyle = gradient;
                 ctx.shadowColor = '#ffdd00';
                 ctx.shadowBlur = 10;
                 ctx.beginPath();
-                ctx.moveTo(obs.x, y + obs.h);
-                ctx.lineTo(obs.x + obs.w / 2, y);
-                ctx.lineTo(obs.x + obs.w, y + obs.h);
+                ctx.moveTo(obs.x + 5, y + obs.h);
+                ctx.lineTo(obs.x + obs.w / 2, y + 5);
+                ctx.lineTo(obs.x + obs.w - 5, y + obs.h);
+                ctx.closePath();
                 ctx.fill();
                 ctx.shadowBlur = 0;
+                
+                // Spike detail
+                ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
             } else if (obs.type === 'block') {
                 // Ground Block
-                ctx.fillStyle = '#444';
+                ctx.fillStyle = '#333';
+                ctx.fillRect(obs.x, y, obs.w, obs.h);
+                
                 ctx.strokeStyle = '#fff';
                 ctx.lineWidth = 2;
-                ctx.fillRect(obs.x, y, obs.w, obs.h);
-                ctx.strokeRect(obs.x, y, obs.w, obs.h);
+                ctx.strokeRect(obs.x + 2, y + 2, obs.w - 4, obs.h - 4);
+                
+                // Inner glow
+                ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                ctx.fillRect(obs.x + 5, y + 5, obs.w - 10, obs.h - 10);
             } else if (obs.type === 'platform') {
                 // Floating Platform
-                ctx.fillStyle = '#aa00ff';
-                ctx.shadowColor = '#aa00ff';
-                ctx.shadowBlur = 5;
+                const gradient = ctx.createLinearGradient(obs.x, y, obs.x, y + obs.h);
+                gradient.addColorStop(0, '#aa00ff');
+                gradient.addColorStop(1, '#440088');
+                ctx.fillStyle = gradient;
                 ctx.fillRect(obs.x, y, obs.w, obs.h);
-                ctx.shadowBlur = 0;
+                
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(obs.x, y, obs.w, obs.h);
+                
                 // Shine top
-                ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                ctx.fillStyle = 'rgba(255,255,255,0.4)';
                 ctx.fillRect(obs.x, y, obs.w, 4);
+            } else if (obs.type === 'portal') {
+                // Portal
+                const color = obs.portalType === 'SHIP' ? '#00ff00' : '#00aaff';
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 15;
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.ellipse(obs.x + obs.w / 2, y + obs.h / 2, obs.w / 2, obs.h / 2, 0, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                // Inner lines
+                ctx.lineWidth = 2;
+                for (let i = 0; i < 3; i++) {
+                    const offset = (Date.now() / 100 + i * 2) % 10;
+                    ctx.beginPath();
+                    ctx.ellipse(obs.x + obs.w / 2, y + obs.h / 2, (obs.w / 2) - offset, (obs.h / 2) - offset, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+                ctx.shadowBlur = 0;
             } else if (obs.type === 'finish') {
                 // Finish Portal
                 const hue = (Date.now() / 10) % 360;
@@ -333,9 +528,21 @@ export const GeometryDash: React.FC = () => {
         });
         ctx.globalAlpha = 1;
 
-        if (gameStatus === 'PLAYING') {
-            distanceRef.current += currentLevelConfig.speed * deltaTime;
-            setScore(Math.floor(distanceRef.current));
+        // Attempt Text
+        if (distanceRef.current < 200) {
+            ctx.fillStyle = '#fff';
+            ctx.font = '24px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            ctx.globalAlpha = Math.max(0, 1 - distanceRef.current / 200);
+            ctx.fillText(`ATTEMPT ${attempts}`, w / 2, h / 2);
+            ctx.globalAlpha = 1;
+        }
+
+        if (gameStatusRef.current === 'PLAYING' || shakeRef.current > 0) {
+            if (gameStatusRef.current === 'PLAYING') {
+                distanceRef.current += currentLevelConfig.speed * deltaTime;
+                setScore(Math.floor(distanceRef.current));
+            }
 
             // Cleanup particles
             particles.current.forEach(p => {
@@ -347,6 +554,8 @@ export const GeometryDash: React.FC = () => {
 
             frameRef.current = requestAnimationFrame(gameLoop);
         }
+
+        ctx.restore();
     };
 
     const jump = () => {
@@ -370,39 +579,60 @@ export const GeometryDash: React.FC = () => {
     }, [isGameUnlocked, activeGame]);
 
     useEffect(() => {
-        const handleInput = (e: KeyboardEvent | TouchEvent | MouseEvent) => {
+        const handleKeyDown = (e: KeyboardEvent) => {
             if (activeGame !== 'GEOMETRY_DASH') return;
-            if (e.type === 'keydown') {
-                const k = (e as KeyboardEvent).key;
-                if (k === ' ' || k === 'ArrowUp' || k === 'w') {
-                    if (gameStatus === 'LEVEL_COMPLETE') {
-                        nextLevel();
-                    } else if (gameStatus === 'GAME_OVER') {
-                        resetGame();
-                    } else {
-                        jump();
-                    }
-                }
-            } else {
-                if ((e.target as HTMLElement).tagName !== 'BUTTON') {
-                    if (gameStatus === 'LEVEL_COMPLETE') {
-                        nextLevel();
-                    } else if (gameStatus === 'GAME_OVER') {
-                        resetGame();
-                    } else {
-                        jump();
-                    }
+            const k = e.key;
+            if (k === ' ' || k === 'ArrowUp' || k === 'w') {
+                isJumpPressed.current = true;
+                if (gameStatus === 'LEVEL_COMPLETE') {
+                    nextLevel();
+                } else if (gameStatus === 'GAME_OVER') {
+                    resetGame();
+                } else {
+                    jump();
                 }
             }
         };
 
-        window.addEventListener('keydown', handleInput);
-        window.addEventListener('mousedown', handleInput);
-        window.addEventListener('touchstart', handleInput);
+        const handleKeyUp = (e: KeyboardEvent) => {
+            if (activeGame !== 'GEOMETRY_DASH') return;
+            const k = e.key;
+            if (k === ' ' || k === 'ArrowUp' || k === 'w') {
+                isJumpPressed.current = false;
+            }
+        };
+
+        const handleMouseDown = (e: MouseEvent | TouchEvent) => {
+            if (activeGame !== 'GEOMETRY_DASH') return;
+            if ((e.target as HTMLElement).tagName !== 'BUTTON') {
+                isJumpPressed.current = true;
+                if (gameStatus === 'LEVEL_COMPLETE') {
+                    nextLevel();
+                } else if (gameStatus === 'GAME_OVER') {
+                    resetGame();
+                } else {
+                    jump();
+                }
+            }
+        };
+
+        const handleMouseUp = () => {
+            isJumpPressed.current = false;
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
+        window.addEventListener('mousedown', handleMouseDown);
+        window.addEventListener('mouseup', handleMouseUp);
+        window.addEventListener('touchstart', handleMouseDown);
+        window.addEventListener('touchend', handleMouseUp);
         return () => {
-            window.removeEventListener('keydown', handleInput);
-            window.removeEventListener('mousedown', handleInput);
-            window.removeEventListener('touchstart', handleInput);
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
+            window.removeEventListener('mousedown', handleMouseDown);
+            window.removeEventListener('mouseup', handleMouseUp);
+            window.removeEventListener('touchstart', handleMouseDown);
+            window.removeEventListener('touchend', handleMouseUp);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeGame, gameStatus]);

@@ -28,12 +28,12 @@ export const About: React.FC<AboutProps> = ({ isCreativeMode, toggleCreativeMode
                     </div>
                     <div className="stat-item">
                         <h3>Foundation</h3>
-                        <p>
+                        <div>
                             <ThemeTrigger
                                 isCreativeMode={isCreativeMode}
                                 onToggle={() => toggleCreativeMode({} as React.MouseEvent)}
                             />
-                        </p>
+                        </div>
                     </div>
                     <div className="stat-item">
                         <h3>Faith</h3>
