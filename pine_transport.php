@@ -5,6 +5,7 @@ use PHPMailer\PHPMailer\Exception;
 
 // Ensure vendor is loaded if not already (though usually loaded by entry point)
 require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/utils.php';
 
 function sendIRCPine($recipientPine, $userName, $userMessage, $ircId, $adminToken, $resend = false)
 {
@@ -13,19 +14,19 @@ function sendIRCPine($recipientPine, $userName, $userMessage, $ircId, $adminToke
     try {
         // Server settings
         $pine->isSMTP();
-        // Use global $_ENV which should be populated by utils.php or pine.php
-        $pine->Host = $_ENV['SMTP_HOST'];
+        // Use getEnvVar to ensure we get the config whether it's in $_ENV, $_SERVER, or getenv()
+        $pine->Host = getEnvVar('SMTP_HOST');
         $pine->SMTPAuth = true;
-        $pine->Username = $_ENV['SMTP_USER'];
-        $pine->Password = $_ENV['SMTP_PASS'];
+        $pine->Username = getEnvVar('SMTP_USER');
+        $pine->Password = getEnvVar('SMTP_PASS');
         $pine->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $pine->Port = $_ENV['SMTP_PORT'] ?? 587;
+        $pine->Port = getEnvVar('SMTP_PORT', 587);
 
         // Recipients
-        $pine->setFrom($_ENV['FROM_EMAIL'], $_ENV['FROM_NAME']);
-        $pine->addAddress($_ENV['TO_EMAIL']);
-        if (!empty($_ENV['TO_TEXT_EMAIL'])) {
-            $pine->addAddress($_ENV['TO_TEXT_EMAIL']);
+        $pine->setFrom(getEnvVar('FROM_EMAIL'), getEnvVar('FROM_NAME'));
+        $pine->addAddress(getEnvVar('TO_EMAIL'));
+        if (!empty(getEnvVar('TO_TEXT_EMAIL'))) {
+            $pine->addAddress(getEnvVar('TO_TEXT_EMAIL'));
         }
 
         // Content
