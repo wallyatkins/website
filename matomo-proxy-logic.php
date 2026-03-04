@@ -118,10 +118,12 @@ if (strpos($path, '?') === false) {
 
 $extraQueryParams = array();
 if (strpos($path, 'piwik.php') === 0 || strpos($path, 'matomo.php') === 0) {
-    $extraQueryParams = array(
-        'cip' => getVisitIp(),
-        'token_auth' => $TOKEN_AUTH,
-    );
+    if (!empty($TOKEN_AUTH) && $TOKEN_AUTH !== 'xyz') {
+        $extraQueryParams = array(
+            'cip' => getVisitIp(),
+            'token_auth' => $TOKEN_AUTH,
+        );
+    }
 }
 
 $url = $MATOMO_URL . $path;
