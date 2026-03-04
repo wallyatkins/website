@@ -49,6 +49,11 @@ if (! isset($timeout)) {
     $timeout = 5;
 }
 
+// Fallback for path if undefined
+if (! isset($path)) {
+    $path = 'matomo.php';
+}
+
 // The HTTP User-Agent to set in the request sent to Matomo Tracking API
 if (empty($user_agent)) {
     $user_agent = arrayValue($_SERVER, 'HTTP_USER_AGENT', '');
