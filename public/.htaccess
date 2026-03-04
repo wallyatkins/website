@@ -2,7 +2,7 @@
   RewriteEngine On
   
   # Allow access to backend endpoints
-  RewriteRule ^(pine|irc)\.php$ - [L]
+  RewriteRule ^(pine|irc|matomo)\.php$ - [L]
 
   # Allow access to snake game if it were separate, but here it's SPA
   # Allow access to assets
