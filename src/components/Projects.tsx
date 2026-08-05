@@ -46,8 +46,7 @@ export const Projects: React.FC = () => {
                         <p className="project-desc">A video-sharing service for 1-on-1 storytelling. Designed to foster
                             controlled, meaningful interactions rather than broad social networking.</p>
                     </div>
-                    <a href="https://github.com/wallyatkins" target="_blank" className="project-link"><i
-                        className="fab fa-github"></i></a>
+                    <a href="https://github.com/wallyatkins" target="_blank" rel="noreferrer" className="project-link">GitHub</a>
                 </div>
                 <div className="project-item">
                     <span className="project-category">AI Workflow</span>
@@ -62,8 +61,7 @@ export const Projects: React.FC = () => {
                         <p className="project-desc">An agentic "magic genie" workflow. It leverages AI and complex
                             automation to grant user "wishes" and execute tasks.</p>
                     </div>
-                    <a href="https://github.com/wallyatkins" target="_blank" className="project-link"><i
-                        className="fab fa-github"></i></a>
+                    <a href="https://github.com/wallyatkins" target="_blank" rel="noreferrer" className="project-link">GitHub</a>
                 </div>
                 <div className="project-item">
                     <span className="project-category">Platform</span>
@@ -72,8 +70,7 @@ export const Projects: React.FC = () => {
                         <p className="project-desc">An open-source, bulletin-board style platform. A deployable blueprint
                             for building small-scale digital communities.</p>
                     </div>
-                    <a href="https://github.com/wallyatkins" target="_blank" className="project-link"><i
-                        className="fab fa-github"></i></a>
+                    <a href="https://github.com/wallyatkins" target="_blank" rel="noreferrer" className="project-link">GitHub</a>
                 </div>
                 <div className="project-item">
                     <span className="project-category">Analytics</span>
@@ -82,8 +79,7 @@ export const Projects: React.FC = () => {
                         <p className="project-desc">Developing improved statistical methodologies for athletic performance.
                         </p>
                     </div>
-                    <a href="https://github.com/wallyatkins" target="_blank" className="project-link"><i
-                        className="fab fa-github"></i></a>
+                    <a href="https://github.com/wallyatkins" target="_blank" rel="noreferrer" className="project-link">GitHub</a>
                 </div>
             </div>
         </section>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import type { FieldValues } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { useEasterEgg } from '../context/EasterEggContext';
 
@@ -31,7 +32,7 @@ export const ContactForm: React.FC = () => {
     }, [nameValue, emailValue, messageValue, activateFhqwhgads, reset]);
 
 
-    const onSubmit = async (data: any) => {
+    const onSubmit = async (data: FieldValues) => {
         setIsSending(true);
         setStatus({ message: '', type: '' });
 
@@ -76,8 +77,8 @@ export const ContactForm: React.FC = () => {
             } else {
                 throw new Error(result.message || 'Something went wrong');
             }
-        } catch (error: any) {
-            setStatus({ message: error.message, type: 'error' });
+        } catch (error: unknown) {
+            setStatus({ message: error instanceof Error ? error.message : 'Something went wrong', type: 'error' });
         } finally {
             setIsSending(false);
         }
@@ -124,10 +125,10 @@ export const ContactForm: React.FC = () => {
                 </div>
 
                 <div className="social-links">
-                    <a href="https://github.com/wallyatkins" target="_blank" aria-label="GitHub"><i className="fab fa-github"></i> GitHub</a>
-                    <a href="https://linkedin.com/in/wallyatkins" target="_blank" aria-label="LinkedIn"><i className="fab fa-linkedin"></i> LinkedIn</a>
-                    <a href="https://instagram.com/wallyatkins" target="_blank" aria-label="Instagram"><i className="fab fa-instagram"></i> Instagram</a>
-                    <a href="https://facebook.com/wallyatkins" target="_blank" aria-label="Facebook"><i className="fab fa-facebook"></i> Facebook</a>
+                    <a href="https://github.com/wallyatkins" target="_blank" rel="noreferrer" aria-label="GitHub"><span className="social-mark" aria-hidden="true">GH</span> GitHub</a>
+                    <a href="https://linkedin.com/in/wallyatkins" target="_blank" rel="noreferrer" aria-label="LinkedIn"><span className="social-mark" aria-hidden="true">in</span> LinkedIn</a>
+                    <a href="https://instagram.com/wallyatkins" target="_blank" rel="noreferrer" aria-label="Instagram"><span className="social-mark" aria-hidden="true">IG</span> Instagram</a>
+                    <a href="https://facebook.com/wallyatkins" target="_blank" rel="noreferrer" aria-label="Facebook"><span className="social-mark" aria-hidden="true">f</span> Facebook</a>
                 </div>
             </div>
         </section>
