@@ -12,12 +12,19 @@
     </FilesMatch>
   </IfModule>
 
+  # Prevent directory indexing
+  Options -Indexes
+
+  # Deny access to sensitive files and hidden dotfiles
+  <FilesMatch "(?:^\.|\.env.*|error_log|composer\.(?:json|lock)|package(?:-lock)?\.json|\.sql|\.md|\.log)$">
+    Require all denied
+  </FilesMatch>
+
   RewriteEngine On
   
   # Allow access to backend endpoints
   RewriteRule ^(pine|irc|matomo)\.php$ - [L]
 
-  # Allow access to snake game if it were separate, but here it's SPA
   # Allow access to assets
   RewriteCond %{REQUEST_FILENAME} -f [OR]
   RewriteCond %{REQUEST_FILENAME} -d

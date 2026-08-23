@@ -79,8 +79,11 @@ function processContactForm($inputInfo, $envVars, $pine = null) {
 
         // 3. Encrypt & Save
         $file_content = encryptData($initial_data, $irc_key);
-        $temp_dir = sys_get_temp_dir();
-        file_put_contents($temp_dir . '/irc_' . $irc_id . '.json', $file_content);
+        $session_dir = __DIR__ . '/var/sessions';
+        if (!is_dir($session_dir)) {
+            @mkdir($session_dir, 0700, true);
+        }
+        file_put_contents($session_dir . '/irc_' . $irc_id . '.json', $file_content);
 
     // 4. Notify Admin
     global $is_test_mode;

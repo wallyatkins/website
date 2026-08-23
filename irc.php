@@ -20,8 +20,14 @@ if (empty($irc_id) || empty($token) || !ctype_alnum($irc_id) || !ctype_alnum($to
     exit;
 }
 
-$temp_dir = sys_get_temp_dir();
-$irc_file = $temp_dir . '/irc_' . $irc_id . '.json';
+$session_dir = __DIR__ . '/var/sessions';
+if (!is_dir($session_dir)) {
+    @mkdir($session_dir, 0700, true);
+}
+$irc_file = $session_dir . '/irc_' . $irc_id . '.json';
+if (!file_exists($irc_file) && file_exists(sys_get_temp_dir() . '/irc_' . $irc_id . '.json')) {
+    $irc_file = sys_get_temp_dir() . '/irc_' . $irc_id . '.json';
+}
 
 // 2. Load Utils (Encryption & Mail Helpers)
 // utils.php loaded at top

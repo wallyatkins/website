@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /assets/
+Disallow: /static/
+Disallow: /stories/
+Disallow: /pine.php
+Disallow: /irc.php
+Disallow: /matomo.php
+
+Sitemap: https://wallyatkins.com/sitemap.xml

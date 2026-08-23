@@ -26,23 +26,26 @@ function getEnvVar($key, $default = null)
     return $default;
 }
 
-// DEBUG: Log IRC Key Hash to verify consistency across scripts
-$k = getEnvVar('IRC_KEY', '');
-error_log("Utils loaded. Script: " . $_SERVER['SCRIPT_NAME'] . " | KeyHash: " . md5($k));
-
 // --- ENCRYPTION HELPERS ---
 
 function encryptData($data, $key)
 {
-    $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('aes-256-cbc'));
+    $iv = random_bytes(openssl_cipher_iv_length('aes-256-cbc'));
     $encrypted = openssl_encrypt(json_encode($data), 'aes-256-cbc', $key, 0, $iv);
     return base64_encode($iv) . '::' . $encrypted;
 }
 
 function decryptData($content, $key)
 {
+    if (!is_string($content) || !str_contains($content, '::')) {
+        return null;
+    }
     list($iv, $encrypted_data) = explode('::', $content, 2);
-    return json_decode(openssl_decrypt($encrypted_data, 'aes-256-cbc', $key, 0, base64_decode($iv)), true);
+    $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $key, 0, base64_decode($iv));
+    if ($decrypted === false) {
+        return null;
+    }
+    return json_decode($decrypted, true);
 }
 
 // --- EMAIL HELPERS ---

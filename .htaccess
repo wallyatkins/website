@@ -13,6 +13,14 @@ RewriteEngine On
   </FilesMatch>
 </IfModule>
 
+# Prevent directory indexing
+Options -Indexes
+
+# Deny access to sensitive files and hidden dotfiles
+<FilesMatch "(?:^\.|\.env.*|error_log|composer\.(?:json|lock)|package(?:-lock)?\.json|\.sql|\.md|\.log)$">
+  Require all denied
+</FilesMatch>
+
 # Force HTTPS
 RewriteCond %{HTTPS} off
 RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
