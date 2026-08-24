@@ -1,0 +1,27 @@
+name: Dynamic Security Scan (OWASP ZAP)
+
+on:
+  schedule:
+    # Run every Monday at 04:00 UTC
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  zap-baseline-scan:
+    name: OWASP ZAP Baseline DAST Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: 'https://wallyatkins.com'
+          issue_title: 'OWASP ZAP Security Scan Findings'
+          fail_action: false
+          allow_issue_writing: true
