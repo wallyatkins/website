@@ -1,12 +1,38 @@
 import React, { useState } from 'react';
 
-export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+interface LayoutProps {
+    children: React.ReactNode;
+    currentPath?: string;
+    onNavigate?: (path: string) => void;
+}
+
+export const Layout: React.FC<LayoutProps> = ({ children, currentPath = '/', onNavigate }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const isGamesPage = currentPath.startsWith('/games');
+
+    const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, targetPath: string, hash?: string) => {
+        setIsMenuOpen(false);
+        if (onNavigate) {
+            e.preventDefault();
+            onNavigate(hash ? `/${hash}` : targetPath);
+        }
+    };
 
     return (
         <>
             <nav className="navbar">
-                <a href="#hero" className="logo">WA</a>
+                <a
+                    href={isGamesPage ? '/' : '#hero'}
+                    className="logo"
+                    onClick={(e) => {
+                        if (isGamesPage && onNavigate) {
+                            e.preventDefault();
+                            onNavigate('/');
+                        }
+                    }}
+                >
+                    WA
+                </a>
                 <button
                     className={`mobile-menu-btn ${isMenuOpen ? 'active' : ''}`}
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -17,17 +43,44 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                     <span className="bar"></span>
                 </button>
                 <div className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
-                    <a href="#about" onClick={() => setIsMenuOpen(false)}>About</a>
-                    <a href="#work" onClick={() => setIsMenuOpen(false)}>Work</a>
-                    <a href="#process" onClick={() => setIsMenuOpen(false)}>Process</a>
-                    <a href="#contact" onClick={() => setIsMenuOpen(false)}>Contact</a>
+                    <a
+                        href={isGamesPage ? '/#about' : '#about'}
+                        onClick={(e) => isGamesPage && handleNavClick(e, '/', '#about')}
+                    >
+                        About
+                    </a>
+                    <a
+                        href={isGamesPage ? '/#work' : '#work'}
+                        onClick={(e) => isGamesPage && handleNavClick(e, '/', '#work')}
+                    >
+                        Work
+                    </a>
+                    <a
+                        href="/games"
+                        className={isGamesPage ? 'active' : ''}
+                        onClick={(e) => !isGamesPage && handleNavClick(e, '/games')}
+                    >
+                        Games
+                    </a>
+                    <a
+                        href={isGamesPage ? '/#process' : '#process'}
+                        onClick={(e) => isGamesPage && handleNavClick(e, '/', '#process')}
+                    >
+                        Process
+                    </a>
+                    <a
+                        href={isGamesPage ? '/#contact' : '#contact'}
+                        onClick={(e) => isGamesPage && handleNavClick(e, '/', '#contact')}
+                    >
+                        Contact
+                    </a>
                 </div>
             </nav>
             <main>
                 {children}
             </main>
             <footer className="site-footer">
-                <p>&copy; 2025 Wally Atkins. Built with AI/LLMs/Agents.</p>
+                <p>&copy; {new Date().getFullYear()} Wally Atkins. Built with AI/LLMs/Agents.</p>
             </footer>
         </>
     );

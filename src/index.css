@@ -1549,3 +1549,389 @@ body.creative-mode .submit-btn:hover {
     color: #fff;
     margin-bottom: 1rem;
 }
+
+/* ==========================================================================
+   Project Link & Active Nav State
+   ========================================================================== */
+.project-name-link {
+    color: inherit;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+}
+
+.project-name-link:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.nav-links a.active {
+    opacity: 1;
+    color: var(--accent-color);
+    border-bottom: 2px solid var(--accent-color);
+    padding-bottom: 2px;
+}
+
+/* ==========================================================================
+   Games Page Styles
+   ========================================================================== */
+.games-page {
+    padding-top: 8rem;
+    padding-bottom: 6rem;
+    max-width: var(--container-width);
+    margin: 0 auto;
+}
+
+.games-header {
+    margin-bottom: 5rem;
+    border-bottom: 1px solid #222;
+    padding-bottom: 3rem;
+}
+
+body.light-mode .games-header {
+    border-color: #e5e5e5;
+}
+
+.games-back-link {
+    display: inline-flex;
+    align-items: center;
+    font-family: monospace;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.games-back-link:hover {
+    color: var(--text-color);
+    transform: translateX(-4px);
+    opacity: 1;
+}
+
+.games-badge {
+    display: block;
+    font-family: monospace;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.games-title {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.04em;
+}
+
+.games-subtitle {
+    font-size: 1.35rem;
+    font-weight: 300;
+    color: var(--text-secondary);
+    max-width: 800px;
+    line-height: 1.6;
+}
+
+.games-section {
+    min-height: auto;
+    padding: 4rem 0;
+    border-bottom: 1px solid #1a1a1a;
+}
+
+body.light-mode .games-section {
+    border-color: #eee;
+}
+
+.games-section-heading {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.02em;
+}
+
+.games-lead-text {
+    font-size: 1.25rem;
+    font-weight: 300;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    max-width: 900px;
+    margin-bottom: 2rem;
+}
+
+.games-prose {
+    font-size: 1.15rem;
+    line-height: 1.8;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.games-grid-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: start;
+}
+
+/* Simulated 1991 Unix VT100 Terminal */
+.games-terminal-card {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 0 40px rgba(0, 255, 100, 0.03);
+    overflow: hidden;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.games-terminal-header {
+    background: #161b22;
+    padding: 0.6rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid #30363d;
+}
+
+.term-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.term-dot-red { background: #ff5f56; }
+.term-dot-yellow { background: #ffbd2e; }
+.term-dot-green { background: #27c93f; }
+
+.term-title {
+    font-size: 0.75rem;
+    color: #8b949e;
+    margin-left: auto;
+}
+
+.games-terminal-body {
+    padding: 1.5rem;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: #c9d1d9;
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+.term-dim {
+    color: #6e7681;
+}
+
+.term-bright {
+    color: #f0f6fc;
+    font-weight: bold;
+}
+
+.term-highlight {
+    color: #58a6ff;
+}
+
+.term-green {
+    color: #3fb950;
+}
+
+.term-cursor {
+    display: inline-block;
+    color: #3fb950;
+    animation: term-blink 1s step-end infinite;
+}
+
+@keyframes term-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* Evolution Grid */
+.games-evolution-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.games-card {
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 6px;
+    padding: 2.2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+body.light-mode .games-card {
+    background: #f9f9f9;
+    border-color: #e5e5e5;
+}
+
+.games-card:hover {
+    transform: translateY(-4px);
+    border-color: #555;
+}
+
+.games-card.highlighted-card {
+    border-color: #444;
+    background: linear-gradient(180deg, #141414 0%, #0c0c0c 100%);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+body.light-mode .games-card.highlighted-card {
+    background: linear-gradient(180deg, #ffffff 0%, #f4f4f4 100%);
+    border-color: #ccc;
+}
+
+.card-phase {
+    font-family: monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.card-title {
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.card-desc {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 1.8rem;
+    flex-grow: 1;
+}
+
+.card-link {
+    font-family: monospace;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-color);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+/* Feature Grid */
+.games-features-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2.5rem;
+    margin-top: 2rem;
+}
+
+.feature-item {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1.8rem;
+    border: 1px solid #1f1f1f;
+    border-radius: 8px;
+    background: #0f0f0f;
+    transition: border-color 0.3s ease;
+}
+
+body.light-mode .feature-item {
+    background: #fbfbfb;
+    border-color: #e5e5e5;
+}
+
+.feature-item:hover {
+    border-color: #444;
+}
+
+.feature-icon {
+    font-size: 2rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.feature-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+}
+
+.feature-desc {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* Philosophy Section */
+.games-philosophy-section {
+    text-align: center;
+    padding: 6rem 0;
+    border-bottom: none;
+}
+
+.games-quote {
+    font-size: clamp(1.4rem, 2.5vw, 2rem);
+    font-weight: 300;
+    line-height: 1.5;
+    max-width: 850px;
+    margin: 0 auto 3rem auto;
+    font-style: italic;
+    color: var(--text-color);
+}
+
+.games-cta-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.games-btn {
+    padding: 1rem 2rem;
+    font-family: monospace;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--text-color);
+    color: var(--bg-color);
+    border: 1px solid var(--text-color);
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.games-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+.games-btn-secondary {
+    background: transparent;
+    color: var(--text-color);
+    border-color: #444;
+}
+
+.games-btn-secondary:hover {
+    border-color: var(--text-color);
+}
+
+/* Responsive Media Queries */
+@media (max-width: 900px) {
+    .games-grid-two-col {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+    }
+
+    .games-evolution-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .games-features-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -11,11 +11,38 @@ import { Zoltar } from './components/easter-eggs/Zoltar';
 import { CTA } from './components/CTA';
 import { IRCInterface } from './components/IRCInterface';
 import { Fhqwhgads } from './components/easter-eggs/Fhqwhgads';
+import { GamesPage } from './components/GamesPage';
 
 function App() {
-
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
   const [isLightMode, setIsLightMode] = useState(false);
   const [isCreativeMode, setIsCreativeMode] = useState(false);
+
+  // Sync browser popstate (back/forward)
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const navigateTo = (path: string) => {
+    if (path.startsWith('/#')) {
+      const hash = path.substring(1);
+      window.history.pushState({}, '', '/');
+      setCurrentPath('/');
+      setTimeout(() => {
+        const el = document.querySelector(hash);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 50);
+      return;
+    }
+
+    window.history.pushState({}, '', path);
+    setCurrentPath(path);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Easter Egg: IRC Mode Check
   const params = new URLSearchParams(window.location.search);
@@ -48,6 +75,12 @@ function App() {
     }, 750);
   };
 
+  useEffect(() => {
+    if (!currentPath.startsWith('/games')) {
+      document.title = "Wally Atkins | Creator & Technologist";
+    }
+  }, [currentPath]);
+
   if (ircId && token) {
     return (
       <div className="chat-fullscreen-wrapper">
@@ -58,21 +91,27 @@ function App() {
 
   return (
     <EasterEggProvider>
-      <Layout>
+      <Layout currentPath={currentPath} onNavigate={navigateTo}>
         <WhimsicalLayer isVisible={isCreativeMode} />
-        <Hero
-          isLightMode={isLightMode}
-          isCreativeMode={isCreativeMode}
-          toggleTheme={toggleTheme}
-        />
-        <About
-          isCreativeMode={isCreativeMode}
-          toggleCreativeMode={toggleCreativeMode}
-        />
-        <Projects />
-        <Process />
-        <ContactForm />
-        <CTA />
+        {currentPath.startsWith('/games') ? (
+          <GamesPage onNavigate={navigateTo} />
+        ) : (
+          <>
+            <Hero
+              isLightMode={isLightMode}
+              isCreativeMode={isCreativeMode}
+              toggleTheme={toggleTheme}
+            />
+            <About
+              isCreativeMode={isCreativeMode}
+              toggleCreativeMode={toggleCreativeMode}
+            />
+            <Projects onNavigate={navigateTo} />
+            <Process />
+            <ContactForm />
+            <CTA />
+          </>
+        )}
         <Zoltar />
         <Fhqwhgads />
       </Layout>

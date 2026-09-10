@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { useEasterEgg } from '../context/EasterEggContext';
 
-export const Projects: React.FC = () => {
+export const Projects: React.FC<{ onNavigate?: (path: string) => void }> = ({ onNavigate }) => {
     const { activateZoltar } = useEasterEgg();
     const rubCount = useRef(0);
     const lastX = useRef(0);
@@ -64,13 +64,25 @@ export const Projects: React.FC = () => {
                     <a href="https://github.com/wallyatkins" target="_blank" rel="noreferrer" className="project-link">GitHub</a>
                 </div>
                 <div className="project-item">
-                    <span className="project-category">Platform</span>
+                    <span className="project-category">Games</span>
                     <div className="project-info">
-                        <h3 className="project-name">Community</h3>
-                        <p className="project-desc">An open-source, bulletin-board style platform. A deployable blueprint
-                            for building small-scale digital communities.</p>
+                        <h3 className="project-name">
+                            <a
+                                href="/games"
+                                className="project-name-link"
+                                onClick={(e) => {
+                                    if (onNavigate) {
+                                        e.preventDefault();
+                                        onNavigate('/games');
+                                    }
+                                }}
+                            >
+                                Games
+                            </a>
+                        </h3>
+                        <p className="project-desc">From 1991 Unix dial-up sessions to modern Java engines and mobile-first web MUDs. A lifelong journey through virtual worlds.</p>
                     </div>
-                    <a href="https://github.com/wallyatkins" target="_blank" rel="noreferrer" className="project-link">GitHub</a>
+                    <a href="https://github.com/wallyatkins/java-merc-mud" target="_blank" rel="noreferrer" className="project-link">GitHub</a>
                 </div>
                 <div className="project-item">
                     <span className="project-category">Analytics</span>
