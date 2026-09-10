@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { trackPageView } from '../analytics';
 
 interface GamesPageProps {
     onNavigate?: (path: string) => void;
@@ -8,6 +9,7 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onNavigate }) => {
     useEffect(() => {
         window.scrollTo(0, 0);
         document.title = "Games & MUDs | Wally Atkins";
+        trackPageView('/games', "Games & MUDs | Wally Atkins");
     }, []);
 
     const handleBack = (e: React.MouseEvent) => {
@@ -38,7 +40,7 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onNavigate }) => {
                     <div className="games-story-text">
                         <h2 className="games-section-heading">The 1991 Genesis</h2>
                         <p className="games-prose">
-                            My journey with MUDs started in 1991. Back then, my introduction to the internet wasn’t a web browser—it was dialing directly into Unix servers at the University of Virginia, thanks to account access set up by John Gaffel (of turing.org fame).
+                            My journey with MUDs started in 1991. Back then, my introduction to the internet wasn’t a web browser—it was dialing directly into Unix servers at the University of Virginia, thanks to account access set up by <a href="https://www.turing.org/jon/resume/" target="_blank" rel="noreferrer" className="games-inline-link">Jon Gaffel</a> (of turing.org fame).
                         </p>
                         <p className="games-prose">
                             That green-and-black terminal connection became my gateway to text-based virtual worlds, and I spent countless late nights throughout high school and college exploring dungeons, typing out frantic combat commands, and hanging out in virtual taverns.
@@ -117,12 +119,12 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onNavigate }) => {
                             A modern web-first deployment using lightweight PHP, SQLite persistence, and polling engine ticks—paired with a touch-first interface engineered for modern phone screens.
                         </p>
                         <a
-                            href="https://github.com/wallyatkins/WallyMud"
+                            href="https://mud.wallyatkins.com"
                             target="_blank"
                             rel="noreferrer"
                             className="card-link"
                         >
-                            GitHub Repository ↗
+                            Play Live WallyMUD ↗
                         </a>
                     </div>
                 </div>
@@ -140,7 +142,7 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onNavigate }) => {
 
                 <div className="games-features-grid">
                     <div className="feature-item">
-                        <div className="feature-icon">🧭</div>
+                        <div className="feature-num">[01]</div>
                         <div className="feature-content">
                             <h3 className="feature-title">Permanent Navigation Matrix</h3>
                             <p className="feature-desc">
@@ -150,7 +152,7 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onNavigate }) => {
                     </div>
 
                     <div className="feature-item">
-                        <div className="feature-icon">⚡</div>
+                        <div className="feature-num">[02]</div>
                         <div className="feature-content">
                             <h3 className="feature-title">Context-Aware Action Deck</h3>
                             <p className="feature-desc">
@@ -160,7 +162,7 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onNavigate }) => {
                     </div>
 
                     <div className="feature-item">
-                        <div className="feature-icon">🚨</div>
+                        <div className="feature-num">[03]</div>
                         <div className="feature-content">
                             <h3 className="feature-title">Smart Combat States</h3>
                             <p className="feature-desc">
@@ -170,7 +172,7 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onNavigate }) => {
                     </div>
 
                     <div className="feature-item">
-                        <div className="feature-icon">🎨</div>
+                        <div className="feature-num">[04]</div>
                         <div className="feature-content">
                             <h3 className="feature-title">Atmospheric Visuals</h3>
                             <p className="feature-desc">
@@ -196,12 +198,12 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onNavigate }) => {
                         Explore Java Merc MUD
                     </a>
                     <a
-                        href="https://github.com/wallyatkins/WallyMud"
+                        href="https://mud.wallyatkins.com"
                         target="_blank"
                         rel="noreferrer"
                         className="games-btn games-btn-secondary"
                     >
-                        View Web MUD Engine
+                        Play Live WallyMUD
                     </a>
                 </div>
             </section>

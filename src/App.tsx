@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { trackPageView } from './analytics';
 import { Layout } from './components/Layout';
 import { Hero } from './components/Hero';
 import { About } from './components/About';
@@ -75,10 +76,15 @@ function App() {
     }, 750);
   };
 
+  const isInitialRender = useRef(true);
   useEffect(() => {
     if (!currentPath.startsWith('/games')) {
       document.title = "Wally Atkins | Creator & Technologist";
+      if (!isInitialRender.current) {
+        trackPageView(currentPath, "Wally Atkins | Creator & Technologist");
+      }
     }
+    isInitialRender.current = false;
   }, [currentPath]);
 
   if (ircId && token) {

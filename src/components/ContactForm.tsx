@@ -68,7 +68,7 @@ export const ContactForm: React.FC = () => {
                                 setShowEnvelope(false);
                                 setEnvelopeState('');
                                 reset();
-                                setStatus({ message: 'Message Sent! ✉️', type: 'success' });
+                                setStatus({ message: 'Message Sent!', type: 'success' });
                             }, 1000);
                         }, 1000);
                     }, 600);
