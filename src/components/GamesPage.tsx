@@ -15,16 +15,16 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onNavigate }) => {
     const handleBack = (e: React.MouseEvent) => {
         e.preventDefault();
         if (onNavigate) {
-            onNavigate('/#work');
+            onNavigate('/work');
         } else {
-            window.location.href = '/#work';
+            window.location.href = '/work';
         }
     };
 
     return (
         <div className="games-page">
             <header className="games-header">
-                <a href="/#work" onClick={handleBack} className="games-back-link">
+                <a href="/work" onClick={handleBack} className="games-back-link">
                     ← Back to Portfolio
                 </a>
                 <span className="games-badge">Retro Computing & Virtual Worlds // 1991 — Present</span>

@@ -37,34 +37,11 @@ export const Projects: React.FC<{ onNavigate?: (path: string) => void }> = ({ on
 
     return (
         <section id="work" className="content-section">
-            <h2 className="section-title">Open Source Projects</h2>
+            <h2 className="section-title">Ecosystem &amp; Projects</h2>
             <div className="project-list">
+                {/* 1. WallyMUD & Retro Worlds */}
                 <div className="project-item">
-                    <span className="project-category">Web Service</span>
-                    <div className="project-info">
-                        <h3 className="project-name">Story Prompts</h3>
-                        <p className="project-desc">A video-sharing service for 1-on-1 storytelling. Designed to foster
-                            controlled, meaningful interactions rather than broad social networking.</p>
-                    </div>
-                    <a href="https://github.com/wallyatkins" target="_blank" rel="noreferrer" className="project-link">GitHub</a>
-                </div>
-                <div className="project-item">
-                    <span className="project-category">AI Workflow</span>
-                    <div className="project-info">
-                        <h3
-                            className="project-name"
-                            onMouseMove={handleRub}
-                            onTouchMove={handleRub}
-                        >
-                            Zoltar
-                        </h3>
-                        <p className="project-desc">An agentic "magic genie" workflow. It leverages AI and complex
-                            automation to grant user "wishes" and execute tasks.</p>
-                    </div>
-                    <a href="https://github.com/wallyatkins" target="_blank" rel="noreferrer" className="project-link">GitHub</a>
-                </div>
-                <div className="project-item">
-                    <span className="project-category">Games</span>
+                    <span className="project-category">Gaming &amp; Systems</span>
                     <div className="project-info">
                         <h3 className="project-name">
                             <a
@@ -77,21 +54,214 @@ export const Projects: React.FC<{ onNavigate?: (path: string) => void }> = ({ on
                                     }
                                 }}
                             >
-                                Games
+                                WallyMUD &amp; Retro Worlds
                             </a>
                         </h3>
-                        <p className="project-desc">From 1991 Unix dial-up sessions to modern Java engines and mobile-first web MUDs. A lifelong journey through virtual worlds.</p>
-                    </div>
-                    <a href="https://github.com/wallyatkins/java-merc-mud" target="_blank" rel="noreferrer" className="project-link">GitHub</a>
-                </div>
-                <div className="project-item">
-                    <span className="project-category">Analytics</span>
-                    <div className="project-info">
-                        <h3 className="project-name">Sports Analysis</h3>
-                        <p className="project-desc">Developing improved statistical methodologies for athletic performance.
+                        <p className="project-desc">
+                            From dialing UVA Unix terminals via 2400-baud modems in 1991 to re-architecting Merc DikuMUD into modern Java and building a mobile-first touch-control web MUD in PHP.
                         </p>
                     </div>
-                    <a href="https://github.com/wallyatkins" target="_blank" rel="noreferrer" className="project-link">GitHub</a>
+                    <div className="project-links">
+                        <a
+                            href="https://mud.wallyatkins.com"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="project-link"
+                        >
+                            Play Live MUD ↗
+                        </a>
+                        <a
+                            href="/games"
+                            className="project-link"
+                            onClick={(e) => {
+                                if (onNavigate) {
+                                    e.preventDefault();
+                                    onNavigate('/games');
+                                }
+                            }}
+                        >
+                            Chronicle ↗
+                        </a>
+                    </div>
+                </div>
+
+                {/* 2. Where's Wally Location Tracker */}
+                <div className="project-item">
+                    <span className="project-category">Interactive Maps</span>
+                    <div className="project-info">
+                        <h3 className="project-name">
+                            <a
+                                href="https://wheres.wallyatkins.com"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="project-name-link"
+                            >
+                                Where's Wally
+                            </a>
+                        </h3>
+                        <p className="project-desc">
+                            An ultra-high-resolution Deep Zoom (DZI) interactive map and travel chronicle. Built with responsive multi-scale tile rendering and location telemetry.
+                        </p>
+                    </div>
+                    <div className="project-links">
+                        <a
+                            href="https://wheres.wallyatkins.com"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="project-link"
+                        >
+                            Explore Map ↗
+                        </a>
+                    </div>
+                </div>
+
+                {/* 3. Video Stories */}
+                <div className="project-item">
+                    <span className="project-category">Web Platform</span>
+                    <div className="project-info">
+                        <h3 className="project-name">
+                            <a
+                                href="https://stories.wallyatkins.com"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="project-name-link"
+                            >
+                                Video Stories
+                            </a>
+                        </h3>
+                        <p className="project-desc">
+                            A prompt-and-response video storytelling service designed for meaningful 1-on-1 human interaction rather than broadcast social noise. Secure media pipelines with private delivery.
+                        </p>
+                    </div>
+                    <div className="project-links">
+                        <a
+                            href="https://stories.wallyatkins.com"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="project-link"
+                        >
+                            Launch Stories ↗
+                        </a>
+                    </div>
+                </div>
+
+                {/* 4. Atkins NFL Pool */}
+                <div className="project-item">
+                    <span className="project-category">Sports Analytics</span>
+                    <div className="project-info">
+                        <h3 className="project-name">
+                            <a
+                                href="https://football.wallyatkins.com"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="project-name-link"
+                            >
+                                Atkins NFL Pool
+                            </a>
+                        </h3>
+                        <p className="project-desc">
+                            A private tournament platform featuring straight-up Pick'em with Game of the Week tiebreaker point differentials, season-long Survivor pool tracking, and automated morning email digest briefings.
+                        </p>
+                    </div>
+                    <div className="project-links">
+                        <a
+                            href="https://football.wallyatkins.com"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="project-link"
+                        >
+                            View League ↗
+                        </a>
+                    </div>
+                </div>
+
+                {/* 5. Wally Tasks */}
+                <div className="project-item">
+                    <span className="project-category">Productivity &amp; AI</span>
+                    <div className="project-info">
+                        <h3 className="project-name">
+                            <a
+                                href="https://tasks.wallyatkins.com"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="project-name-link"
+                            >
+                                Wally Tasks
+                            </a>
+                        </h3>
+                        <p className="project-desc">
+                            Personal productivity suite and agentic task orchestration. Features priority scoring, review state transitions, file attachments, and cross-platform synchronization.
+                        </p>
+                    </div>
+                    <div className="project-links">
+                        <a
+                            href="https://tasks.wallyatkins.com"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="project-link"
+                        >
+                            Open Tasks ↗
+                        </a>
+                    </div>
+                </div>
+
+                {/* 6. WallyAuth SSO */}
+                <div className="project-item">
+                    <span className="project-category">Identity &amp; Security</span>
+                    <div className="project-info">
+                        <h3 className="project-name">
+                            <a
+                                href="https://auth.wallyatkins.com"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="project-name-link"
+                            >
+                                WallyAuth SSO
+                            </a>
+                        </h3>
+                        <p className="project-desc">
+                            A centralized OpenID Connect (OIDC) identity provider with PKCE and dual-driver SQLite/MySQL persistence. Provides seamless single sign-on across all subdomains and services.
+                        </p>
+                    </div>
+                    <div className="project-links">
+                        <a
+                            href="https://auth.wallyatkins.com"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="project-link"
+                        >
+                            Auth Portal ↗
+                        </a>
+                    </div>
+                </div>
+
+                {/* 7. Zoltar */}
+                <div className="project-item">
+                    <span className="project-category">AI Workflow</span>
+                    <div className="project-info">
+                        <h3
+                            className="project-name"
+                            onMouseMove={handleRub}
+                            onTouchMove={handleRub}
+                            style={{ cursor: 'pointer' }}
+                            title="Rub the title to awaken Zoltar"
+                        >
+                            Zoltar
+                        </h3>
+                        <p className="project-desc">
+                            An agentic "magic genie" workflow. Leverages autonomous multi-agent tool execution, complex automation, and webhooks to grant user wishes and execute real-world tasks.
+                        </p>
+                    </div>
+                    <div className="project-links">
+                        <a
+                            href="https://github.com/wallyatkins"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="project-link"
+                        >
+                            GitHub ↗
+                        </a>
+                    </div>
                 </div>
             </div>
         </section>

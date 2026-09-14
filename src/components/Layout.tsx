@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Footer } from './Footer';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -8,13 +9,12 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children, currentPath = '/', onNavigate }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const isGamesPage = currentPath.startsWith('/games');
 
-    const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, targetPath: string, hash?: string) => {
+    const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, targetPath: string) => {
         setIsMenuOpen(false);
         if (onNavigate) {
             e.preventDefault();
-            onNavigate(hash ? `/${hash}` : targetPath);
+            onNavigate(targetPath);
         }
     };
 
@@ -22,14 +22,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPath = '/', onN
         <>
             <nav className="navbar">
                 <a
-                    href={isGamesPage ? '/' : '#hero'}
+                    href="/"
                     className="logo"
-                    onClick={(e) => {
-                        if (isGamesPage && onNavigate) {
-                            e.preventDefault();
-                            onNavigate('/');
-                        }
-                    }}
+                    onClick={(e) => handleNavClick(e, '/')}
                 >
                     WA
                 </a>
@@ -44,33 +39,37 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPath = '/', onN
                 </button>
                 <div className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
                     <a
-                        href={isGamesPage ? '/#about' : '#about'}
-                        onClick={(e) => isGamesPage && handleNavClick(e, '/', '#about')}
+                        href="/about"
+                        className={currentPath === '/about' ? 'active' : ''}
+                        onClick={(e) => handleNavClick(e, '/about')}
                     >
                         About
                     </a>
                     <a
-                        href={isGamesPage ? '/#work' : '#work'}
-                        onClick={(e) => isGamesPage && handleNavClick(e, '/', '#work')}
+                        href="/work"
+                        className={currentPath === '/work' ? 'active' : ''}
+                        onClick={(e) => handleNavClick(e, '/work')}
                     >
                         Work
                     </a>
                     <a
                         href="/games"
-                        className={isGamesPage ? 'active' : ''}
-                        onClick={(e) => !isGamesPage && handleNavClick(e, '/games')}
+                        className={currentPath === '/games' ? 'active' : ''}
+                        onClick={(e) => handleNavClick(e, '/games')}
                     >
                         Games
                     </a>
                     <a
-                        href={isGamesPage ? '/#process' : '#process'}
-                        onClick={(e) => isGamesPage && handleNavClick(e, '/', '#process')}
+                        href="/process"
+                        className={currentPath === '/process' ? 'active' : ''}
+                        onClick={(e) => handleNavClick(e, '/process')}
                     >
                         Process
                     </a>
                     <a
-                        href={isGamesPage ? '/#contact' : '#contact'}
-                        onClick={(e) => isGamesPage && handleNavClick(e, '/', '#contact')}
+                        href="/contact"
+                        className={currentPath === '/contact' ? 'active' : ''}
+                        onClick={(e) => handleNavClick(e, '/contact')}
                     >
                         Contact
                     </a>
@@ -79,9 +78,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPath = '/', onN
             <main>
                 {children}
             </main>
-            <footer className="site-footer">
-                <p>&copy; {new Date().getFullYear()} Wally Atkins. Built with AI/LLMs/Agents.</p>
-            </footer>
+            <Footer currentPath={currentPath} onNavigate={onNavigate} />
         </>
     );
 };
