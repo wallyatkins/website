@@ -44,21 +44,6 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onNavigate }) => {
                 </p>
             </header>
 
-            {/* Official Contact Notice */}
-            <div className="legal-callout">
-                <div className="legal-callout-icon">💬</div>
-                <div className="legal-callout-content">
-                    <h3>Questions or Support Requests</h3>
-                    <p>
-                        To reach Wally Atkins regarding any questions, bug reports, or support needs, please use the official{' '}
-                        <a href="/contact" onClick={handleContactClick} className="legal-inline-link">
-                            "Get in Touch" form
-                        </a>{' '}
-                        on the home page.
-                    </p>
-                </div>
-            </div>
-
             <article className="legal-content">
                 <section className="legal-section">
                     <h2>1. Acceptance of Terms</h2>

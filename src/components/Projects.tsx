@@ -37,7 +37,7 @@ export const Projects: React.FC<{ onNavigate?: (path: string) => void }> = ({ on
 
     return (
         <section id="work" className="content-section">
-            <h2 className="section-title">Ecosystem &amp; Projects</h2>
+            <h2 className="section-title">Selected Projects</h2>
             <div className="project-list">
                 {/* 1. WallyMUD & Retro Worlds */}
                 <div className="project-item">

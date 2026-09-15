@@ -44,22 +44,6 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ onNavigate }) => {
                 </p>
             </header>
 
-            {/* Official Contact Notice */}
-            <div className="legal-callout">
-                <div className="legal-callout-icon">💬</div>
-                <div className="legal-callout-content">
-                    <h3>Official Communication &amp; Support Channel</h3>
-                    <p>
-                        The primary and official method to communicate with me regarding privacy questions,
-                        data requests, or app support is the{' '}
-                        <a href="/contact" onClick={handleContactClick} className="legal-inline-link">
-                            "Get in Touch" form
-                        </a>{' '}
-                        located on the main page of this website.
-                    </p>
-                </div>
-            </div>
-
             <article className="legal-content">
                 <section className="legal-section">
                     <h2>1. Scope &amp; Purpose</h2>

@@ -8,7 +8,6 @@ interface FooterProps {
 export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
     const handleInternalClick = (e: React.MouseEvent<HTMLAnchorElement>, target: string) => {
         e.preventDefault();
-        // Ensure clean path format without hash
         let clean = target.replace(/^\/?#/, '/');
         if (!clean.startsWith('/')) clean = `/${clean}`;
         if (clean === '/hero') clean = '/';
@@ -32,83 +31,33 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         <footer className="site-footer" role="contentinfo">
             <div className="footer-container">
                 <div className="footer-grid">
-                    {/* Column 1: Brand & Philosophy */}
+                    {/* Column 1: Identity */}
                     <div className="footer-col footer-col-brand">
-                        <div className="footer-logo">WA</div>
+                        <a
+                            href="/"
+                            className="logo footer-brand-logo"
+                            onClick={(e) => handleInternalClick(e, '/')}
+                        >
+                            WA
+                        </a>
                         <h3 className="footer-brand-title">Wally Atkins</h3>
                         <p className="footer-brand-desc">
-                            Creator, software engineer, and systems architect. Building purposeful applications,
-                            playful retro games, and automated agentic workflows.
+                            Creator, software engineer, and systems architect. Crafting purposeful applications,
+                            retro virtual worlds, and intelligent workflows.
                         </p>
-                        <div className="footer-principles">
-                            <span className="footer-principles-label">Principles for Action:</span>
-                            <p className="footer-principles-text">
-                                Make the most of time. Prioritize meaningful relationships. Collaborate to improve the world.
-                            </p>
-                        </div>
                     </div>
 
-                    {/* Column 2: Apps & Ecosystem */}
+                    {/* Column 2: Navigation */}
                     <div className="footer-col">
-                        <h4 className="footer-heading">Apps &amp; Ecosystem</h4>
+                        <h4 className="footer-heading">Explore</h4>
                         <ul className="footer-nav-list">
                             <li>
                                 <a
-                                    href="https://mud.wallyatkins.com"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="footer-link external-link"
-                                >
-                                    <span className="footer-link-icon">⚔️</span> WallyMUD
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    href="https://wheres.wallyatkins.com"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="footer-link external-link"
-                                >
-                                    <span className="footer-link-icon">🗺️</span> Where's Wally
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    href="https://stories.wallyatkins.com"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="footer-link external-link"
-                                >
-                                    <span className="footer-link-icon">🎥</span> Video Stories
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    href="https://football.wallyatkins.com"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="footer-link external-link"
-                                >
-                                    <span className="footer-link-icon">🏈</span> Atkins NFL Pool
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    href="https://tasks.wallyatkins.com"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="footer-link external-link"
-                                >
-                                    <span className="footer-link-icon">📋</span> Wally Tasks
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    href="/games"
-                                    onClick={(e) => handleInternalClick(e, '/games')}
+                                    href="/about"
+                                    onClick={(e) => handleInternalClick(e, '/about')}
                                     className="footer-link"
                                 >
-                                    <span className="footer-link-icon">🎮</span> Retro Games &amp; MUDs
+                                    About
                                 </a>
                             </li>
                             <li>
@@ -117,55 +66,25 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                                     onClick={(e) => handleInternalClick(e, '/work')}
                                     className="footer-link"
                                 >
-                                    <span className="footer-link-icon">💡</span> Selected Projects
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-
-                    {/* Column 3: Accounts & Identity */}
-                    <div className="footer-col">
-                        <h4 className="footer-heading">Accounts &amp; SSO</h4>
-                        <ul className="footer-nav-list">
-                            <li>
-                                <a
-                                    href="https://auth.wallyatkins.com"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="footer-link external-link"
-                                >
-                                    <span className="footer-link-icon">🔐</span> WallyAuth Single Sign-On
+                                    Work
                                 </a>
                             </li>
                             <li>
                                 <a
-                                    href="https://auth.wallyatkins.com/account"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="footer-link external-link"
+                                    href="/games"
+                                    onClick={(e) => handleInternalClick(e, '/games')}
+                                    className="footer-link"
                                 >
-                                    <span className="footer-link-icon">👤</span> Profile &amp; Sessions
+                                    Games
                                 </a>
                             </li>
                             <li>
-                                <span className="footer-note">
-                                    Unified OIDC PKCE security protecting all apps in the suite.
-                                </span>
-                            </li>
-                        </ul>
-                    </div>
-
-                    {/* Column 4: Contact & Support */}
-                    <div className="footer-col">
-                        <h4 className="footer-heading">Contact &amp; Support</h4>
-                        <ul className="footer-nav-list">
-                            <li>
                                 <a
-                                    href="/contact"
-                                    onClick={(e) => handleInternalClick(e, '/contact')}
-                                    className="footer-link footer-highlight-link"
+                                    href="/process"
+                                    onClick={(e) => handleInternalClick(e, '/process')}
+                                    className="footer-link"
                                 >
-                                    <span className="footer-link-icon">✉️</span> Get in Touch Form
+                                    Process
                                 </a>
                             </li>
                             <li>
@@ -174,20 +93,82 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                                     onClick={(e) => handleInternalClick(e, '/contact')}
                                     className="footer-link"
                                 >
-                                    <span className="footer-link-icon">🛠️</span> App Support &amp; Inquiries
+                                    Contact
                                 </a>
-                            </li>
-                            <li>
-                                <p className="footer-support-note">
-                                    The official method to communicate with me for support, feedback, or requesting an app account is the <strong>Get in Touch</strong> form right here on this website.
-                                </p>
                             </li>
                         </ul>
                     </div>
 
-                    {/* Column 5: Legal & Transparency */}
+                    {/* Column 3: Applications & Ecosystem */}
                     <div className="footer-col">
-                        <h4 className="footer-heading">Legal &amp; Policies</h4>
+                        <h4 className="footer-heading">Applications</h4>
+                        <ul className="footer-nav-list">
+                            <li>
+                                <a
+                                    href="https://mud.wallyatkins.com"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="footer-link"
+                                >
+                                    WallyMUD
+                                </a>
+                            </li>
+                            <li>
+                                <a
+                                    href="https://wheres.wallyatkins.com"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="footer-link"
+                                >
+                                    Where's Wally
+                                </a>
+                            </li>
+                            <li>
+                                <a
+                                    href="https://stories.wallyatkins.com"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="footer-link"
+                                >
+                                    Video Stories
+                                </a>
+                            </li>
+                            <li>
+                                <a
+                                    href="https://football.wallyatkins.com"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="footer-link"
+                                >
+                                    Atkins NFL Pool
+                                </a>
+                            </li>
+                            <li>
+                                <a
+                                    href="https://tasks.wallyatkins.com"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="footer-link"
+                                >
+                                    Wally Tasks
+                                </a>
+                            </li>
+                            <li>
+                                <a
+                                    href="https://auth.wallyatkins.com"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="footer-link"
+                                >
+                                    WallyAuth SSO
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {/* Column 4: Transparency & Legal */}
+                    <div className="footer-col">
+                        <h4 className="footer-heading">Transparency</h4>
                         <ul className="footer-nav-list">
                             <li>
                                 <a
@@ -195,7 +176,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                                     onClick={(e) => handleInternalClick(e, '/privacy')}
                                     className="footer-link"
                                 >
-                                    <span className="footer-link-icon">🔒</span> Privacy Policy
+                                    Privacy Policy
                                 </a>
                             </li>
                             <li>
@@ -204,13 +185,17 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                                     onClick={(e) => handleInternalClick(e, '/terms')}
                                     className="footer-link"
                                 >
-                                    <span className="footer-link-icon">📜</span> Terms of Use
+                                    Terms of Use
                                 </a>
                             </li>
                             <li>
-                                <span className="footer-note">
-                                    Self-hosted Matomo analytics with privacy-preserving telemetry and no ad tracking.
-                                </span>
+                                <a
+                                    href="/contact"
+                                    onClick={(e) => handleInternalClick(e, '/contact')}
+                                    className="footer-link"
+                                >
+                                    Get in Touch
+                                </a>
                             </li>
                         </ul>
                     </div>
@@ -220,9 +205,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <div className="footer-bottom">
                     <div className="footer-bottom-left">
                         <p className="footer-copyright">
-                            &copy; {new Date().getFullYear()} Wally Atkins. All rights reserved.
+                            &copy; {new Date().getFullYear()} Wally Atkins. Built with AI/LLMs/Agents.
                         </p>
-                        <span className="footer-badge">Built with AI &amp; Agentic Systems</span>
                     </div>
 
                     <div className="footer-bottom-right">
