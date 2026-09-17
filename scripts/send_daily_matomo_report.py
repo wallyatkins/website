@@ -21,6 +21,7 @@ import subprocess
 import datetime
 import smtplib
 import ssl
+import re
 import email.utils
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -153,25 +154,27 @@ def generate_analytics_data():
     """
     network_rollups = run_query(network_sql)
 
-    # 3. Top Pages (Last 24 Hours) across all sites
+    # 3. Top Pages (Last 24 Hours) across all sites (clean paths without tokens/query strings)
     pages_sql = """
     SELECT 
         s.idsite,
         s.name as site_name,
-        a.name as page_url, 
+        SUBSTRING_INDEX(a.name, '?', 1) as page_url, 
         COUNT(*) as pageviews,
         COUNT(DISTINCT l.idvisit) as unique_pageviews
     FROM matomo_log_link_visit_action l
     JOIN matomo_site s ON l.idsite = s.idsite
     JOIN matomo_log_action a ON l.idaction_url = a.idaction
     WHERE l.server_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
-    GROUP BY s.idsite, s.name, a.name
+      AND a.name NOT LIKE '%account.venmo.com%'
+      AND a.name NOT LIKE '%paypal.com%'
+    GROUP BY s.idsite, s.name, page_url
     ORDER BY pageviews DESC
-    LIMIT 15;
+    LIMIT 12;
     """
     top_pages = run_query(pages_sql)
 
-    # 4. Traffic Channels & Referrers (Last 7 Days)
+    # 4. Traffic Channels & Referrers (Last 7 Days) (filtered of spam bot domains)
     referrers_sql = """
     SELECT 
         CASE 
@@ -185,6 +188,14 @@ def generate_analytics_data():
         COUNT(DISTINCT idvisitor) as unique_visitors
     FROM matomo_log_visit
     WHERE visit_last_action_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+      AND (referer_name IS NULL OR (
+           referer_name NOT LIKE '%.online' 
+       AND referer_name NOT LIKE '%.top' 
+       AND referer_name NOT LIKE '%.xyz' 
+       AND referer_name NOT LIKE '%.ru'
+       AND referer_name NOT LIKE '%bot%'
+       AND referer_name NOT LIKE '%crawler%'
+      ))
     GROUP BY channel
     ORDER BY visits DESC
     LIMIT 8;
@@ -274,7 +285,7 @@ def build_email_content(data):
     pages_html = ""
     if data["top_pages"]:
         for p in data["top_pages"]:
-            clean_url = p["page_url"]
+            clean_url = re.sub(r'^https?://', '', p["page_url"])
             if len(clean_url) > 60:
                 clean_url = clean_url[:57] + "..."
             pages_html += f"""
@@ -513,7 +524,8 @@ def build_email_content(data):
 
     plain += "📄 TOP PAGES (LAST 24 HOURS):\n"
     for p in data["top_pages"][:10]:
-        plain += f"• [{p['site_name']}] {p['page_url']}: {p['pageviews']} views ({p['unique_pageviews']} unique)\n"
+        clean_p = re.sub(r'^https?://', '', p['page_url'])
+        plain += f"• [{p['site_name']}] {clean_p}: {p['pageviews']} views ({p['unique_pageviews']} unique)\n"
 
     plain += "\n🧭 TRAFFIC CHANNELS (LAST 7 DAYS):\n"
     for r in data["referrers"]:
