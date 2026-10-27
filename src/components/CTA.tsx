@@ -6,6 +6,7 @@ import { GameSelection } from './easter-eggs/GameSelection';
 const BlockBlast = React.lazy(() => import('./easter-eggs/BlockBlast').then(module => ({ default: module.BlockBlast })));
 const Snake = React.lazy(() => import('./easter-eggs/Snake').then(module => ({ default: module.Snake })));
 const GeometryDash = React.lazy(() => import('./easter-eggs/GeometryDash').then(module => ({ default: module.GeometryDash })));
+const Minesweeper = React.lazy(() => import('./easter-eggs/Minesweeper').then(module => ({ default: module.Minesweeper })));
 
 export const CTA: React.FC = () => {
     const { activateDPad, isDPadActive, isGameUnlocked } = useEasterEgg();
@@ -46,6 +47,7 @@ export const CTA: React.FC = () => {
                 <BlockBlast />
                 <Snake />
                 <GeometryDash />
+                <Minesweeper />
             </Suspense>
         </section>
     );

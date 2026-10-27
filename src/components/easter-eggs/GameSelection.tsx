@@ -12,6 +12,19 @@ export const GameSelection: React.FC = () => {
                 <div id="game-close-btn" onClick={closeGame}>&times;</div>
                 <h2>Game Mode Unlocked</h2>
                 <div className="game-options">
+                    <button 
+                        onClick={() => selectGame('MINESWEEPER')} 
+                        className="game-btn" 
+                        style={{ 
+                            background: 'linear-gradient(135deg, #1e1b4b 0%, #3b0764 100%)',
+                            borderColor: '#f59e0b', 
+                            color: '#fbbf24',
+                            boxShadow: '0 0 20px rgba(245, 158, 11, 0.4)',
+                            fontWeight: 'bold'
+                        }}
+                    >
+                        💎 Neo-Mines: Turbo Bling
+                    </button>
                     <button onClick={() => selectGame('BLOCK_BLAST')} className="game-btn">
                         Block Blast
                     </button>

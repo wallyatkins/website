@@ -26,11 +26,12 @@ A guide to the secrets hidden within the Wally Atkins website.
 
 ## 4. Game Mode
 **Inspiration**: Retro gaming consoles, the Konami Code, and classic arcade games.
-**Description**: Unlocks a hidden gaming interface where you can choose between multiple games like **Block Blast** and **Snake**.
+**Description**: Unlocks a hidden gaming arcade featuring **Neo-Mines: Turbo Bling Edition** (honoring Wally's 2003 DHTML and 2006 NeoSwiff Flash Minesweeper creations), alongside **Block Blast**, **Snake**, and **GeoDash**.
 **How to Trigger**:
-1.  **Find the Controller**: Scroll to the **CTA / Principles** section ("Principles for Action"). Click and **hold** (long press) anywhere in that section for **5 seconds** to reveal a D-Pad.
-2.  **Unlock the Games**: Use the D-Pad to enter the Konami Code: **Up, Up, Down, Down, Left, Right, Left, Right**.
-3.  **Select a Game**: A menu will appear allowing you to play **Block Blast** or **Snake**.
+* **Method 1 (Keyboard Anywhere)**: Simply enter the classic Konami Code on your keyboard on any page:
+  `↑ ↑ ↓ ↓ ← → ← → B A`
+* **Method 2 (D-Pad Controller)**: Scroll to the **CTA / Principles** section ("Principles for Action"). Click and **hold** (long press) anywhere in that section for **5 seconds** to reveal the D-Pad, then tap **Up, Up, Down, Down, Left, Right, Left, Right**.
+* **Select a Game**: In the retro Game Selection menu, choose **💎 Neo-Mines: Turbo Bling**!
 
 ## 5. Everybody to the Limit (Fhqwhgads)
 **Inspiration**: Strong Bad's hit song "Everybody to the Limit" from *Homestar Runner*.

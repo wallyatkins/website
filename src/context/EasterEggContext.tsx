@@ -8,9 +8,9 @@ interface EasterEggContextType {
     activateDPad: () => void;
     closeDPad: () => void;
     isGameUnlocked: boolean;
-    activeGame: 'NONE' | 'SELECT' | 'BLOCK_BLAST' | 'SNAKE' | 'GEOMETRY_DASH';
+    activeGame: 'NONE' | 'SELECT' | 'BLOCK_BLAST' | 'SNAKE' | 'GEOMETRY_DASH' | 'MINESWEEPER';
     unlockGame: () => void;
-    selectGame: (game: 'BLOCK_BLAST' | 'SNAKE' | 'GEOMETRY_DASH') => void;
+    selectGame: (game: 'BLOCK_BLAST' | 'SNAKE' | 'GEOMETRY_DASH' | 'MINESWEEPER') => void;
     closeGame: () => void;
     returnToMenu: () => void;
     isFhqwhgadsActive: boolean;
@@ -24,7 +24,7 @@ export const EasterEggProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const [isZoltarActive, setIsZoltarActive] = useState(false);
     const [isDPadActive, setIsDPadActive] = useState(false);
     const [isGameUnlocked, setIsGameUnlocked] = useState(false);
-    const [activeGame, setActiveGame] = useState<'NONE' | 'SELECT' | 'BLOCK_BLAST' | 'SNAKE' | 'GEOMETRY_DASH'>('NONE');
+    const [activeGame, setActiveGame] = useState<'NONE' | 'SELECT' | 'BLOCK_BLAST' | 'SNAKE' | 'GEOMETRY_DASH' | 'MINESWEEPER'>('NONE');
     const [isFhqwhgadsActive, setIsFhqwhgadsActive] = useState(false);
 
     const activateZoltar = () => setIsZoltarActive(true);
@@ -39,7 +39,7 @@ export const EasterEggProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setActiveGame('SELECT');
     };
 
-    const selectGame = (game: 'BLOCK_BLAST' | 'SNAKE' | 'GEOMETRY_DASH') => {
+    const selectGame = (game: 'BLOCK_BLAST' | 'SNAKE' | 'GEOMETRY_DASH' | 'MINESWEEPER') => {
         setActiveGame(game);
     };
 
@@ -54,6 +54,39 @@ export const EasterEggProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     const activateFhqwhgads = () => setIsFhqwhgadsActive(true);
     const closeFhqwhgads = () => setIsFhqwhgadsActive(false);
+
+    // Global Konami Code keyboard listener (↑ ↑ ↓ ↓ ← → ← → B A)
+    React.useEffect(() => {
+        const konamiSequence = [
+            'arrowup', 'arrowup',
+            'arrowdown', 'arrowdown',
+            'arrowleft', 'arrowright',
+            'arrowleft', 'arrowright',
+            'b', 'a'
+        ];
+        let keyIndex = 0;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (['input', 'textarea'].includes((e.target as HTMLElement)?.tagName?.toLowerCase())) {
+                return;
+            }
+            const key = e.key.toLowerCase();
+            if (key === konamiSequence[keyIndex]) {
+                keyIndex++;
+                if (keyIndex === konamiSequence.length) {
+                    unlockGame();
+                    keyIndex = 0;
+                }
+            } else if (key === konamiSequence[0]) {
+                keyIndex = 1;
+            } else {
+                keyIndex = 0;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     return (
         <EasterEggContext.Provider value={{
