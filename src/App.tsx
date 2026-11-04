@@ -13,6 +13,7 @@ import { CTA } from './components/CTA';
 import { IRCInterface } from './components/IRCInterface';
 import { Fhqwhgads } from './components/easter-eggs/Fhqwhgads';
 import { GamesPage } from './components/GamesPage';
+import { AppsPage } from './components/AppsPage';
 import { PrivacyPage } from './components/PrivacyPage';
 import { TermsPage } from './components/TermsPage';
 
@@ -28,6 +29,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/': 'Wally Atkins | Creator & Technologist',
   '/about': 'About | Wally Atkins',
   '/work': 'Selected Projects & Apps | Wally Atkins',
+  '/apps': 'Application Suite & Portal | Wally Atkins',
   '/process': 'Process | Wally Atkins',
   '/contact': 'Get in Touch | Wally Atkins',
   '/games': 'Games & MUDs | Wally Atkins',
@@ -134,6 +136,7 @@ function App() {
   // Scroll spy / IntersectionObserver for home page sections to keep clean paths in address bar
   useEffect(() => {
     const isStandalonePage =
+      currentPath.startsWith('/apps') ||
       currentPath.startsWith('/games') ||
       currentPath.startsWith('/privacy') ||
       currentPath.startsWith('/terms');
@@ -211,7 +214,9 @@ function App() {
     <EasterEggProvider>
       <Layout currentPath={currentPath} onNavigate={navigateTo}>
         <WhimsicalLayer isVisible={isCreativeMode} />
-        {currentPath.startsWith('/games') ? (
+        {currentPath.startsWith('/apps') ? (
+          <AppsPage onNavigate={navigateTo} />
+        ) : currentPath.startsWith('/games') ? (
           <GamesPage onNavigate={navigateTo} />
         ) : currentPath.startsWith('/privacy') ? (
           <PrivacyPage onNavigate={navigateTo} />

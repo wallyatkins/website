@@ -37,7 +37,21 @@ export const Projects: React.FC<{ onNavigate?: (path: string) => void }> = ({ on
 
     return (
         <section id="work" className="content-section">
-            <h2 className="section-title">Selected Projects</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' }}>
+                <h2 className="section-title" style={{ margin: 0 }}>Selected Projects</h2>
+                <a
+                    href="/apps"
+                    onClick={(e) => {
+                        if (onNavigate) {
+                            e.preventDefault();
+                            onNavigate('/apps');
+                        }
+                    }}
+                    style={{ color: '#38bdf8', fontSize: '0.95rem', fontWeight: 700 }}
+                >
+                    Launch Full App Suite ⚡ ↗
+                </a>
+            </div>
             <div className="project-list">
                 {/* 1. WallyMUD & Retro Worlds */}
                 <div className="project-item">

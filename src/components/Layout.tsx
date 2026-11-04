@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Footer } from './Footer';
+import { usePWA } from '../hooks/usePWA';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -9,6 +10,7 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children, currentPath = '/', onNavigate }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const { canInstall, needRefresh, installApp, updateApp } = usePWA();
 
     const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, targetPath: string) => {
         setIsMenuOpen(false);
@@ -28,16 +30,35 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPath = '/', onN
                 >
                     WA
                 </a>
-                <button
-                    className={`mobile-menu-btn ${isMenuOpen ? 'active' : ''}`}
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    aria-label="Toggle navigation"
-                >
-                    <span className="bar"></span>
-                    <span className="bar"></span>
-                    <span className="bar"></span>
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    {canInstall && (
+                        <button
+                            className="nav-install-btn"
+                            onClick={installApp}
+                            title="Install Wally Atkins Progressive Web App"
+                        >
+                            📱 Install App
+                        </button>
+                    )}
+                    <button
+                        className={`mobile-menu-btn ${isMenuOpen ? 'active' : ''}`}
+                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                        aria-label="Toggle navigation"
+                    >
+                        <span className="bar"></span>
+                        <span className="bar"></span>
+                        <span className="bar"></span>
+                    </button>
+                </div>
                 <div className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
+                    <a
+                        href="/apps"
+                        className={currentPath === '/apps' ? 'active' : ''}
+                        onClick={(e) => handleNavClick(e, '/apps')}
+                        style={{ color: '#38bdf8', fontWeight: 700 }}
+                    >
+                        Apps ⚡
+                    </a>
                     <a
                         href="/about"
                         className={currentPath === '/about' ? 'active' : ''}
@@ -75,6 +96,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPath = '/', onN
                     </a>
                 </div>
             </nav>
+
+            {needRefresh && (
+                <div className="pwa-update-bar">
+                    <span>A new version of the portal is available!</span>
+                    <button onClick={updateApp}>Update Now</button>
+                </div>
+            )}
+
             <main>
                 {children}
             </main>

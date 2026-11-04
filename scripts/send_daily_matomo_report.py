@@ -269,7 +269,7 @@ def build_email_content(data):
         <tr style="border-bottom: 1px solid #e2e8f0; {row_bg}">
           <td style="padding: 12px 10px; font-size: 13px;">
             {badge}<strong>{name}</strong><br>
-            <a href="{matomo_link}" style="color: #64748b; font-size: 11px; text-decoration: none; margin-left: 14px;">{url} &bull; <span style="color:#2563eb;">View &rarr;</span></a>
+            <span style="color: #64748b; font-size: 11px; margin-left: 14px;">{url} &bull; </span><a href="{matomo_link}" style="color:#2563eb; font-size: 11px; text-decoration: none; font-weight: 600;">View in Matomo &rarr;</a>
           </td>
           <td style="padding: 12px 8px; text-align: center; font-size: 13px;">{v24_display}</td>
           <td style="padding: 12px 8px; text-align: center; font-size: 13px;">{u24_display}</td>
