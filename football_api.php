@@ -81,7 +81,7 @@ if (!empty($_SESSION['user'])) {
         $uid = (int) $parts[0];
         $rawToken = $parts[1];
         $tokenHash = hash('sha256', $rawToken);
-        $stmt = $pdo->prepare('SELECT u.id, u.username, u.email, u.role FROM user_device_tokens dt JOIN users u ON u.id = dt.user_id WHERE dt.user_id = :uid AND dt.token_hash = :thash AND dt.expires_at > datetime("now") LIMIT 1');
+        $stmt = $pdo->prepare('SELECT u.id, u.username, u.email, u.role, u.avatar_url FROM user_device_tokens dt JOIN users u ON u.id = dt.user_id WHERE dt.user_id = :uid AND dt.token_hash = :thash AND dt.expires_at > datetime("now") LIMIT 1');
         $stmt->execute(['uid' => $uid, 'thash' => $tokenHash]);
         $row = $stmt->fetch();
         if ($row) {
@@ -91,13 +91,14 @@ if (!empty($_SESSION['user'])) {
     }
 }
 
-// Default fallback to user 1 (Wally) if testing or requested via query
-if (!$currentUser && isset($_GET['as_user'])) {
-    $stmt = $pdo->prepare('SELECT id, username, email, role FROM users WHERE id = :uid OR username = :u LIMIT 1');
+// User override or selection via query param or session
+if (!$currentUser && !empty($_GET['as_user'])) {
+    $stmt = $pdo->prepare('SELECT id, username, email, role, avatar_url FROM users WHERE id = :uid OR username = :u LIMIT 1');
     $stmt->execute(['uid' => (int)$_GET['as_user'], 'u' => $_GET['as_user']]);
     $u = $stmt->fetch();
     if ($u) {
         $currentUser = $u;
+        $_SESSION['user'] = $u;
     }
 }
 
@@ -114,6 +115,40 @@ if ($activeWeek <= 0) {
 }
 
 $action = $_GET['action'] ?? 'matrix';
+
+// Action: switch_user
+if ($action === 'switch_user') {
+    $input = json_decode(file_get_contents('php://input'), true);
+    $targetUsername = trim($input['username'] ?? $_GET['username'] ?? '');
+    if ($targetUsername) {
+        $stmt = $pdo->prepare('SELECT id, username, email, role, avatar_url FROM users WHERE username = :u OR id = :uid LIMIT 1');
+        $stmt->execute(['u' => $targetUsername, 'uid' => (int)$targetUsername]);
+        $u = $stmt->fetch();
+        if ($u) {
+            $currentUser = $u;
+            $_SESSION['user'] = $u;
+            echo json_encode(['success' => true, 'user' => $u]);
+            exit;
+        }
+    }
+    http_response_code(400);
+    echo json_encode(['error' => 'User not found']);
+    exit;
+}
+
+// Action: logout
+if ($action === 'logout') {
+    unset($_SESSION['user']);
+    echo json_encode(['success' => true]);
+    exit;
+}
+
+// Action: users_list
+if ($action === 'users_list') {
+    $users = $pdo->query('SELECT id, username, role, avatar_url FROM users ORDER BY username ASC')->fetchAll();
+    echo json_encode(['users' => $users]);
+    exit;
+}
 
 // Action: meta
 if ($action === 'meta') {
