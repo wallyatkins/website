@@ -84,6 +84,7 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
   const [isSwitchingUser, setIsSwitchingUser] = useState<boolean>(false);
 
   const hasAutoLaunchedRef = useRef<boolean>(false);
+  const weeksSliderRef = useRef<HTMLElement | null>(null);
 
   // 1. Fetch metadata on initial load (current week & available weeks)
   useEffect(() => {
@@ -107,6 +108,29 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
     };
     fetchMeta();
   }, []);
+
+  // Scroll horizontal weeks slider as far right as possible by default to show current week
+  useEffect(() => {
+    if (weeksSliderRef.current && availableWeeks.length > 0) {
+      // Immediate scroll right
+      weeksSliderRef.current.scrollLeft = weeksSliderRef.current.scrollWidth;
+      // Also ensure active week chip is smoothly centered into view
+      const timeoutId = setTimeout(() => {
+        if (weeksSliderRef.current) {
+          const activeChip = weeksSliderRef.current.querySelector('.week-chip.active');
+          if (activeChip) {
+            activeChip.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+          } else {
+            weeksSliderRef.current.scrollTo({
+              left: weeksSliderRef.current.scrollWidth,
+              behavior: 'smooth',
+            });
+          }
+        }
+      }, 60);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [availableWeeks, currentWeek]);
 
   // 2. Fetch Matrix Data whenever selectedWeek changes
   const fetchWeekMatrix = async (weekToLoad: number) => {
@@ -308,8 +332,8 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
         </div>
       </header>
 
-      {/* 2. HORIZONTAL WEEKS SLIDER (Right at top) */}
-      <nav className="weeks-slider-wrapper" aria-label="NFL Weeks Navigation">
+      {/* 2. HORIZONTAL WEEKS SLIDER (Right at top, default scrolled to right for current week) */}
+      <nav ref={weeksSliderRef} className="weeks-slider-wrapper" aria-label="NFL Weeks Navigation">
         <div className="weeks-slider">
           {availableWeeks.map((w) => {
             const isCurrent = w === currentWeek;
@@ -408,12 +432,11 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
                         idx % 2 === 0 ? 'even' : 'odd'
                       }`}
                     >
-                      {/* Sticky Participant Name Column (Pure Text, No Images) */}
+                      {/* Sticky Participant Name Column (Pure Text, Row Highlighted) */}
                       <td className="td-participant sticky-col">
                         <div className="participant-cell-wrap">
                           <span className="rank-num">#{idx + 1}</span>
                           <span className="participant-name">{p.username}</span>
-                          {p.is_me && <span className="you-tag">YOU</span>}
                         </div>
                       </td>
 

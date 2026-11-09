@@ -326,7 +326,9 @@ body {
 .matrix-viewport {
   flex: 1;
   padding: 0.5rem 0.75rem 2.5rem;
-  overflow-x: auto;
+  overflow: visible;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 @media (min-width: 768px) {
@@ -336,24 +338,30 @@ body {
 }
 
 .matrix-table-container {
+  width: 100%;
+  max-width: 100%;
   background: var(--fb-card-bg);
   border: 1px solid var(--fb-border);
   border-radius: 14px;
   overflow-x: auto;
+  overflow-y: visible;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: contain;
 }
 
 .matrix-table {
-  width: 100%;
-  border-collapse: collapse;
+  width: max-content;
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 0.82rem;
   text-align: left;
 }
 
 .matrix-table thead tr {
   background: #08111e;
-  border-bottom: 2px solid var(--fb-border);
 }
 
 .matrix-table th {
@@ -364,6 +372,11 @@ body {
   letter-spacing: 0.05em;
   color: var(--fb-text-muted);
   white-space: nowrap;
+  border-bottom: 2px solid var(--fb-border);
+}
+
+.matrix-table td {
+  border-bottom: 1px solid var(--fb-border);
 }
 
 .sticky-col {
@@ -371,6 +384,7 @@ body {
   left: 0;
   background: #0b1626;
   z-index: 10;
+  box-shadow: 3px 0 10px rgba(0, 0, 0, 0.4);
 }
 
 .matrix-table thead .sticky-col {
@@ -385,7 +399,8 @@ body {
 
 .th-matchup {
   text-align: center;
-  min-width: 95px;
+  min-width: 85px;
+  padding: 0.65rem 0.4rem;
 }
 
 .matchup-header-cell {
@@ -428,15 +443,15 @@ body {
 
 .th-tiebreaker {
   text-align: center;
-  min-width: 105px;
+  min-width: 110px;
+  padding-right: 1.5rem;
 }
 
 .participant-row {
-  border-bottom: 1px solid var(--fb-border);
   transition: background 0.15s ease;
 }
 
-.participant-row:hover {
+.participant-row:hover td {
   background: var(--fb-card-hover);
 }
 
@@ -444,8 +459,8 @@ body {
   background: var(--fb-card-hover);
 }
 
-.participant-row.my-row {
-  background: rgba(234, 179, 8, 0.08);
+.participant-row.my-row td {
+  background: rgba(234, 179, 8, 0.09);
 }
 
 .participant-row.my-row .sticky-col {
@@ -500,6 +515,7 @@ body {
 .td-pick {
   text-align: center;
   padding: 0.55rem 0.35rem;
+  min-width: 85px;
 }
 
 .pick-cell {
@@ -550,7 +566,8 @@ body {
 
 .td-tiebreaker {
   text-align: center;
-  padding: 0.7rem 0.5rem;
+  padding: 0.7rem 1.5rem 0.7rem 0.5rem;
+  min-width: 110px;
 }
 
 .mnf-pts-pill {
