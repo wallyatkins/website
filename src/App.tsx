@@ -14,11 +14,12 @@ import { IRCInterface } from './components/IRCInterface';
 import { Fhqwhgads } from './components/easter-eggs/Fhqwhgads';
 import { GamesPage } from './components/GamesPage';
 import { AppsPage } from './components/AppsPage';
+import { FootballPickemApp } from './components/FootballPickemApp';
 import { PrivacyPage } from './components/PrivacyPage';
 import { TermsPage } from './components/TermsPage';
 
 const SECTION_MAP: Record<string, string> = {
-  '/': 'hero',
+  '/portfolio': 'hero',
   '/about': 'about',
   '/work': 'work',
   '/process': 'process',
@@ -26,7 +27,9 @@ const SECTION_MAP: Record<string, string> = {
 };
 
 const PAGE_TITLES: Record<string, string> = {
-  '/': 'Wally Atkins | Creator & Technologist',
+  '/': "Wally's NFL Pick'em | Atkins League",
+  '/pickem': "Wally's NFL Pick'em | Atkins League",
+  '/portfolio': 'Wally Atkins | Creator & Technologist',
   '/about': 'About | Wally Atkins',
   '/work': 'Selected Projects & Apps | Wally Atkins',
   '/apps': 'Application Suite & Portal | Wally Atkins',
@@ -208,6 +211,11 @@ function App() {
         <IRCInterface ircId={ircId} token={token} />
       </div>
     );
+  }
+
+  // Simplified Football Pick'em PWA Default View
+  if (currentPath === '/' || currentPath === '/pickem') {
+    return <FootballPickemApp />;
   }
 
   return (

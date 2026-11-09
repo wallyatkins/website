@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -14,8 +14,8 @@ export function usePWA() {
   const [canInstall, setCanInstall] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
-  const [needRefresh, setNeedRefresh] = useState(false);
-  const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
     // 1. Detect if running standalone (installed PWA)
@@ -46,15 +46,16 @@ export function usePWA() {
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
     window.addEventListener('appinstalled', handleAppInstalled);
 
-    // 3. Register Service Worker
+    // 3. Register Service Worker with seamless auto-update
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker
         .register('/sw.js', { scope: '/' })
         .then((registration) => {
-          // Check for waiting worker
+          registrationRef.current = registration;
+
+          // If a worker is already waiting, trigger immediate skipWaiting
           if (registration.waiting) {
-            setWaitingWorker(registration.waiting);
-            setNeedRefresh(true);
+            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
           }
 
           registration.addEventListener('updatefound', () => {
@@ -62,8 +63,9 @@ export function usePWA() {
             if (newWorker) {
               newWorker.addEventListener('statechange', () => {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  setWaitingWorker(newWorker);
-                  setNeedRefresh(true);
+                  // Proactively skip waiting for automatic instant update
+                  setIsUpdating(true);
+                  newWorker.postMessage({ type: 'SKIP_WAITING' });
                 }
               });
             }
@@ -73,7 +75,7 @@ export function usePWA() {
           console.warn('[PWA] Service worker registration failed:', err);
         });
 
-      // Reload when the active controller changes
+      // Reload smoothly when active controller changes
       let refreshing = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (!refreshing) {
@@ -81,6 +83,33 @@ export function usePWA() {
           window.location.reload();
         }
       });
+
+      // 4. Proactive update checks on window focus and every 60s
+      const checkForUpdates = () => {
+        if (registrationRef.current) {
+          registrationRef.current.update().catch(() => {});
+        }
+      };
+
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+          checkForUpdates();
+        }
+      };
+
+      window.addEventListener('focus', checkForUpdates);
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
+      const intervalId = setInterval(checkForUpdates, 60 * 1000);
+
+      return () => {
+        clearInterval(intervalId);
+        window.removeEventListener('focus', checkForUpdates);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        mql.removeEventListener('change', handleMqlChange);
+        window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+        window.removeEventListener('appinstalled', handleAppInstalled);
+      };
     }
 
     return () => {
@@ -106,18 +135,20 @@ export function usePWA() {
     }
   }, [deferredPrompt]);
 
-  const updateApp = useCallback(() => {
-    if (waitingWorker) {
-      waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+  const checkForUpdate = useCallback(() => {
+    if (registrationRef.current) {
+      registrationRef.current.update();
     }
-  }, [waitingWorker]);
+  }, []);
 
   return {
     canInstall,
     isStandalone,
     isInstalled,
-    needRefresh,
+    isUpdating,
+    needRefresh: isUpdating,
     installApp,
-    updateApp,
+    updateApp: checkForUpdate,
+    checkForUpdate,
   };
 }

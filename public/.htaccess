@@ -40,7 +40,7 @@
   RewriteEngine On
   
   # Allow access to backend endpoints
-  RewriteRule ^(pine|irc|matomo)\.php$ - [L]
+  RewriteRule ^(pine|irc|matomo|football_api)\.php$ - [L]
 
   # Allow access to assets
   RewriteCond %{REQUEST_FILENAME} -f [OR]

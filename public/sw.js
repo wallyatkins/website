@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wallyatkins-pwa-v1.0.0';
+const CACHE_NAME = 'wallyatkins-nfl-pwa-v2.0.0';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -9,6 +9,7 @@ const PRECACHE_ASSETS = [
   '/icon-512.png',
   '/maskable-icon-512.png',
   '/apple-touch-icon.png',
+  '/nfl-logo-vector.svg',
   '/offline.html',
   '/robots.txt'
 ];

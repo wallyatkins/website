@@ -1,9 +1,9 @@
 {
   "id": "https://wallyatkins.com/",
-  "name": "Wally Atkins Portal",
-  "short_name": "Wally Atkins",
-  "description": "Wally Atkins web suite and application hub — access NFL Pick'em, Wally Tasks, WallyMUD, and personal tools.",
-  "start_url": "/?source=pwa",
+  "name": "Wally's NFL Pick'em",
+  "short_name": "NFL Pick'em",
+  "description": "Atkins NFL Pick'em League - Weekly Picks Matrix & Wizard",
+  "start_url": "/?pwa=true",
   "scope": "/",
   "display": "standalone",
   "display_override": [
@@ -12,17 +12,21 @@
     "minimal-ui"
   ],
   "orientation": "any",
-  "background_color": "#07090e",
-  "theme_color": "#07090e",
+  "background_color": "#070d17",
+  "theme_color": "#0B1626",
   "categories": [
-    "productivity",
     "sports",
-    "games",
-    "utilities"
+    "games"
   ],
   "lang": "en",
   "dir": "ltr",
   "icons": [
+    {
+      "src": "/assets/logos/nfl.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
@@ -50,10 +54,10 @@
   ],
   "shortcuts": [
     {
-      "name": "🏈 Atkins NFL Pool",
-      "short_name": "NFL Pool",
-      "description": "Make weekly picks, track spreads and survivor pool",
-      "url": "https://football.wallyatkins.com",
+      "name": "🏈 Make Weekly Picks",
+      "short_name": "Make Picks",
+      "description": "Open pick-by-pick flow for the active NFL week",
+      "url": "/?mode=wizard",
       "icons": [
         {
           "src": "/icon-192.png",
@@ -62,46 +66,10 @@
       ]
     },
     {
-      "name": "📋 Wally Tasks",
-      "short_name": "Tasks",
-      "description": "Productivity and agentic task orchestration",
-      "url": "https://tasks.wallyatkins.com",
-      "icons": [
-        {
-          "src": "/icon-192.png",
-          "sizes": "192x192"
-        }
-      ]
-    },
-    {
-      "name": "⚔️ WallyMUD",
-      "short_name": "WallyMUD",
-      "description": "Mobile-first live retro fantasy MUD",
-      "url": "https://mud.wallyatkins.com",
-      "icons": [
-        {
-          "src": "/icon-192.png",
-          "sizes": "192x192"
-        }
-      ]
-    },
-    {
-      "name": "🗺️ Where's Wally",
-      "short_name": "Map",
-      "description": "Interactive Deep Zoom travel chronicle",
-      "url": "https://wheres.wallyatkins.com",
-      "icons": [
-        {
-          "src": "/icon-192.png",
-          "sizes": "192x192"
-        }
-      ]
-    },
-    {
-      "name": "🔐 WallyAuth SSO",
-      "short_name": "Auth",
-      "description": "Single Sign-On and account console",
-      "url": "https://auth.wallyatkins.com",
+      "name": "📊 Full League Matrix",
+      "short_name": "Picks Matrix",
+      "description": "View all participants' picks and standings",
+      "url": "/?mode=matrix",
       "icons": [
         {
           "src": "/icon-192.png",
@@ -112,10 +80,6 @@
   ],
   "scope_extensions": [
     { "origin": "https://football.wallyatkins.com" },
-    { "origin": "https://tasks.wallyatkins.com" },
-    { "origin": "https://mud.wallyatkins.com" },
-    { "origin": "https://wheres.wallyatkins.com" },
-    { "origin": "https://stories.wallyatkins.com" },
     { "origin": "https://auth.wallyatkins.com" }
   ]
 }
