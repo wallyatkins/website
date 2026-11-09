@@ -480,19 +480,10 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
                         idx % 2 === 0 ? 'even' : 'odd'
                       }`}
                     >
-                      {/* Sticky Participant Name Column */}
+                      {/* Sticky Participant Name Column (Pure Text, No Images) */}
                       <td className="td-participant sticky-col">
                         <div className="participant-cell-wrap">
                           <span className="rank-num">#{idx + 1}</span>
-                          {p.avatar_url ? (
-                            <img
-                              src={p.avatar_url}
-                              alt={p.username}
-                              className="matrix-user-avatar"
-                            />
-                          ) : (
-                            <span className="matrix-avatar-dot"></span>
-                          )}
                           <span className="participant-name">{p.username}</span>
                           {p.is_me && <span className="you-tag">YOU</span>}
                         </div>
@@ -506,44 +497,36 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
                         </div>
                       </td>
 
-                      {/* Matchup Picks Columns */}
+                      {/* Matchup Picks Columns (Text Badges, No Images) */}
                       {weekData.games.map((g) => {
                         const pick = p.picks[String(g.id)];
                         const selectedTeam = pick?.selected_team;
                         const isRevealed = pick?.is_revealed;
                         const result = pick?.result || 'pending';
 
-                        if (!selectedTeam || !isRevealed) {
+                        if (!isRevealed) {
                           return (
-                            <td key={g.id} className="td-pick hidden-or-empty">
-                              <span
-                                className="pick-hidden-dash"
-                                title={isRevealed ? 'No pick submitted' : 'Hidden until kickoff'}
-                              >
-                                {isRevealed ? '—' : '🔒'}
+                            <td key={g.id} className="td-pick">
+                              <span className="pick-cell locked" title="Hidden until kickoff">
+                                LOCKED
                               </span>
                             </td>
                           );
                         }
 
-                        const isHome = selectedTeam === g.home_team;
-                        const teamLogo = isHome ? g.home_logo : g.away_logo;
+                        if (!selectedTeam) {
+                          return (
+                            <td key={g.id} className="td-pick">
+                              <span className="cell-empty">—</span>
+                            </td>
+                          );
+                        }
 
                         return (
-                          <td key={g.id} className={`td-pick pick-result-${result}`}>
-                            <div className="pick-chip-inner">
-                              {teamLogo && (
-                                <img
-                                  src={teamLogo}
-                                  alt={selectedTeam}
-                                  className="team-mini-logo"
-                                  loading="lazy"
-                                />
-                              )}
-                              <span className="team-abbr">{selectedTeam}</span>
-                              {result === 'correct' && <span className="result-icon">✓</span>}
-                              {result === 'incorrect' && <span className="result-icon">✗</span>}
-                            </div>
+                          <td key={g.id} className="td-pick">
+                            <span className={`pick-cell ${result}`}>
+                              {selectedTeam}
+                            </span>
                           </td>
                         );
                       })}
@@ -551,7 +534,7 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
                       {/* Tiebreaker Column */}
                       <td className="td-tiebreaker">
                         <span className="tiebreaker-val">
-                          {p.mnf_points_prediction !== null ? `${p.mnf_points_prediction} pts` : '—'}
+                          {p.mnf_points_prediction !== null ? p.mnf_points_prediction : '—'}
                         </span>
                       </td>
                     </tr>
