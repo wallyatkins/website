@@ -53,12 +53,11 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                         <ul className="footer-nav-list">
                             <li>
                                 <a
-                                    href="/apps"
-                                    onClick={(e) => handleInternalClick(e, '/apps')}
+                                    href="/app"
+                                    onClick={(e) => handleInternalClick(e, '/app')}
                                     className="footer-link"
-                                    style={{ color: '#38bdf8' }}
                                 >
-                                    App Suite ⚡
+                                    App
                                 </a>
                             </li>
                             <li>

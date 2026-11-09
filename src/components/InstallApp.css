@@ -1,0 +1,393 @@
+/* ==========================================================================
+   InstallAppPage Styles - Frictionless PWA Onboarding
+   ========================================================================== */
+
+.install-page-container {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 5rem;
+  color: #f8fafc;
+}
+
+@media (min-width: 640px) {
+  .install-page-container {
+    padding: 3.5rem 1.5rem 6rem;
+  }
+}
+
+/* Hero Badge & Header */
+.install-hero {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.install-app-icon-wrap {
+  position: relative;
+  margin-bottom: 1.25rem;
+}
+
+.install-app-icon {
+  width: 96px;
+  height: 96px;
+  border-radius: 22px;
+  object-fit: cover;
+  box-shadow: 0 12px 35px rgba(56, 189, 248, 0.35);
+  border: 2px solid rgba(56, 189, 248, 0.5);
+  background: #0b1626;
+}
+
+.install-app-badge {
+  position: absolute;
+  bottom: -6px;
+  right: -6px;
+  background: linear-gradient(135deg, #f59e0b, #eab308);
+  color: #070d17;
+  font-size: 1.1rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  border: 2px solid #070d17;
+}
+
+.install-title {
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  margin: 0 0 0.5rem;
+  color: #ffffff;
+  line-height: 1.15;
+}
+
+@media (min-width: 640px) {
+  .install-title {
+    font-size: 2.5rem;
+  }
+}
+
+.install-subtitle {
+  font-size: 1rem;
+  color: #94a3b8;
+  max-width: 480px;
+  margin: 0 0 1.5rem;
+  line-height: 1.5;
+}
+
+/* Quick Action Buttons */
+.install-actions-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.btn-install-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background: linear-gradient(135deg, #0284c7, #38bdf8);
+  color: #070d17;
+  font-size: 1rem;
+  font-weight: 800;
+  padding: 0.85rem 1.75rem;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 8px 25px rgba(56, 189, 248, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  min-height: 48px;
+}
+
+.btn-install-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(56, 189, 248, 0.45);
+}
+
+.btn-launch-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f8fafc;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 0.85rem 1.5rem;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-height: 48px;
+}
+
+.btn-launch-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Standalone Banner */
+.standalone-installed-banner {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* Device OS Tabs */
+.device-tabs-wrap {
+  display: flex;
+  background: #08111e;
+  border: 1px solid #1e2e45;
+  border-radius: 14px;
+  padding: 0.35rem;
+  gap: 0.35rem;
+  margin-bottom: 2rem;
+}
+
+.device-tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.65rem 0.5rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.device-tab-btn.active {
+  background: #132238;
+  color: #ffffff;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.device-tab-btn:hover:not(.active) {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Step-by-Step Instructions Card */
+.install-guide-card {
+  background: #0b1626;
+  border: 1px solid #1e2e45;
+  border-radius: 20px;
+  padding: 1.75rem 1.25rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+}
+
+@media (min-width: 640px) {
+  .install-guide-card {
+    padding: 2.25rem 2rem;
+  }
+}
+
+.guide-header {
+  margin-bottom: 1.75rem;
+}
+
+.guide-os-tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #38bdf8;
+  margin-bottom: 0.35rem;
+  display: block;
+}
+
+.guide-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin: 0;
+  color: #ffffff;
+}
+
+/* Steps List */
+.steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 1rem 1.25rem;
+  border-radius: 14px;
+}
+
+.step-num-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0284c7, #38bdf8);
+  color: #070d17;
+  font-weight: 900;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.step-body {
+  flex: 1;
+}
+
+.step-heading {
+  font-size: 1rem;
+  font-weight: 800;
+  margin: 0 0 0.35rem;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.step-ui-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-family: inherit;
+}
+
+.step-desc {
+  font-size: 0.88rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.step-desc strong {
+  color: #f8fafc;
+}
+
+/* Safari Callout Box */
+.safari-callout {
+  margin-top: 1.5rem;
+  background: rgba(234, 179, 8, 0.08);
+  border: 1px solid rgba(234, 179, 8, 0.25);
+  padding: 0.85rem 1.15rem;
+  border-radius: 12px;
+  font-size: 0.82rem;
+  color: #fde047;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  line-height: 1.4;
+}
+
+/* Desktop QR Code Centerpiece */
+.qr-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.5rem 0;
+}
+
+.qr-frame {
+  background: #ffffff;
+  padding: 1rem;
+  border-radius: 20px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8);
+  margin-bottom: 1.25rem;
+}
+
+.qr-image {
+  width: 200px;
+  height: 200px;
+  display: block;
+}
+
+.qr-caption {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0 0 0.4rem;
+}
+
+.qr-subtext {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  margin: 0 0 1.5rem;
+  max-width: 340px;
+}
+
+/* Feature Highlights Grid */
+.install-features-row {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+@media (min-width: 640px) {
+  .install-features-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.install-feat-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 1.15rem;
+  text-align: center;
+}
+
+.feat-icon {
+  font-size: 1.75rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.feat-title {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 0.25rem;
+}
+
+.feat-desc {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.35;
+}

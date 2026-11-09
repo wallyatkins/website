@@ -40,16 +40,16 @@ export const Projects: React.FC<{ onNavigate?: (path: string) => void }> = ({ on
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' }}>
                 <h2 className="section-title" style={{ margin: 0 }}>Selected Projects</h2>
                 <a
-                    href="/apps"
+                    href="/app"
                     onClick={(e) => {
                         if (onNavigate) {
                             e.preventDefault();
-                            onNavigate('/apps');
+                            onNavigate('/app');
                         }
                     }}
                     style={{ color: '#38bdf8', fontSize: '0.95rem', fontWeight: 700 }}
                 >
-                    Launch Full App Suite ⚡ ↗
+                    Get the App ↗
                 </a>
             </div>
             <div className="project-list">

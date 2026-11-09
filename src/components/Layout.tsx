@@ -52,12 +52,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentPath = '/', onN
                 </div>
                 <div className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
                     <a
-                        href="/apps"
-                        className={currentPath === '/apps' ? 'active' : ''}
-                        onClick={(e) => handleNavClick(e, '/apps')}
-                        style={{ color: '#38bdf8', fontWeight: 700 }}
+                        href="/app"
+                        className={currentPath === '/app' || currentPath === '/apps' ? 'active' : ''}
+                        onClick={(e) => handleNavClick(e, '/app')}
                     >
-                        Apps ⚡
+                        App
                     </a>
                     <a
                         href="/about"

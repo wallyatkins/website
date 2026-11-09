@@ -13,7 +13,7 @@ import { CTA } from './components/CTA';
 import { IRCInterface } from './components/IRCInterface';
 import { Fhqwhgads } from './components/easter-eggs/Fhqwhgads';
 import { GamesPage } from './components/GamesPage';
-import { AppsPage } from './components/AppsPage';
+import { InstallAppPage } from './components/InstallAppPage';
 import { FootballPickemApp } from './components/FootballPickemApp';
 import { PrivacyPage } from './components/PrivacyPage';
 import { TermsPage } from './components/TermsPage';
@@ -33,7 +33,8 @@ const PAGE_TITLES: Record<string, string> = {
   '/portfolio': 'Wally Atkins | Creator & Technologist',
   '/about': 'About | Wally Atkins',
   '/work': 'Selected Projects & Apps | Wally Atkins',
-  '/apps': 'Application Suite & Portal | Wally Atkins',
+  '/app': 'Get the App | Wally Atkins',
+  '/apps': 'Get the App | Wally Atkins',
   '/process': 'Process | Wally Atkins',
   '/contact': 'Get in Touch | Wally Atkins',
   '/games': 'Games & MUDs | Wally Atkins',
@@ -174,7 +175,7 @@ function App() {
 
   // Scroll spy / IntersectionObserver for home page sections to keep clean paths in address bar
   useEffect(() => {
-    if (isPwaMode || currentPath.startsWith('/apps') || currentPath.startsWith('/games') || currentPath.startsWith('/privacy') || currentPath.startsWith('/terms')) {
+    if (isPwaMode || currentPath.startsWith('/app') || currentPath.startsWith('/games') || currentPath.startsWith('/privacy') || currentPath.startsWith('/terms')) {
       return;
     }
 
@@ -252,8 +253,8 @@ function App() {
     <EasterEggProvider>
       <Layout currentPath={currentPath} onNavigate={navigateTo}>
         <WhimsicalLayer isVisible={isCreativeMode} />
-        {currentPath.startsWith('/apps') ? (
-          <AppsPage onNavigate={navigateTo} />
+        {currentPath.startsWith('/app') ? (
+          <InstallAppPage onNavigate={navigateTo} />
         ) : currentPath.startsWith('/games') ? (
           <GamesPage onNavigate={navigateTo} />
         ) : currentPath.startsWith('/privacy') ? (
