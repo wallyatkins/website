@@ -27,8 +27,9 @@ const SECTION_MAP: Record<string, string> = {
 };
 
 const PAGE_TITLES: Record<string, string> = {
-  '/': "Wally's NFL Pick'em | Atkins League",
-  '/pickem': "Wally's NFL Pick'em | Atkins League",
+  '/': 'Wally Atkins | Creator & Technologist',
+  '/pickem': "Wally Atkins | NFL Pick'em",
+  '/pwa': 'Wally Atkins | Application Suite',
   '/portfolio': 'Wally Atkins | Creator & Technologist',
   '/about': 'About | Wally Atkins',
   '/work': 'Selected Projects & Apps | Wally Atkins',
@@ -58,24 +59,51 @@ function App() {
   const [currentPath, setCurrentPath] = useState(getInitialPath);
   const [isLightMode, setIsLightMode] = useState(false);
   const [isCreativeMode, setIsCreativeMode] = useState(false);
+
+  // Distinguish PWA App Suite mode vs Personal Portfolio Website
+  const [isPwaMode, setIsPwaMode] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const isStandaloneDisplay = window.matchMedia('(display-mode: standalone)').matches;
+    const isIosStandalone = (window.navigator as unknown as { standalone?: boolean }).standalone === true;
+    const searchParams = new URLSearchParams(window.location.search);
+    const hasPwaParam =
+      searchParams.get('source') === 'pwa' ||
+      searchParams.get('pwa') === 'true' ||
+      searchParams.has('app');
+    const isPwaPath =
+      window.location.pathname.startsWith('/pickem') ||
+      window.location.pathname.startsWith('/pwa');
+
+    const storedMode = localStorage.getItem('wally_app_mode');
+    if (storedMode === 'website' && !hasPwaParam && !isPwaPath) {
+      return false;
+    }
+    return Boolean(isStandaloneDisplay || isIosStandalone || hasPwaParam || isPwaPath || storedMode === 'pwa');
+  });
+
   const isNavigatingRef = useRef(false);
   const isInitialRender = useRef(true);
 
+  // Check URL params for chat interface (ircId & token)
+  const [ircId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return new URLSearchParams(window.location.search).get('ircId');
+  });
+  const [token] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return new URLSearchParams(window.location.search).get('token');
+  });
+
   const scrollToSection = useCallback((sectionId: string) => {
-    if (sectionId === 'hero') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-    const el = document.getElementById(sectionId);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      setTimeout(() => {
-        const retryEl = document.getElementById(sectionId);
-        if (retryEl) {
-          retryEl.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 80);
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const navOffset = 80;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - navOffset;
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth',
+      });
     }
   }, []);
 
@@ -98,6 +126,11 @@ function App() {
     let path = rawPath.replace(/^\/?#/, '/');
     if (!path.startsWith('/')) path = `/${path}`;
     if (path === '/hero') path = '/';
+
+    if (path === '/pickem' || path === '/pwa') {
+      setIsPwaMode(true);
+      localStorage.setItem('wally_app_mode', 'pwa');
+    }
 
     isNavigatingRef.current = true;
     window.history.pushState({}, '', path);
@@ -127,66 +160,54 @@ function App() {
 
   // Title and Analytics tracking
   useEffect(() => {
-    const title = PAGE_TITLES[currentPath] || 'Wally Atkins | Creator & Technologist';
+    let title = PAGE_TITLES[currentPath] || 'Wally Atkins | Creator & Technologist';
+    if (isPwaMode) {
+      title = "Wally Atkins | NFL Pick'em";
+    }
     document.title = title;
 
     if (!isInitialRender.current) {
       trackPageView(currentPath, title);
     }
     isInitialRender.current = false;
-  }, [currentPath]);
+  }, [currentPath, isPwaMode]);
 
   // Scroll spy / IntersectionObserver for home page sections to keep clean paths in address bar
   useEffect(() => {
-    const isStandalonePage =
-      currentPath.startsWith('/apps') ||
-      currentPath.startsWith('/games') ||
-      currentPath.startsWith('/privacy') ||
-      currentPath.startsWith('/terms');
-
-    if (isStandalonePage) return;
+    if (isPwaMode || currentPath.startsWith('/apps') || currentPath.startsWith('/games') || currentPath.startsWith('/privacy') || currentPath.startsWith('/terms')) {
+      return;
+    }
 
     const sections = ['hero', 'about', 'work', 'process', 'contact'];
-    const elements = sections
-      .map(id => document.getElementById(id))
+    const sectionElements = sections
+      .map((id) => document.getElementById(id))
       .filter((el): el is HTMLElement => el !== null);
-
-    if (elements.length === 0) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         if (isNavigatingRef.current) return;
 
-        const visibleEntry = entries
-          .filter(e => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.3) {
+            const id = entry.target.id;
+            const newPath = id === 'hero' ? '/' : `/${id}`;
 
-        if (visibleEntry) {
-          const sectionId = visibleEntry.target.id;
-          const cleanPath = sectionId === 'hero' ? '/' : `/${sectionId}`;
-          if (window.location.pathname !== cleanPath) {
-            window.history.replaceState({}, '', cleanPath);
-            setCurrentPath(cleanPath);
+            if (window.location.pathname !== newPath) {
+              window.history.replaceState({}, '', newPath);
+              setCurrentPath(newPath);
+            }
           }
-        }
+        });
       },
-      { threshold: [0.2, 0.5, 0.8], rootMargin: '-10% 0px -40% 0px' }
+      {
+        threshold: [0.3],
+        rootMargin: '-80px 0px -40% 0px',
+      }
     );
 
-    elements.forEach(el => observer.observe(el));
+    sectionElements.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, [currentPath]);
-
-  // Easter Egg: IRC Mode Check
-  const params = new URLSearchParams(window.location.search);
-  const ircId = params.get('irc_id');
-  const token = params.get('token');
-
-  // Sync body classes
-  useEffect(() => {
-    document.body.classList.toggle('light-mode', isLightMode);
-    document.body.classList.toggle('creative-mode', isCreativeMode);
-  }, [isLightMode, isCreativeMode]);
+  }, [currentPath, isPwaMode]);
 
   const toggleTheme = () => {
     setIsLightMode(!isLightMode);
@@ -200,7 +221,7 @@ function App() {
     document.body.appendChild(burnOverlay);
 
     setTimeout(() => {
-      setIsCreativeMode(prev => !prev);
+      setIsCreativeMode((prev) => !prev);
       setTimeout(() => burnOverlay.remove(), 1000);
     }, 750);
   };
@@ -213,11 +234,20 @@ function App() {
     );
   }
 
-  // Simplified Football Pick'em PWA Default View
-  if (currentPath === '/' || currentPath === '/pickem') {
-    return <FootballPickemApp />;
+  // PWA APP SUITE VIEW (Football Pick'em as first suite application)
+  if (isPwaMode || currentPath === '/pickem' || currentPath === '/pwa') {
+    return (
+      <FootballPickemApp
+        onSwitchToWebsite={() => {
+          localStorage.setItem('wally_app_mode', 'website');
+          setIsPwaMode(false);
+          navigateTo('/');
+        }}
+      />
+    );
   }
 
+  // PERSONAL PORTFOLIO WEBSITE VIEW
   return (
     <EasterEggProvider>
       <Layout currentPath={currentPath} onNavigate={navigateTo}>

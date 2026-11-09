@@ -65,28 +65,116 @@ function getTeamInfo(string $abbr, array $allTeams): array {
     ];
 }
 
+// Connect to PostgreSQL (WallyAuth database) if available
+$pgPdo = null;
+try {
+    $pgHost = getenv('PG_HOST') ?: 'localhost';
+    $pgPort = getenv('PG_PORT') ?: '5432';
+    $pgDb   = getenv('PG_DB')   ?: 'multili2_wallyauth';
+    $pgUser = getenv('PG_USER') ?: 'multili2_pg_wally_auth';
+    $pgPass = getenv('PG_PASS') ?: 'JTDS1sUp@ndRunn1ng!';
+    $pgPdo = new PDO("pgsql:host={$pgHost};port={$pgPort};dbname={$pgDb}", $pgUser, $pgPass, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_TIMEOUT => 2,
+    ]);
+} catch (\Throwable $e) {
+    $pgPdo = null;
+}
+
 // Start session if needed
 if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
     session_start();
 }
 
-// Resolve authenticated user
+// Resolve authenticated user across WallyAuth and Football
 $currentUser = null;
+$authSource = null;
+
 if (!empty($_SESSION['user'])) {
     $currentUser = $_SESSION['user'];
-} elseif (!empty($_COOKIE['wally_device_token'])) {
-    $cookie = $_COOKIE['wally_device_token'];
+    $authSource = 'session';
+}
+
+// Check WallyAuth primary trust cookie (domain .wallyatkins.com)
+if (!$currentUser && !empty($_COOKIE['WALLY_AUTH_DEVICE']) && $pgPdo) {
+    $cookie = (string) $_COOKIE['WALLY_AUTH_DEVICE'];
     $parts = explode(':', $cookie, 2);
+    if (count($parts) === 2 && !empty($parts[0]) && !empty($parts[1])) {
+        $wallyUid = $parts[0];
+        $tokenHash = hash('sha256', $parts[1]);
+        try {
+            $stmt = $pgPdo->prepare('
+                SELECT d.user_id, u.username, u.email, u.avatar_url
+                FROM device_trust d
+                JOIN oauth_users u ON u.id = d.user_id
+                WHERE d.user_id = :uid
+                  AND d.token_hash = :thash
+                  AND d.revoked_at IS NULL
+                  AND (d.expires_at IS NULL OR d.expires_at > CURRENT_TIMESTAMP)
+                LIMIT 1
+            ');
+            $stmt->execute(['uid' => $wallyUid, 'thash' => $tokenHash]);
+            $wallyUser = $stmt->fetch();
+            if ($wallyUser) {
+                // Match with Football SQLite user
+                $fStmt = $pdo->prepare('SELECT id, username, email, role, avatar_url, oidc_sub FROM users WHERE oidc_sub = :sub OR lower(username) = lower(:u) OR lower(email) = lower(:e) LIMIT 1');
+                $fStmt->execute([
+                    'sub' => $wallyUser['user_id'],
+                    'u' => $wallyUser['username'],
+                    'e' => $wallyUser['email']
+                ]);
+                $fUser = $fStmt->fetch();
+                if ($fUser) {
+                    $currentUser = [
+                        'id' => (int) $fUser['id'],
+                        'wallyauth_id' => $wallyUser['user_id'],
+                        'username' => $fUser['username'],
+                        'email' => $fUser['email'] ?: $wallyUser['email'],
+                        'role' => $fUser['role'] ?: 'player',
+                        'avatar_url' => $wallyUser['avatar_url'] ?: $fUser['avatar_url']
+                    ];
+                } else {
+                    $currentUser = [
+                        'id' => null,
+                        'wallyauth_id' => $wallyUser['user_id'],
+                        'username' => $wallyUser['username'],
+                        'email' => $wallyUser['email'],
+                        'role' => 'player',
+                        'avatar_url' => $wallyUser['avatar_url']
+                    ];
+                }
+                $authSource = 'wallyauth';
+                $_SESSION['user'] = $currentUser;
+            }
+        } catch (\Throwable $e) {
+            // Log or ignore pg lookup error
+        }
+    }
+}
+
+// Check Football device token cookie (domain .wallyatkins.com)
+if (!$currentUser && (!empty($_COOKIE['wally_football_device']) || !empty($_COOKIE['wally_device_token']))) {
+    $cookie = $_COOKIE['wally_football_device'] ?? $_COOKIE['wally_device_token'];
+    $parts = explode(':', (string)$cookie, 2);
     if (count($parts) === 2 && ctype_digit($parts[0])) {
         $uid = (int) $parts[0];
         $rawToken = $parts[1];
         $tokenHash = hash('sha256', $rawToken);
-        $stmt = $pdo->prepare('SELECT u.id, u.username, u.email, u.role, u.avatar_url FROM user_device_tokens dt JOIN users u ON u.id = dt.user_id WHERE dt.user_id = :uid AND dt.token_hash = :thash AND dt.expires_at > datetime("now") LIMIT 1');
+        $stmt = $pdo->prepare('SELECT u.id, u.username, u.email, u.role, u.avatar_url, u.oidc_sub FROM user_device_tokens dt JOIN users u ON u.id = dt.user_id WHERE dt.user_id = :uid AND dt.token_hash = :thash AND dt.expires_at > datetime("now") LIMIT 1');
         $stmt->execute(['uid' => $uid, 'thash' => $tokenHash]);
         $row = $stmt->fetch();
         if ($row) {
-            $currentUser = $row;
-            $_SESSION['user'] = $row;
+            $currentUser = [
+                'id' => (int) $row['id'],
+                'wallyauth_id' => $row['oidc_sub'] ?? null,
+                'username' => $row['username'],
+                'email' => $row['email'],
+                'role' => $row['role'] ?: 'player',
+                'avatar_url' => $row['avatar_url'] ?? null
+            ];
+            $authSource = 'football';
+            $_SESSION['user'] = $currentUser;
         }
     }
 }
@@ -139,7 +227,27 @@ if ($action === 'switch_user') {
 // Action: logout
 if ($action === 'logout') {
     unset($_SESSION['user']);
+    $domain = str_contains($_SERVER['HTTP_HOST'] ?? '', 'wallyatkins.com') ? '.wallyatkins.com' : '';
+    setcookie('wally_football_device', '', ['expires' => time() - 3600, 'path' => '/', 'domain' => $domain, 'httponly' => true, 'samesite' => 'Lax']);
+    setcookie('wally_device_token', '', ['expires' => time() - 3600, 'path' => '/', 'domain' => $domain, 'httponly' => true, 'samesite' => 'Lax']);
     echo json_encode(['success' => true]);
+    exit;
+}
+
+// Action: auth_status / me
+if ($action === 'auth_status' || $action === 'me') {
+    echo json_encode([
+        'is_authenticated' => ($currentUser !== null),
+        'auth_source' => $authSource,
+        'user' => $currentUser ? [
+            'id' => $currentUser['id'] ? (int)$currentUser['id'] : null,
+            'wallyauth_id' => $currentUser['wallyauth_id'] ?? null,
+            'username' => $currentUser['username'],
+            'email' => $currentUser['email'] ?? null,
+            'role' => $currentUser['role'] ?? 'player',
+            'avatar_url' => $currentUser['avatar_url'] ?? null
+        ] : null
+    ]);
     exit;
 }
 
@@ -159,11 +267,15 @@ if ($action === 'meta') {
         'season' => $season,
         'current_week' => $activeWeek,
         'available_weeks' => $availableWeeks,
+        'is_authenticated' => ($currentUser !== null),
+        'auth_source' => $authSource,
         'user' => $currentUser ? [
-            'id' => (int)$currentUser['id'],
+            'id' => $currentUser['id'] ? (int)$currentUser['id'] : null,
+            'wallyauth_id' => $currentUser['wallyauth_id'] ?? null,
             'username' => $currentUser['username'],
-            'email' => $currentUser['email'],
-            'role' => $currentUser['role'] ?? 'player'
+            'email' => $currentUser['email'] ?? null,
+            'role' => $currentUser['role'] ?? 'player',
+            'avatar_url' => $currentUser['avatar_url'] ?? null
         ] : null
     ]);
     exit;
@@ -343,11 +455,14 @@ if ($action === 'matrix' || $action === 'week_data') {
         'participants' => $participants,
         'current_user_status' => [
             'is_authenticated' => ($currentUser !== null),
+            'auth_source' => $authSource,
             'user' => $currentUser ? [
-                'id' => (int)$currentUser['id'],
+                'id' => $currentUser['id'] ? (int)$currentUser['id'] : null,
+                'wallyauth_id' => $currentUser['wallyauth_id'] ?? null,
                 'username' => $currentUser['username'],
-                'email' => $currentUser['email'],
-                'role' => $currentUser['role'] ?? 'player'
+                'email' => $currentUser['email'] ?? null,
+                'role' => $currentUser['role'] ?? 'player',
+                'avatar_url' => $currentUser['avatar_url'] ?? null
             ] : null,
             'has_submitted' => $hasSubmitted,
             'picks_count' => $picksCount,

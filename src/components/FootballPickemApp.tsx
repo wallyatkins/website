@@ -23,14 +23,19 @@ interface Participant {
   >;
 }
 
+interface CurrentUser {
+  id: number | null;
+  wallyauth_id?: string | null;
+  username: string;
+  email?: string | null;
+  role: string;
+  avatar_url?: string | null;
+}
+
 interface CurrentUserStatus {
   is_authenticated: boolean;
-  user: {
-    id: number;
-    username: string;
-    email: string;
-    role: string;
-  } | null;
+  auth_source?: string | null;
+  user: CurrentUser | null;
   has_submitted: boolean;
   picks_count: number;
   total_games: number;
@@ -57,7 +62,11 @@ interface LeagueUser {
   avatar_url?: string;
 }
 
-export const FootballPickemApp: React.FC = () => {
+interface FootballPickemAppProps {
+  onSwitchToWebsite?: () => void;
+}
+
+export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchToWebsite }) => {
   const { canInstall, isStandalone, isUpdating, installApp } = usePWA();
 
   const [season, setSeason] = useState<number>(2026);
@@ -71,6 +80,7 @@ export const FootballPickemApp: React.FC = () => {
 
   const [isWizardOpen, setIsWizardOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [isAppMenuOpen, setIsAppMenuOpen] = useState<boolean>(false);
   const [leagueUsers, setLeagueUsers] = useState<LeagueUser[]>([]);
   const [isSwitchingUser, setIsSwitchingUser] = useState<boolean>(false);
 
@@ -78,23 +88,24 @@ export const FootballPickemApp: React.FC = () => {
 
   // 1. Fetch metadata on initial load (current week & available weeks)
   useEffect(() => {
-    async function fetchMeta() {
+    const fetchMeta = async () => {
       try {
         const res = await fetch('/football_api.php?action=meta');
-        if (!res.ok) throw new Error('Failed to load pool meta');
-        const data = await res.json();
-
-        setSeason(data.season);
-        setCurrentWeek(data.current_week);
-        setAvailableWeeks(data.available_weeks);
-        setSelectedWeek(data.current_week);
-      } catch (err: unknown) {
-        console.warn('Meta fetch error:', err);
-        setAvailableWeeks([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-        setSelectedWeek(9);
+        if (res.ok) {
+          const meta = await res.json();
+          if (meta.season) setSeason(meta.season);
+          if (meta.current_week) {
+            setCurrentWeek(meta.current_week);
+            setSelectedWeek(meta.current_week);
+          }
+          if (meta.available_weeks && Array.isArray(meta.available_weeks)) {
+            setAvailableWeeks(meta.available_weeks);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load metadata', err);
       }
-    }
-
+    };
     fetchMeta();
   }, []);
 
@@ -114,7 +125,7 @@ export const FootballPickemApp: React.FC = () => {
       // ONLY auto-launch if:
       // 1. It is the CURRENT week
       // 2. Has not auto-launched in this session
-      // 3. User is authenticated
+      // 3. User is authenticated with WallyAuth or football account
       // 4. User has NOT fully put in their picks for the week (missing_picks === true)
       if (
         data.is_current_week &&
@@ -174,6 +185,16 @@ export const FootballPickemApp: React.FC = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await fetch('/football_api.php?action=logout', { method: 'POST' });
+      setIsAuthModalOpen(false);
+      await fetchWeekMatrix(selectedWeek);
+    } catch (err) {
+      console.error('Logout error', err);
+    }
+  };
+
   const handlePicksSaved = (newPicks: Record<number, string>, mnfPts: number | null) => {
     if (weekData) {
       setWeekData({
@@ -194,9 +215,15 @@ export const FootballPickemApp: React.FC = () => {
   };
 
   const currentUser = weekData?.current_user_status?.user;
+  const isAuthenticated = Boolean(weekData?.current_user_status?.is_authenticated && currentUser);
   const isCurrentWeekSelected = selectedWeek === currentWeek;
   const userMissingPicks =
     weekData?.current_user_status?.missing_picks || !weekData?.current_user_status?.has_submitted;
+
+  // SSO redirect URL to return directly back to PWA with source parameter
+  const ssoRedirectUrl = `https://football.wallyatkins.com/auth/login?redirect=${encodeURIComponent(
+    'https://wallyatkins.com/?source=pwa&app=football'
+  )}`;
 
   return (
     <div className="football-pwa-container">
@@ -204,20 +231,87 @@ export const FootballPickemApp: React.FC = () => {
       {isUpdating && (
         <div className="pwa-auto-update-toast">
           <span className="pulse-dot"></span>
-          <span>Updating NFL Pool to the latest version...</span>
+          <span>Updating Wally Atkins PWA to latest version...</span>
         </div>
       )}
 
-      {/* Slim Top Header */}
+      {/* 1. PWA SHELL TOP BAR */}
       <header className="football-header">
         <div className="football-header-left">
-          <div className="nfl-brand-badge">
-            <span className="football-emoji">🏈</span>
+          {/* Consistent PWA Identity: Wally Atkins */}
+          <div className="pwa-brand-group">
+            <span className="pwa-brand-monogram">WA</span>
             <div className="brand-titles">
-              <h1 className="league-title">Atkins NFL Pool</h1>
-              <span className="season-subtitle">
-                {season} • Week {selectedWeek}
-              </span>
+              <div className="brand-row">
+                <span className="league-title">Wally Atkins</span>
+                <span className="pwa-suite-tag">PWA</span>
+              </div>
+              {/* Active Sub-App Selector */}
+              <div className="app-selector-dropdown-wrap">
+                <button
+                  type="button"
+                  className="app-selector-btn"
+                  onClick={() => setIsAppMenuOpen(!isAppMenuOpen)}
+                >
+                  <span className="app-icon">🏈</span>
+                  <span className="app-name">NFL Pick'em</span>
+                  <span className="app-chevron">▾</span>
+                </button>
+
+                {isAppMenuOpen && (
+                  <div className="app-switcher-popover" onClick={() => setIsAppMenuOpen(false)}>
+                    <div className="switcher-section-title">Wally Atkins PWA Suite</div>
+                    <div className="switcher-item active">
+                      <span className="switcher-icon">🏈</span>
+                      <div className="switcher-text">
+                        <span className="switcher-name">NFL Pick'em</span>
+                        <span className="switcher-sub">Active App • Matrix &amp; Picks</span>
+                      </div>
+                      <span className="switcher-active-dot">●</span>
+                    </div>
+
+                    <a
+                      href="https://mud.wallyatkins.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="switcher-item"
+                    >
+                      <span className="switcher-icon">⚔️</span>
+                      <div className="switcher-text">
+                        <span className="switcher-name">WallyMUD</span>
+                        <span className="switcher-sub">Mobile Retro Live Fantasy MUD</span>
+                      </div>
+                    </a>
+
+                    <a
+                      href="https://tasks.wallyatkins.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="switcher-item"
+                    >
+                      <span className="switcher-icon">📋</span>
+                      <div className="switcher-text">
+                        <span className="switcher-name">Wally Tasks</span>
+                        <span className="switcher-sub">Agentic Task Orchestration</span>
+                      </div>
+                    </a>
+
+                    {onSwitchToWebsite && (
+                      <button
+                        type="button"
+                        className="switcher-item switch-website-btn"
+                        onClick={onSwitchToWebsite}
+                      >
+                        <span className="switcher-icon">🌐</span>
+                        <div className="switcher-text">
+                          <span className="switcher-name">Personal Website</span>
+                          <span className="switcher-sub">Portfolio, Work &amp; Story</span>
+                        </div>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -228,7 +322,13 @@ export const FootballPickemApp: React.FC = () => {
             <button
               type="button"
               className={`compact-pick-btn ${userMissingPicks ? 'pulse-cta' : ''}`}
-              onClick={() => setIsWizardOpen(true)}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  openAuthModal();
+                } else {
+                  setIsWizardOpen(true);
+                }
+              }}
             >
               <span>⚡</span>
               <span>{userMissingPicks ? 'Make Picks' : 'Edit Picks'}</span>
@@ -242,15 +342,25 @@ export const FootballPickemApp: React.FC = () => {
             </button>
           )}
 
-          {/* User Profile / In-PWA Auth Button */}
-          {currentUser ? (
+          {/* WallyAuth Profile Button / Avatar Display */}
+          {isAuthenticated && currentUser ? (
             <button
               type="button"
               className="user-profile-pill clickable"
               onClick={openAuthModal}
-              title="Click to switch profile or view account"
+              title={`Signed in as @${currentUser.username} • Click to manage profile`}
             >
-              <span className="user-avatar-dot"></span>
+              {currentUser.avatar_url ? (
+                <img
+                  src={currentUser.avatar_url}
+                  alt={currentUser.username}
+                  className="user-avatar-img"
+                />
+              ) : (
+                <span className="user-avatar-fallback">
+                  {currentUser.username.charAt(0).toUpperCase()}
+                </span>
+              )}
               <span className="user-name">{currentUser.username}</span>
               {currentUser.role === 'commissioner' && (
                 <span className="commish-badge">COMMISH</span>
@@ -259,16 +369,18 @@ export const FootballPickemApp: React.FC = () => {
           ) : (
             <button
               type="button"
-              className="login-pill"
+              className="pwa-header-signin-btn"
               onClick={openAuthModal}
+              title="Sign in with WallyAuth"
             >
-              🔐 Sign In
+              <span>🔐</span>
+              <span>Sign In</span>
             </button>
           )}
         </div>
       </header>
 
-      {/* 1. HORIZONTAL WEEKS SLIDER (Right at top) */}
+      {/* 2. HORIZONTAL WEEKS SLIDER (Right at top) */}
       <nav className="weeks-slider-wrapper" aria-label="NFL Weeks Navigation">
         <div className="weeks-slider">
           {availableWeeks.map((w) => {
@@ -278,7 +390,9 @@ export const FootballPickemApp: React.FC = () => {
               <button
                 key={w}
                 type="button"
-                className={`week-chip ${isSelected ? 'active' : ''} ${isCurrent ? 'current-week' : ''}`}
+                className={`week-chip ${isSelected ? 'active' : ''} ${
+                  isCurrent ? 'current-week' : ''
+                }`}
                 onClick={() => setSelectedWeek(w)}
               >
                 <span className="week-label">Week {w}</span>
@@ -289,7 +403,23 @@ export const FootballPickemApp: React.FC = () => {
         </div>
       </nav>
 
-      {/* 2. MATRIX VIEW TABLE (Immediate top positioning) */}
+      {/* Guest Notice Banner if Not Authenticated */}
+      {!isAuthenticated && (
+        <div className="pwa-guest-banner">
+          <div className="guest-banner-content">
+            <span className="guest-banner-icon">👋</span>
+            <span className="guest-banner-text">
+              Browsing as guest. Sign in with <strong>WallyAuth</strong> to enter your Week{' '}
+              {currentWeek} picks and track your record.
+            </span>
+          </div>
+          <button type="button" className="guest-signin-btn" onClick={openAuthModal}>
+            Sign In with WallyAuth
+          </button>
+        </div>
+      )}
+
+      {/* 3. MATRIX VIEW TABLE (Immediate top positioning) */}
       <main className="matrix-viewport">
         {isLoading && (
           <div className="matrix-loading-state">
@@ -354,101 +484,113 @@ export const FootballPickemApp: React.FC = () => {
                       <td className="td-participant sticky-col">
                         <div className="participant-cell-wrap">
                           <span className="rank-num">#{idx + 1}</span>
+                          {p.avatar_url ? (
+                            <img
+                              src={p.avatar_url}
+                              alt={p.username}
+                              className="matrix-user-avatar"
+                            />
+                          ) : (
+                            <span className="matrix-avatar-dot"></span>
+                          )}
                           <span className="participant-name">{p.username}</span>
                           {p.is_me && <span className="you-tag">YOU</span>}
                         </div>
                       </td>
 
-                      {/* Correct / Graded Score Column */}
+                      {/* Correct Picks Score Column */}
                       <td className="td-score">
-                        <span className="score-badge">
-                          {p.correct_count} / {p.graded_count}
-                        </span>
+                        <div className="score-pill">
+                          <span className="score-number">{p.correct_count}</span>
+                          <span className="score-denom">/{p.graded_count}</span>
+                        </div>
                       </td>
 
-                      {/* Pick Cells for each Matchup */}
+                      {/* Matchup Picks Columns */}
                       {weekData.games.map((g) => {
-                        const pickData = p.picks[String(g.id)];
-                        const isRevealed = pickData?.is_revealed ?? false;
-                        const selectedTeam = pickData?.selected_team;
-                        const result = pickData?.result ?? 'pending';
+                        const pick = p.picks[String(g.id)];
+                        const selectedTeam = pick?.selected_team;
+                        const isRevealed = pick?.is_revealed;
+                        const result = pick?.result || 'pending';
 
-                        let cellClass = 'pick-cell pending';
-                        if (result === 'correct') {
-                          cellClass = 'pick-cell correct';
-                        } else if (result === 'incorrect') {
-                          cellClass = 'pick-cell incorrect';
-                        } else if (!isRevealed) {
-                          cellClass = 'pick-cell locked';
+                        if (!selectedTeam || !isRevealed) {
+                          return (
+                            <td key={g.id} className="td-pick hidden-or-empty">
+                              <span
+                                className="pick-hidden-dash"
+                                title={isRevealed ? 'No pick submitted' : 'Hidden until kickoff'}
+                              >
+                                {isRevealed ? '—' : '🔒'}
+                              </span>
+                            </td>
+                          );
                         }
 
+                        const isHome = selectedTeam === g.home_team;
+                        const teamLogo = isHome ? g.home_logo : g.away_logo;
+
                         return (
-                          <td key={g.id} className="td-pick">
-                            {!isRevealed ? (
-                              <span className="cell-locked-pill" title="Locked until kickoff">
-                                🔒
-                              </span>
-                            ) : selectedTeam ? (
-                              <span className={cellClass}>{selectedTeam}</span>
-                            ) : (
-                              <span className="cell-empty">—</span>
-                            )}
+                          <td key={g.id} className={`td-pick pick-result-${result}`}>
+                            <div className="pick-chip-inner">
+                              {teamLogo && (
+                                <img
+                                  src={teamLogo}
+                                  alt={selectedTeam}
+                                  className="team-mini-logo"
+                                  loading="lazy"
+                                />
+                              )}
+                              <span className="team-abbr">{selectedTeam}</span>
+                              {result === 'correct' && <span className="result-icon">✓</span>}
+                              {result === 'incorrect' && <span className="result-icon">✗</span>}
+                            </div>
                           </td>
                         );
                       })}
 
-                      {/* Tiebreaker Monday Night Points */}
+                      {/* Tiebreaker Column */}
                       <td className="td-tiebreaker">
-                        <span className="mnf-pts-pill">
-                          {p.mnf_points_prediction !== null
-                            ? `${p.mnf_points_prediction} pts`
-                            : '—'}
+                        <span className="tiebreaker-val">
+                          {p.mnf_points_prediction !== null ? `${p.mnf_points_prediction} pts` : '—'}
                         </span>
                       </td>
                     </tr>
                   );
                 })}
-
-                {weekData.participants.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={weekData.games.length + 3}
-                      className="empty-participants-cell"
-                    >
-                      No picks submitted for Week {selectedWeek} yet.
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
         )}
       </main>
 
-      {/* 3. PICK-BY-PICK WIZARD MODAL (Only opens when requested or missing picks on current week) */}
-      {weekData && (
+      {/* Pick-by-Pick Interactive Wizard Overlay */}
+      {isWizardOpen && weekData && (
         <FootballPickWizard
-          games={weekData.games}
-          userPicks={weekData.current_user_status.user_picks}
-          initialMnfPoints={weekData.current_user_status.mnf_points}
+          isOpen={isWizardOpen}
           week={selectedWeek}
           season={season}
-          isOpen={isWizardOpen}
+          games={weekData.games}
+          userPicks={weekData.current_user_status?.user_picks || {}}
+          initialMnfPoints={weekData.current_user_status?.mnf_points || null}
           onClose={() => setIsWizardOpen(false)}
           onSaved={handlePicksSaved}
         />
       )}
 
-      {/* 4. IN-PWA SEAMLESS AUTH MODAL */}
+      {/* 4. IN-PWA WALLYAUTH PROFILE & ACCOUNT MODAL */}
       {isAuthModalOpen && (
         <div className="auth-modal-overlay" onClick={() => setIsAuthModalOpen(false)}>
           <div className="auth-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="auth-modal-header">
               <div className="auth-modal-icon">🔐</div>
               <div>
-                <h3 className="auth-modal-title">League Account &amp; Access</h3>
+                <h3 className="auth-modal-title">
+                  {isAuthenticated ? 'Wally Account & Profile' : 'WallyAuth Access'}
+                </h3>
                 <span className="auth-modal-subtitle">
-                  {currentUser ? `Signed in as @${currentUser.username}` : 'Not signed in'}
+                  {isAuthenticated && currentUser
+                    ? `Authenticated via ${weekData?.current_user_status?.auth_source || 'WallyAuth'}`
+                    : 'Single Sign-On across all Wally Atkins apps'}
                 </span>
               </div>
               <button
@@ -461,24 +603,74 @@ export const FootballPickemApp: React.FC = () => {
             </div>
 
             <div className="auth-modal-body">
-              {/* Option 1: WallyAuth SSO Single Sign-On */}
-              <div className="auth-section">
-                <span className="auth-section-label">WallyAuth Single Sign-On</span>
-                <a
-                  href="https://football.wallyatkins.com/auth/login?redirect=https://wallyatkins.com/"
-                  className="auth-sso-btn"
-                >
-                  <span>🔐</span>
-                  <span>Sign in with WallyAuth SSO</span>
-                </a>
-                <p className="auth-hint">
-                  Keeps you securely logged in across all *.wallyatkins.com apps.
-                </p>
-              </div>
+              {/* If Authenticated: Profile Dashboard */}
+              {isAuthenticated && currentUser ? (
+                <div className="auth-section profile-dashboard-card">
+                  <div className="profile-hero-row">
+                    {currentUser.avatar_url ? (
+                      <img
+                        src={currentUser.avatar_url}
+                        alt={currentUser.username}
+                        className="profile-modal-avatar"
+                      />
+                    ) : (
+                      <div className="profile-modal-avatar-fallback">
+                        {currentUser.username.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="profile-meta">
+                      <div className="profile-name-row">
+                        <h4 className="profile-username">@{currentUser.username}</h4>
+                        {currentUser.role === 'commissioner' && (
+                          <span className="commish-badge">COMMISH</span>
+                        )}
+                      </div>
+                      {currentUser.email && (
+                        <span className="profile-email">{currentUser.email}</span>
+                      )}
+                      <span className="profile-status-badge">● Active Device Session</span>
+                    </div>
+                  </div>
 
-              {/* Option 2: Quick League Profile Switcher */}
+                  <div className="profile-actions-stack">
+                    <a
+                      href="https://auth.wallyatkins.com/account"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="profile-action-btn manage-account-btn"
+                    >
+                      <span>⚙️</span>
+                      <span>Manage WallyAuth Profile &amp; Passkeys</span>
+                      <span className="btn-external-icon">↗</span>
+                    </a>
+
+                    <button
+                      type="button"
+                      className="profile-action-btn logout-action-btn"
+                      onClick={handleLogout}
+                    >
+                      <span>🚪</span>
+                      <span>Sign Out from this Device</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* If Not Authenticated: 1-Tap WallyAuth SSO Login */
+                <div className="auth-section">
+                  <span className="auth-section-label">WallyAuth Single Sign-On</span>
+                  <a href={ssoRedirectUrl} className="auth-sso-btn">
+                    <span>🔐</span>
+                    <span>Sign in with WallyAuth SSO</span>
+                  </a>
+                  <p className="auth-hint">
+                    Uses shared session across *.wallyatkins.com with passkey, OTP, or password.
+                  </p>
+                </div>
+              )}
+
+              {/* League Participant Switcher Grid (Available for testing / commissioner) */}
               <div className="auth-section">
-                <span className="auth-section-label">Select League Profile</span>
+                <span className="auth-section-label">Switch League Profile (Testing)</span>
                 <div className="profile-switcher-grid">
                   {leagueUsers.map((u) => {
                     const isSelected = currentUser?.username === u.username;

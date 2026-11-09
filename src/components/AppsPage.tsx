@@ -252,14 +252,24 @@ export const AppsPage: React.FC<{ onNavigate?: (path: string) => void }> = ({ on
                   <span className="role-dot"></span>
                   {app.roleRequired}
                 </div>
-                <a
-                  href={app.url}
-                  className="app-launch-btn"
-                  target={isStandalone ? '_self' : '_blank'}
-                  rel="noreferrer"
-                >
-                  Open App ↗
-                </a>
+                {app.id === 'football' && onNavigate ? (
+                  <button
+                    type="button"
+                    className="app-launch-btn"
+                    onClick={() => onNavigate('/pickem')}
+                  >
+                    Launch PWA App ⚡
+                  </button>
+                ) : (
+                  <a
+                    href={app.url}
+                    className="app-launch-btn"
+                    target={isStandalone ? '_self' : '_blank'}
+                    rel="noreferrer"
+                  >
+                    Open App ↗
+                  </a>
+                )}
               </div>
             </div>
           );

@@ -1,9 +1,9 @@
 {
   "id": "https://wallyatkins.com/",
-  "name": "Wally's NFL Pick'em",
-  "short_name": "NFL Pick'em",
-  "description": "Atkins NFL Pick'em League - Weekly Picks Matrix & Wizard",
-  "start_url": "/?pwa=true",
+  "name": "Wally Atkins",
+  "short_name": "Wally Atkins",
+  "description": "Wally Atkins Application Suite & Portal — NFL Pick'em, WallyMUD, Tasks, and profile.",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
   "display_override": [
@@ -13,20 +13,16 @@
   ],
   "orientation": "any",
   "background_color": "#070d17",
-  "theme_color": "#0B1626",
+  "theme_color": "#0b1626",
   "categories": [
+    "productivity",
     "sports",
-    "games"
+    "games",
+    "utilities"
   ],
   "lang": "en",
   "dir": "ltr",
   "icons": [
-    {
-      "src": "/assets/logos/nfl.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
@@ -54,10 +50,10 @@
   ],
   "shortcuts": [
     {
-      "name": "🏈 Make Weekly Picks",
-      "short_name": "Make Picks",
-      "description": "Open pick-by-pick flow for the active NFL week",
-      "url": "/?mode=wizard",
+      "name": "🏈 NFL Pick'em",
+      "short_name": "Pick'em",
+      "description": "Make weekly picks and view full league matrix",
+      "url": "/?source=pwa&app=football",
       "icons": [
         {
           "src": "/icon-192.png",
@@ -66,10 +62,34 @@
       ]
     },
     {
-      "name": "📊 Full League Matrix",
-      "short_name": "Picks Matrix",
-      "description": "View all participants' picks and standings",
-      "url": "/?mode=matrix",
+      "name": "⚔️ WallyMUD",
+      "short_name": "WallyMUD",
+      "description": "Retro live fantasy MUD",
+      "url": "https://mud.wallyatkins.com",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "📋 Wally Tasks",
+      "short_name": "Tasks",
+      "description": "Agentic task orchestration and productivity",
+      "url": "https://tasks.wallyatkins.com",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "🔐 WallyAuth Profile",
+      "short_name": "Profile",
+      "description": "Manage account security, passkeys, and settings",
+      "url": "https://auth.wallyatkins.com/account",
       "icons": [
         {
           "src": "/icon-192.png",
@@ -80,6 +100,10 @@
   ],
   "scope_extensions": [
     { "origin": "https://football.wallyatkins.com" },
+    { "origin": "https://tasks.wallyatkins.com" },
+    { "origin": "https://mud.wallyatkins.com" },
+    { "origin": "https://wheres.wallyatkins.com" },
+    { "origin": "https://stories.wallyatkins.com" },
     { "origin": "https://auth.wallyatkins.com" }
   ]
 }
