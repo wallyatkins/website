@@ -49,24 +49,24 @@ body {
   z-index: 40;
 }
 
-.nfl-brand-badge {
+.module-brand-group {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.65rem;
 }
 
-.football-emoji {
-  font-size: 1.5rem;
+.module-icon {
+  font-size: 1.6rem;
   filter: drop-shadow(0 2px 6px var(--fb-gold-glow));
 }
 
-.brand-titles {
+.module-titles {
   display: flex;
   flex-direction: column;
 }
 
-.league-title {
-  font-size: 1.05rem;
+.module-title {
+  font-size: 1.15rem;
   font-weight: 900;
   letter-spacing: -0.02em;
   margin: 0;
@@ -74,12 +74,77 @@ body {
   line-height: 1.2;
 }
 
-.season-subtitle {
+.module-subtitle {
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--fb-gold);
   font-weight: 700;
+}
+
+/* Avatar Circle Only in Upper Right */
+.avatar-circle-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+  min-width: 36px;
+  min-height: 36px;
+}
+
+.avatar-circle-btn:hover {
+  transform: scale(1.08);
+}
+
+.avatar-circle-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--fb-cyan);
+  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.35);
+}
+
+.avatar-circle-fallback {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0284c7, #38bdf8);
+  color: #070d17;
+  font-size: 0.95rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.35);
+}
+
+.avatar-circle-btn.unauthenticated {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1.5px solid rgba(56, 189, 248, 0.4);
+  color: var(--fb-cyan);
+  font-size: 1rem;
+}
+
+.avatar-circle-btn.unauthenticated:hover {
+  background: rgba(56, 189, 248, 0.25);
+  border-color: var(--fb-cyan);
+}
+
+.avatar-signin-icon {
+  font-size: 1rem;
+  line-height: 1;
 }
 
 .football-header-right {

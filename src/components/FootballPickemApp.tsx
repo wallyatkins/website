@@ -80,7 +80,6 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
 
   const [isWizardOpen, setIsWizardOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
-  const [isAppMenuOpen, setIsAppMenuOpen] = useState<boolean>(false);
   const [leagueUsers, setLeagueUsers] = useState<LeagueUser[]>([]);
   const [isSwitchingUser, setIsSwitchingUser] = useState<boolean>(false);
 
@@ -227,91 +226,23 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
 
   return (
     <div className="football-pwa-container">
-      {/* PWA Auto-Updating Alert Toast */}
+      {/* Auto-Updating Alert Toast */}
       {isUpdating && (
         <div className="pwa-auto-update-toast">
           <span className="pulse-dot"></span>
-          <span>Updating Wally Atkins PWA to latest version...</span>
+          <span>Updating to latest version...</span>
         </div>
       )}
 
-      {/* 1. PWA SHELL TOP BAR */}
+      {/* 1. TOP BAR */}
       <header className="football-header">
         <div className="football-header-left">
-          {/* Consistent PWA Identity: Wally Atkins */}
-          <div className="pwa-brand-group">
-            <span className="pwa-brand-monogram">WA</span>
-            <div className="brand-titles">
-              <div className="brand-row">
-                <span className="league-title">Wally Atkins</span>
-                <span className="pwa-suite-tag">PWA</span>
-              </div>
-              {/* Active Sub-App Selector */}
-              <div className="app-selector-dropdown-wrap">
-                <button
-                  type="button"
-                  className="app-selector-btn"
-                  onClick={() => setIsAppMenuOpen(!isAppMenuOpen)}
-                >
-                  <span className="app-icon">🏈</span>
-                  <span className="app-name">NFL Pick'em</span>
-                  <span className="app-chevron">▾</span>
-                </button>
-
-                {isAppMenuOpen && (
-                  <div className="app-switcher-popover" onClick={() => setIsAppMenuOpen(false)}>
-                    <div className="switcher-section-title">Wally Atkins PWA Suite</div>
-                    <div className="switcher-item active">
-                      <span className="switcher-icon">🏈</span>
-                      <div className="switcher-text">
-                        <span className="switcher-name">NFL Pick'em</span>
-                        <span className="switcher-sub">Active App • Matrix &amp; Picks</span>
-                      </div>
-                      <span className="switcher-active-dot">●</span>
-                    </div>
-
-                    <a
-                      href="https://mud.wallyatkins.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="switcher-item"
-                    >
-                      <span className="switcher-icon">⚔️</span>
-                      <div className="switcher-text">
-                        <span className="switcher-name">WallyMUD</span>
-                        <span className="switcher-sub">Mobile Retro Live Fantasy MUD</span>
-                      </div>
-                    </a>
-
-                    <a
-                      href="https://tasks.wallyatkins.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="switcher-item"
-                    >
-                      <span className="switcher-icon">📋</span>
-                      <div className="switcher-text">
-                        <span className="switcher-name">Wally Tasks</span>
-                        <span className="switcher-sub">Agentic Task Orchestration</span>
-                      </div>
-                    </a>
-
-                    {onSwitchToWebsite && (
-                      <button
-                        type="button"
-                        className="switcher-item switch-website-btn"
-                        onClick={onSwitchToWebsite}
-                      >
-                        <span className="switcher-icon">🌐</span>
-                        <div className="switcher-text">
-                          <span className="switcher-name">Personal Website</span>
-                          <span className="switcher-sub">Portfolio, Work &amp; Story</span>
-                        </div>
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
+          {/* Upper left: app logo/icon + module name */}
+          <div className="module-brand-group">
+            <span className="module-icon">🏈</span>
+            <div className="module-titles">
+              <h1 className="module-title">Football Pick'em</h1>
+              <span className="module-subtitle">{season} Season</span>
             </div>
           </div>
         </div>
@@ -342,39 +273,36 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
             </button>
           )}
 
-          {/* WallyAuth Profile Button / Avatar Display */}
+          {/* Upper right: Avatar circle only (no username, no commish badge) */}
           {isAuthenticated && currentUser ? (
             <button
               type="button"
-              className="user-profile-pill clickable"
+              className="avatar-circle-btn"
               onClick={openAuthModal}
-              title={`Signed in as @${currentUser.username} • Click to manage profile`}
+              title={`Signed in as @${currentUser.username} • Account & Profile`}
+              aria-label="Account & Profile"
             >
               {currentUser.avatar_url ? (
                 <img
                   src={currentUser.avatar_url}
                   alt={currentUser.username}
-                  className="user-avatar-img"
+                  className="avatar-circle-img"
                 />
               ) : (
-                <span className="user-avatar-fallback">
+                <span className="avatar-circle-fallback">
                   {currentUser.username.charAt(0).toUpperCase()}
                 </span>
-              )}
-              <span className="user-name">{currentUser.username}</span>
-              {currentUser.role === 'commissioner' && (
-                <span className="commish-badge">COMMISH</span>
               )}
             </button>
           ) : (
             <button
               type="button"
-              className="pwa-header-signin-btn"
+              className="avatar-circle-btn unauthenticated"
               onClick={openAuthModal}
               title="Sign in with WallyAuth"
+              aria-label="Sign in"
             >
-              <span>🔐</span>
-              <span>Sign In</span>
+              <span className="avatar-signin-icon">🔐</span>
             </button>
           )}
         </div>
@@ -635,6 +563,20 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
                       <span>🚪</span>
                       <span>Sign Out from this Device</span>
                     </button>
+
+                    {onSwitchToWebsite && (
+                      <button
+                        type="button"
+                        className="profile-action-btn switch-site-btn"
+                        onClick={() => {
+                          setIsAuthModalOpen(false);
+                          onSwitchToWebsite();
+                        }}
+                      >
+                        <span>🌐</span>
+                        <span>View Personal Website</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               ) : (
