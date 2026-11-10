@@ -9,6 +9,77 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
+export function getPWAClientUuid(): string {
+  try {
+    let uuid = localStorage.getItem('pwa_client_uuid');
+    if (!uuid) {
+      uuid = (typeof crypto !== 'undefined' && crypto.randomUUID) 
+        ? crypto.randomUUID() 
+        : 'pwa_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+      localStorage.setItem('pwa_client_uuid', uuid);
+    }
+    return uuid;
+  } catch {
+    return 'pwa_client_' + Date.now().toString(36);
+  }
+}
+
+export function detectDevicePlatform(): string {
+  const ua = navigator.userAgent || '';
+  if (/iPhone|iPad|iPod/i.test(ua)) return 'ios';
+  if (/Android/i.test(ua)) return 'android';
+  if (/Mac OS X|Macintosh/i.test(ua)) return 'macos';
+  if (/Windows/i.test(ua)) return 'windows';
+  if (/Linux/i.test(ua)) return 'linux';
+  return 'other';
+}
+
+export function detectBrowser(): string {
+  const ua = navigator.userAgent || '';
+  if (/Edg/i.test(ua)) return 'Edge';
+  if (/CriOS|Chrome/i.test(ua)) return 'Chrome';
+  if (/Safari/i.test(ua) && !/Chrome|CriOS/i.test(ua)) return 'Safari';
+  if (/Firefox|FxiOS/i.test(ua)) return 'Firefox';
+  return 'Browser';
+}
+
+export async function sendPWATelemetry(params: {
+  eventType: 'install' | 'launch' | 'auth_link' | 'visit';
+  installedVia?: string;
+  username?: string;
+  pushEnabled?: boolean;
+}) {
+  try {
+    const clientUuid = getPWAClientUuid();
+    const platform = detectDevicePlatform();
+    const browser = detectBrowser();
+    const isDisplayStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const isIosStandalone = (window.navigator as unknown as { standalone?: boolean }).standalone === true;
+    const isUrlPwa = window.location.search.includes('source=pwa');
+    const isStandalone = Boolean(isDisplayStandalone || isIosStandalone || isUrlPwa);
+    const displayMode = isStandalone ? 'standalone' : 'browser';
+    const installedVia = params.installedVia || (isStandalone ? 'standalone_launch' : 'browser');
+
+    await fetch('/football_api.php?action=record_pwa_telemetry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        client_uuid: clientUuid,
+        platform,
+        browser,
+        display_mode: displayMode,
+        installed_via: installedVia,
+        event_type: params.eventType,
+        username: params.username,
+        push_enabled: params.pushEnabled ? 1 : 0,
+      }),
+    });
+  } catch (err) {
+    console.debug('[PWA Telemetry] Non-blocking ping error:', err);
+  }
+}
+
 export function usePWA() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [canInstall, setCanInstall] = useState(false);
@@ -22,13 +93,36 @@ export function usePWA() {
     const checkStandalone = () => {
       const isDisplayStandalone = window.matchMedia('(display-mode: standalone)').matches;
       const isIosStandalone = (window.navigator as unknown as { standalone?: boolean }).standalone === true;
-      setIsStandalone(Boolean(isDisplayStandalone || isIosStandalone));
+      const isUrlPwa = window.location.search.includes('source=pwa');
+      const standalone = Boolean(isDisplayStandalone || isIosStandalone || isUrlPwa);
+      setIsStandalone(standalone);
+      return standalone;
     };
 
-    checkStandalone();
+    const standalone = checkStandalone();
     const mql = window.matchMedia('(display-mode: standalone)');
-    const handleMqlChange = (e: MediaQueryListEvent) => setIsStandalone(e.matches);
+    const handleMqlChange = (e: MediaQueryListEvent) => {
+      const isNowStandalone = e.matches;
+      setIsStandalone(isNowStandalone);
+      if (isNowStandalone) {
+        sendPWATelemetry({ eventType: 'launch', installedVia: 'standalone_launch' });
+      }
+    };
     mql.addEventListener('change', handleMqlChange);
+
+    // Initial launch heartbeat once per session
+    try {
+      const sessionKey = 'pwa_launch_recorded';
+      if (!sessionStorage.getItem(sessionKey)) {
+        sessionStorage.setItem(sessionKey, '1');
+        sendPWATelemetry({
+          eventType: standalone ? 'launch' : 'visit',
+          installedVia: standalone ? 'standalone_launch' : 'browser',
+        });
+      }
+    } catch {
+      // Non-blocking
+    }
 
     // 2. Listen for install prompt
     const handleBeforeInstall = (e: Event) => {
@@ -41,6 +135,7 @@ export function usePWA() {
       setDeferredPrompt(null);
       setCanInstall(false);
       setIsInstalled(true);
+      sendPWATelemetry({ eventType: 'install', installedVia: 'appinstalled_event' });
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
@@ -126,6 +221,7 @@ export function usePWA() {
       const choice = await deferredPrompt.userChoice;
       if (choice.outcome === 'accepted') {
         setIsInstalled(true);
+        sendPWATelemetry({ eventType: 'install', installedVia: 'appinstalled_event' });
       }
     } catch (err) {
       console.warn('[PWA] Prompt error:', err);

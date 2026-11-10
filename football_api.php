@@ -34,6 +34,37 @@ try {
         PDO::ATTR_EMULATE_PREPARES => false,
     ]);
     $pdo->exec('PRAGMA busy_timeout = 5000;');
+
+    // Auto-create PWA telemetry tables if not existing
+    $pdo->exec('CREATE TABLE IF NOT EXISTS pwa_installations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        client_uuid VARCHAR(64) UNIQUE NOT NULL,
+        user_id INTEGER DEFAULT NULL,
+        wallyauth_id VARCHAR(64) DEFAULT NULL,
+        username VARCHAR(100) DEFAULT NULL,
+        email VARCHAR(255) DEFAULT NULL,
+        platform VARCHAR(32) NOT NULL,
+        browser VARCHAR(64) DEFAULT NULL,
+        display_mode VARCHAR(32) NOT NULL,
+        installed_via VARCHAR(64) DEFAULT "standalone_launch",
+        user_agent TEXT DEFAULT NULL,
+        ip_address VARCHAR(45) DEFAULT NULL,
+        installed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        last_seen_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        launch_count INTEGER DEFAULT 1,
+        push_enabled BOOLEAN DEFAULT 0,
+        notified_commish BOOLEAN DEFAULT 0,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+    );');
+    $pdo->exec('CREATE TABLE IF NOT EXISTS pwa_activity_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        installation_id INTEGER DEFAULT NULL,
+        user_id INTEGER DEFAULT NULL,
+        username VARCHAR(100) DEFAULT NULL,
+        event_type VARCHAR(64) NOT NULL,
+        details TEXT DEFAULT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );');
 } catch (\Throwable $e) {
     http_response_code(500);
     echo json_encode(['error' => 'Database connection failed: ' . $e->getMessage()]);
@@ -63,6 +94,93 @@ function getTeamInfo(string $abbr, array $allTeams): array {
         'color2' => '#ffffff',
         'logo' => "/assets/logos/" . strtolower($abbr) . ".png"
     ];
+}
+
+function notifyCommissionerPwaInstall(PDO $pdo, array $installData): void {
+    $adminEmail = 'wallyatkins@gmail.com';
+    $commishPhone = '7575933306';
+    $carrierGateway = 'msg.fi.google.com';
+
+    try {
+        $prefStmt = $pdo->prepare('SELECT phone_number, carrier_gateway FROM user_notification_preferences WHERE user_id = 1 LIMIT 1');
+        $prefStmt->execute();
+        $pref = $prefStmt->fetch();
+        if ($pref && !empty($pref['phone_number'])) {
+            $commishPhone = preg_replace('/\D+/', '', (string)$pref['phone_number']);
+        }
+        if ($pref && !empty($pref['carrier_gateway'])) {
+            $carrierGateway = trim((string)$pref['carrier_gateway']);
+        }
+    } catch (\Throwable $e) {}
+
+    $username = $installData['username'] ?: 'WallyAuth User';
+    $email = $installData['email'] ?: 'No email';
+    $platform = ucfirst($installData['platform'] ?? 'Mobile');
+    $browser = $installData['browser'] ?? 'Browser';
+    $installedVia = $installData['installed_via'] ?? 'standalone_launch';
+    $timestamp = date('M j, Y g:i A T');
+
+    $subject = "📱 [PWA Install] {$username} installed the Wally Atkins App!";
+
+    $htmlBody = <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #070d17; color: #f8fafc; padding: 24px; }
+.card { background-color: #0d1829; border: 1px solid #1e3a5f; border-radius: 12px; max-width: 580px; margin: 0 auto; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+.badge { display: inline-block; background: #0284c7; color: #fff; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 9999px; text-transform: uppercase; }
+.row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1e293b; font-size: 14px; }
+.label { color: #94a3b8; }
+.val { color: #f8fafc; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="card">
+    <div style="margin-bottom: 16px;"><span class="badge">PWA Installation Alert</span></div>
+    <h2 style="color: #38bdf8; margin: 0 0 8px 0;">🎉 App Installed by {$username}!</h2>
+    <p style="color: #cbd5e1; font-size: 15px; margin: 0 0 20px 0;">
+        A verified WallyAuth user has installed the <strong>Wally Atkins PWA</strong> to their home screen.
+    </p>
+    <div style="background: #08101d; border: 1px solid #1e2d42; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px;">
+        <div class="row"><span class="label">User</span><span class="val">{$username}</span></div>
+        <div class="row"><span class="label">Email</span><span class="val"><a href="mailto:{$email}" style="color: #38bdf8;">{$email}</a></span></div>
+        <div class="row"><span class="label">Platform</span><span class="val">{$platform} ({$browser})</span></div>
+        <div class="row"><span class="label">Detected Via</span><span class="val">{$installedVia}</span></div>
+        <div class="row" style="border-bottom: none;"><span class="label">Time</span><span class="val">{$timestamp}</span></div>
+    </div>
+    <p style="color: #64748b; font-size: 12px; margin: 0;">
+        PWA Telemetry Service • Wally Atkins Application Suite
+    </p>
+</div>
+</body>
+</html>
+HTML;
+
+    // Send Email
+    $headers = [
+        "From: Wally Atkins PWA <noreply@wallyatkins.com>",
+        "Reply-To: noreply@wallyatkins.com",
+        "MIME-Version: 1.0",
+        "Content-Type: text/html; charset=UTF-8",
+        "X-Mailer: WallyAtkinsPWA/1.0"
+    ];
+    @mail($adminEmail, $subject, $htmlBody, implode("\r\n", $headers));
+    if ($adminEmail !== 'wally@wallyatkins.com') {
+        @mail('wally@wallyatkins.com', $subject, $htmlBody, implode("\r\n", $headers));
+    }
+
+    // Send SMS
+    if (!empty($commishPhone) && !empty($carrierGateway)) {
+        $smsTarget = "{$commishPhone}@{$carrierGateway}";
+        $smsMsg = "PWA Alert: {$username} installed the Wally Atkins App on {$platform}!";
+        $smsHeaders = [
+            "From: Wally Atkins PWA <noreply@wallyatkins.com>",
+            "Content-Type: text/plain; charset=UTF-8"
+        ];
+        @mail($smsTarget, "PWA Install Alert", $smsMsg, implode("\r\n", $smsHeaders));
+    }
 }
 
 // Connect to PostgreSQL (WallyAuth database) if available
@@ -203,6 +321,240 @@ if ($activeWeek <= 0) {
 }
 
 $action = $_GET['action'] ?? 'matrix';
+
+// Action: record_pwa_telemetry
+if ($action === 'record_pwa_telemetry') {
+    $input = json_decode(file_get_contents('php://input'), true) ?: $_POST;
+    $clientUuid = trim((string)($input['client_uuid'] ?? $_GET['client_uuid'] ?? ''));
+
+    if (empty($clientUuid)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'client_uuid is required']);
+        exit;
+    }
+
+    $platform = strtolower(trim((string)($input['platform'] ?? $_GET['platform'] ?? 'other')));
+    $browser = trim((string)($input['browser'] ?? $_GET['browser'] ?? ''));
+    $displayMode = trim((string)($input['display_mode'] ?? $_GET['display_mode'] ?? 'browser'));
+    $installedVia = trim((string)($input['installed_via'] ?? $_GET['installed_via'] ?? ($displayMode === 'standalone' ? 'standalone_launch' : 'browser')));
+    $eventType = trim((string)($input['event_type'] ?? $_GET['event_type'] ?? ($displayMode === 'standalone' ? 'launch' : 'visit')));
+    $pushEnabled = (!empty($input['push_enabled']) || !empty($_GET['push_enabled'])) ? 1 : 0;
+    $userAgent = substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 500);
+    $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '';
+
+    // Check if user is known from session, currentUser, or input payload
+    $userId = $currentUser ? (int)$currentUser['id'] : null;
+    $wallyauthId = $currentUser['wallyauth_id'] ?? null;
+    $username = $currentUser['username'] ?? null;
+    $email = $currentUser['email'] ?? null;
+
+    $payloadUsername = trim((string)($input['username'] ?? $_GET['username'] ?? ''));
+    if (!$userId && !empty($payloadUsername)) {
+        $stmtU = $pdo->prepare('SELECT id, username, email, role, oidc_sub FROM users WHERE username = :u LIMIT 1');
+        $stmtU->execute(['u' => $payloadUsername]);
+        $uFound = $stmtU->fetch();
+        if ($uFound) {
+            $userId = (int)$uFound['id'];
+            $username = $uFound['username'];
+            $email = $uFound['email'];
+            $wallyauthId = $uFound['oidc_sub'] ?? null;
+        }
+    }
+
+    // Check existing installation record
+    $checkStmt = $pdo->prepare('SELECT * FROM pwa_installations WHERE client_uuid = :uuid LIMIT 1');
+    $checkStmt->execute(['uuid' => $clientUuid]);
+    $existing = $checkStmt->fetch();
+
+    $isFirstInstall = false;
+    $shouldNotify = false;
+
+    if ($existing) {
+        $instId = (int)$existing['id'];
+        
+        $finalUserId = $existing['user_id'] ?: $userId;
+        $finalUsername = $existing['username'] ?: $username;
+        $finalEmail = $existing['email'] ?: $email;
+        $finalWallyAuthId = $existing['wallyauth_id'] ?: $wallyauthId;
+        $notifiedCommish = (int)$existing['notified_commish'];
+
+        // If user is known, not yet notified, and app is running standalone or installed via event:
+        if (!empty($finalUsername) && $notifiedCommish === 0 && ($displayMode === 'standalone' || $installedVia === 'appinstalled_event')) {
+            $shouldNotify = true;
+            $notifiedCommish = 1;
+        }
+
+        $updateStmt = $pdo->prepare('
+            UPDATE pwa_installations 
+            SET user_id = :uid,
+                wallyauth_id = :waid,
+                username = :uname,
+                email = :email,
+                platform = :plat,
+                browser = :brow,
+                display_mode = :disp,
+                installed_via = CASE WHEN pwa_installations.installed_via = "standalone_launch" THEN pwa_installations.installed_via ELSE :via END,
+                user_agent = :ua,
+                ip_address = :ip,
+                last_seen_at = datetime("now"),
+                launch_count = launch_count + 1,
+                push_enabled = CASE WHEN :push = 1 THEN 1 ELSE push_enabled END,
+                notified_commish = :notified
+            WHERE id = :id
+        ');
+        $updateStmt->execute([
+            'uid' => $finalUserId,
+            'waid' => $finalWallyAuthId,
+            'uname' => $finalUsername,
+            'email' => $finalEmail,
+            'plat' => $platform,
+            'brow' => $browser,
+            'disp' => $displayMode,
+            'via' => $installedVia,
+            'ua' => $userAgent,
+            'ip' => $ipAddress,
+            'push' => $pushEnabled,
+            'notified' => $notifiedCommish,
+            'id' => $instId
+        ]);
+    } else {
+        $isFirstInstall = true;
+        $notifiedCommish = 0;
+        if (!empty($username) && ($displayMode === 'standalone' || $installedVia === 'appinstalled_event')) {
+            $shouldNotify = true;
+            $notifiedCommish = 1;
+        }
+
+        $insertStmt = $pdo->prepare('
+            INSERT INTO pwa_installations (
+                client_uuid, user_id, wallyauth_id, username, email,
+                platform, browser, display_mode, installed_via,
+                user_agent, ip_address, installed_at, last_seen_at,
+                launch_count, push_enabled, notified_commish
+            ) VALUES (
+                :uuid, :uid, :waid, :uname, :email,
+                :plat, :brow, :disp, :via,
+                :ua, :ip, datetime("now"), datetime("now"),
+                1, :push, :notified
+            )
+        ');
+        $insertStmt->execute([
+            'uuid' => $clientUuid,
+            'uid' => $userId,
+            'waid' => $wallyauthId,
+            'uname' => $username,
+            'email' => $email,
+            'plat' => $platform,
+            'brow' => $browser,
+            'disp' => $displayMode,
+            'via' => $installedVia,
+            'ua' => $userAgent,
+            'ip' => $ipAddress,
+            'push' => $pushEnabled,
+            'notified' => $notifiedCommish
+        ]);
+        $instId = (int)$pdo->lastInsertId();
+    }
+
+    // Log to activity logs
+    try {
+        $logStmt = $pdo->prepare('
+            INSERT INTO pwa_activity_logs (installation_id, user_id, username, event_type, details)
+            VALUES (:iid, :uid, :uname, :etype, :details)
+        ');
+        $logStmt->execute([
+            'iid' => $instId,
+            'uid' => $userId,
+            'uname' => $username,
+            'etype' => $eventType,
+            'details' => json_encode([
+                'display_mode' => $displayMode,
+                'platform' => $platform,
+                'browser' => $browser,
+                'installed_via' => $installedVia,
+                'is_first_install' => $isFirstInstall
+            ])
+        ]);
+    } catch (\Throwable $e) {}
+
+    // Dispatch notification to commissioner
+    if ($shouldNotify && !empty($username)) {
+        notifyCommissionerPwaInstall($pdo, [
+            'username' => $username,
+            'email' => $email,
+            'wallyauth_id' => $wallyauthId,
+            'platform' => $platform,
+            'browser' => $browser,
+            'installed_via' => $installedVia
+        ]);
+    }
+
+    echo json_encode([
+        'success' => true,
+        'installation_id' => $instId,
+        'client_uuid' => $clientUuid,
+        'matched_user' => $username ? [
+            'id' => $userId,
+            'username' => $username,
+            'email' => $email,
+            'wallyauth_id' => $wallyauthId
+        ] : null,
+        'is_first_install' => $isFirstInstall,
+        'notified' => $shouldNotify
+    ]);
+    exit;
+}
+
+// Action: pwa_metrics
+if ($action === 'pwa_metrics') {
+    $isAdmin = !empty($currentUser) && in_array($currentUser['role'] ?? '', ['admin', 'commissioner'], true);
+    if (!$isAdmin && ($currentUser['username'] ?? '') !== 'wallyatkins') {
+        $token = $_GET['secret'] ?? '';
+        if ($token !== 'commish_wally') {
+            http_response_code(403);
+            echo json_encode(['error' => 'Access denied: Commissioner privileges required']);
+            exit;
+        }
+    }
+
+    $totalInstalls = (int)$pdo->query('SELECT count(*) FROM pwa_installations')->fetchColumn();
+    $authInstalls = (int)$pdo->query('SELECT count(*) FROM pwa_installations WHERE user_id IS NOT NULL OR username IS NOT NULL')->fetchColumn();
+    $anonInstalls = $totalInstalls - $authInstalls;
+
+    $platformBreakdown = $pdo->query('
+        SELECT platform, count(*) as count 
+        FROM pwa_installations 
+        GROUP BY platform
+        ORDER BY count DESC
+    ')->fetchAll();
+
+    $installations = $pdo->query('
+        SELECT p.*, u.avatar_url 
+        FROM pwa_installations p
+        LEFT JOIN users u ON p.user_id = u.id
+        ORDER BY p.last_seen_at DESC
+        LIMIT 100
+    ')->fetchAll();
+
+    $recentActivity = $pdo->query('
+        SELECT * FROM pwa_activity_logs 
+        ORDER BY created_at DESC 
+        LIMIT 50
+    ')->fetchAll();
+
+    echo json_encode([
+        'success' => true,
+        'summary' => [
+            'total_installations' => $totalInstalls,
+            'authenticated_installations' => $authInstalls,
+            'anonymous_installations' => $anonInstalls,
+            'platforms' => $platformBreakdown
+        ],
+        'installations' => $installations,
+        'recent_activity' => $recentActivity
+    ]);
+    exit;
+}
 
 // Action: switch_user
 if ($action === 'switch_user') {

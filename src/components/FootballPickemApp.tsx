@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { usePWA } from '../hooks/usePWA';
+import { usePWA, sendPWATelemetry } from '../hooks/usePWA';
 import { FootballPickWizard, type FootballGame } from './FootballPickWizard';
 import './FootballPickem.css';
 
@@ -62,6 +62,42 @@ interface LeagueUser {
   avatar_url?: string;
 }
 
+interface PwaInstallationRecord {
+  id: number;
+  client_uuid: string;
+  user_id: number | null;
+  wallyauth_id: string | null;
+  username: string | null;
+  email: string | null;
+  platform: string;
+  browser: string | null;
+  display_mode: string;
+  installed_via: string;
+  user_agent: string | null;
+  installed_at: string;
+  last_seen_at: string;
+  launch_count: number;
+  push_enabled: number;
+  avatar_url?: string | null;
+}
+
+interface PwaMetricsData {
+  summary: {
+    total_installations: number;
+    authenticated_installations: number;
+    anonymous_installations: number;
+    platforms: Array<{ platform: string; count: number }>;
+  };
+  installations: PwaInstallationRecord[];
+  recent_activity: Array<{
+    id: number;
+    username: string | null;
+    event_type: string;
+    details: string;
+    created_at: string;
+  }>;
+}
+
 interface FootballPickemAppProps {
   onSwitchToWebsite?: () => void;
 }
@@ -82,6 +118,10 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [leagueUsers, setLeagueUsers] = useState<LeagueUser[]>([]);
   const [isSwitchingUser, setIsSwitchingUser] = useState<boolean>(false);
+
+  const [isMetricsModalOpen, setIsMetricsModalOpen] = useState<boolean>(false);
+  const [metricsData, setMetricsData] = useState<PwaMetricsData | null>(null);
+  const [isLoadingMetrics, setIsLoadingMetrics] = useState<boolean>(false);
 
   const hasAutoLaunchedRef = useRef<boolean>(false);
   const weeksSliderRef = useRef<HTMLElement | null>(null);
@@ -145,6 +185,14 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
       setWeekData(data);
       setIsLoading(false);
 
+      // Auto-link authenticated WallyAuth user to this PWA device installation
+      if (data.current_user_status?.user?.username) {
+        sendPWATelemetry({
+          eventType: 'auth_link',
+          username: data.current_user_status.user.username,
+        });
+      }
+
       // ONLY auto-launch if:
       // 1. It is the CURRENT week
       // 2. Has not auto-launched in this session
@@ -185,6 +233,23 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
       } catch {
         // Fallback
       }
+    }
+  };
+
+  const fetchPwaMetrics = async () => {
+    setIsLoadingMetrics(true);
+    try {
+      const res = await fetch('/football_api.php?action=pwa_metrics&secret=commish_wally', {
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMetricsData(data);
+      }
+    } catch (err) {
+      console.error('Failed to load PWA metrics', err);
+    } finally {
+      setIsLoadingMetrics(false);
     }
   };
 
@@ -587,6 +652,23 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
                       <span>Sign Out from this Device</span>
                     </button>
 
+                    {(currentUser.role === 'commissioner' ||
+                      currentUser.role === 'admin' ||
+                      currentUser.username === 'wallyatkins') && (
+                      <button
+                        type="button"
+                        className="profile-action-btn metrics-action-btn"
+                        onClick={() => {
+                          setIsAuthModalOpen(false);
+                          fetchPwaMetrics();
+                          setIsMetricsModalOpen(true);
+                        }}
+                      >
+                        <span>📊</span>
+                        <span>PWA Installs &amp; User Metrics</span>
+                      </button>
+                    )}
+
                     {onSwitchToWebsite && (
                       <button
                         type="button"
@@ -638,6 +720,156 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
                   })}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PWA Installs & Metrics Modal (Commissioner) */}
+      {isMetricsModalOpen && (
+        <div className="auth-modal-overlay" onClick={() => setIsMetricsModalOpen(false)}>
+          <div className="auth-modal-card pwa-metrics-card" onClick={(e) => e.stopPropagation()}>
+            <div className="auth-modal-header">
+              <div className="auth-modal-icon">📱</div>
+              <div>
+                <h3 className="auth-modal-title">PWA Installs &amp; Metrics</h3>
+                <span className="auth-modal-subtitle">Real-time installation &amp; device telemetry</span>
+              </div>
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="metrics-refresh-btn"
+                  onClick={fetchPwaMetrics}
+                  disabled={isLoadingMetrics}
+                  title="Refresh"
+                >
+                  {isLoadingMetrics ? '…' : '↻'}
+                </button>
+                <button
+                  type="button"
+                  className="auth-modal-close"
+                  onClick={() => setIsMetricsModalOpen(false)}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div className="auth-modal-body">
+              {isLoadingMetrics && !metricsData ? (
+                <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>
+                  Loading installation telemetry...
+                </div>
+              ) : metricsData ? (
+                <>
+                  {/* Summary KPI Cards */}
+                  <div className="metrics-kpi-grid">
+                    <div className="metrics-kpi-card">
+                      <span className="metrics-kpi-label">Total Installs</span>
+                      <span className="metrics-kpi-val cyan">{metricsData.summary.total_installations}</span>
+                      <span className="metrics-kpi-sub">Unique Devices</span>
+                    </div>
+                    <div className="metrics-kpi-card">
+                      <span className="metrics-kpi-label">WallyAuth Users</span>
+                      <span className="metrics-kpi-val green">{metricsData.summary.authenticated_installations}</span>
+                      <span className="metrics-kpi-sub">Verified Accounts</span>
+                    </div>
+                    <div className="metrics-kpi-card">
+                      <span className="metrics-kpi-label">Platforms</span>
+                      <div className="metrics-platform-pills">
+                        {metricsData.summary.platforms.map((p) => (
+                          <span key={p.platform} className="platform-pill">
+                            {p.platform === 'ios' ? '🍎 iOS' : p.platform === 'android' ? '🤖 Android' : '💻 ' + p.platform}: {p.count}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Installations List */}
+                  <div className="auth-section">
+                    <span className="auth-section-label">Installed App Instances ({metricsData.installations.length})</span>
+                    <div className="metrics-installs-list">
+                      {metricsData.installations.length === 0 ? (
+                        <div style={{ padding: '1rem', color: '#64748b', textAlign: 'center' }}>
+                          No installations recorded yet.
+                        </div>
+                      ) : (
+                        metricsData.installations.map((inst) => {
+                          const isIos = inst.platform === 'ios';
+                          const isAndroid = inst.platform === 'android';
+                          const icon = isIos ? '🍎' : isAndroid ? '🤖' : '💻';
+                          const lastSeen = new Date(inst.last_seen_at).toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                          });
+
+                          return (
+                            <div key={inst.id} className="metrics-install-row">
+                              <div className="install-avatar-box">
+                                {inst.avatar_url ? (
+                                  <img src={inst.avatar_url} alt="" className="metrics-avatar-img" />
+                                ) : (
+                                  <span className="metrics-avatar-fallback">{icon}</span>
+                                )}
+                              </div>
+                              <div className="install-info">
+                                <div className="install-name-line">
+                                  <span className="install-username">
+                                    {inst.username ? `@${inst.username}` : 'Guest / Not Logged In'}
+                                  </span>
+                                  {inst.display_mode === 'standalone' ? (
+                                    <span className="install-badge standalone">PWA Installed</span>
+                                  ) : (
+                                    <span className="install-badge browser">Browser Visit</span>
+                                  )}
+                                  {inst.push_enabled === 1 && (
+                                    <span className="install-badge push">🔔 Push Active</span>
+                                  )}
+                                </div>
+                                <div className="install-subline">
+                                  <span>{icon} {inst.platform.toUpperCase()} • {inst.browser || 'Browser'}</span>
+                                  <span>• {inst.launch_count} {inst.launch_count === 1 ? 'open' : 'opens'}</span>
+                                  <span>• Active: {lastSeen}</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Recent Activity */}
+                  {metricsData.recent_activity.length > 0 && (
+                    <div className="auth-section">
+                      <span className="auth-section-label">Recent Activity Feed</span>
+                      <div className="metrics-activity-list">
+                        {metricsData.recent_activity.slice(0, 15).map((act) => {
+                          const timeStr = new Date(act.created_at).toLocaleTimeString(undefined, {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                          });
+                          return (
+                            <div key={act.id} className="activity-item">
+                              <span className="activity-dot">●</span>
+                              <span className="activity-user">{act.username ? `@${act.username}` : 'Guest'}</span>
+                              <span className="activity-event">{act.event_type}</span>
+                              <span className="activity-time">{timeStr}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div style={{ padding: '2rem', textAlign: 'center', color: '#ef4444' }}>
+                  Unable to load metrics. Ensure you are signed in as commissioner.
+                </div>
+              )}
             </div>
           </div>
         </div>

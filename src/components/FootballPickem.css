@@ -1649,3 +1649,231 @@ body {
 .logout-action-btn:hover {
   background: rgba(239, 68, 68, 0.2);
 }
+
+.metrics-action-btn {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
+}
+
+.metrics-action-btn:hover {
+  background: rgba(16, 185, 129, 0.22);
+}
+
+/* PWA Metrics Modal */
+.pwa-metrics-card {
+  max-width: 600px;
+}
+
+.metrics-refresh-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--fb-border);
+  color: #94a3b8;
+  font-size: 1.1rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.metrics-refresh-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #f8fafc;
+}
+
+.metrics-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.metrics-kpi-card {
+  background: #08101d;
+  border: 1px solid var(--fb-border);
+  border-radius: 10px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.metrics-kpi-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--fb-text-muted);
+}
+
+.metrics-kpi-val {
+  font-size: 1.5rem;
+  font-weight: 900;
+  line-height: 1.2;
+  margin: 0.2rem 0;
+}
+
+.metrics-kpi-val.cyan {
+  color: var(--fb-cyan);
+}
+
+.metrics-kpi-val.green {
+  color: #34d399;
+}
+
+.metrics-kpi-sub {
+  font-size: 0.65rem;
+  color: #64748b;
+}
+
+.metrics-platform-pills {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: 0.2rem;
+}
+
+.platform-pill {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.metrics-installs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.metrics-install-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #08101d;
+  border: 1px solid var(--fb-border);
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+}
+
+.install-avatar-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.metrics-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.metrics-avatar-fallback {
+  font-size: 1.1rem;
+}
+
+.install-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.install-name-line {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.install-username {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.install-badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.install-badge.standalone {
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--fb-cyan);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.install-badge.browser {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.install-badge.push {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.install-subline {
+  font-size: 0.68rem;
+  color: #64748b;
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.metrics-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 160px;
+  overflow-y: auto;
+  font-size: 0.72rem;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #94a3b8;
+  padding: 0.25rem 0.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+}
+
+.activity-dot {
+  color: var(--fb-cyan);
+  font-size: 0.5rem;
+}
+
+.activity-user {
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.activity-event {
+  color: #cbd5e1;
+}
+
+.activity-time {
+  margin-left: auto;
+  color: #64748b;
+  font-size: 0.65rem;
+}
