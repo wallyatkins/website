@@ -43,6 +43,14 @@ export function detectBrowser(): string {
   return 'Browser';
 }
 
+export function detectUserTimezone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York';
+  } catch {
+    return 'America/New_York';
+  }
+}
+
 export async function sendPWATelemetry(params: {
   eventType: 'install' | 'launch' | 'auth_link' | 'visit';
   installedVia?: string;
@@ -53,6 +61,7 @@ export async function sendPWATelemetry(params: {
     const clientUuid = getPWAClientUuid();
     const platform = detectDevicePlatform();
     const browser = detectBrowser();
+    const timezone = detectUserTimezone();
     const isDisplayStandalone = window.matchMedia('(display-mode: standalone)').matches;
     const isIosStandalone = (window.navigator as unknown as { standalone?: boolean }).standalone === true;
     const isUrlPwa = window.location.search.includes('source=pwa');
@@ -68,6 +77,7 @@ export async function sendPWATelemetry(params: {
         client_uuid: clientUuid,
         platform,
         browser,
+        timezone,
         display_mode: displayMode,
         installed_via: installedVia,
         event_type: params.eventType,

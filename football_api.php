@@ -158,7 +158,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helve
 </html>
 HTML;
 
-    // Send Email
+    // Send Email (single primary to prevent duplicate inbox clutter)
     $headers = [
         "From: Wally Atkins PWA <noreply@wallyatkins.com>",
         "Reply-To: noreply@wallyatkins.com",
@@ -167,9 +167,6 @@ HTML;
         "X-Mailer: WallyAtkinsPWA/1.0"
     ];
     @mail($adminEmail, $subject, $htmlBody, implode("\r\n", $headers));
-    if ($adminEmail !== 'wally@wallyatkins.com') {
-        @mail('wally@wallyatkins.com', $subject, $htmlBody, implode("\r\n", $headers));
-    }
 
     // Send SMS
     if (!empty($commishPhone) && !empty($carrierGateway)) {
@@ -342,6 +339,12 @@ if ($action === 'record_pwa_telemetry') {
     $userAgent = substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 500);
     $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '';
 
+    // Detect and validate user timezone (defaults to America/New_York / Eastern)
+    $timezone = trim((string)($input['timezone'] ?? $_GET['timezone'] ?? 'America/New_York'));
+    if (!in_array($timezone, \DateTimeZone::listIdentifiers(), true)) {
+        $timezone = 'America/New_York';
+    }
+
     // Check if user is known from session, currentUser, or input payload
     $userId = $currentUser ? (int)$currentUser['id'] : null;
     $wallyauthId = $currentUser['wallyauth_id'] ?? null;
@@ -392,6 +395,7 @@ if ($action === 'record_pwa_telemetry') {
                 email = :email,
                 platform = :plat,
                 browser = :brow,
+                timezone = :tz,
                 display_mode = :disp,
                 installed_via = CASE WHEN pwa_installations.installed_via = "standalone_launch" THEN pwa_installations.installed_via ELSE :via END,
                 user_agent = :ua,
@@ -409,6 +413,7 @@ if ($action === 'record_pwa_telemetry') {
             'email' => $finalEmail,
             'plat' => $platform,
             'brow' => $browser,
+            'tz' => $timezone,
             'disp' => $displayMode,
             'via' => $installedVia,
             'ua' => $userAgent,
@@ -420,6 +425,11 @@ if ($action === 'record_pwa_telemetry') {
     } else {
         $isFirstInstall = true;
         $notifiedCommish = 0;
+        $finalUserId = $userId;
+        $finalUsername = $username;
+        $finalEmail = $email;
+        $finalWallyAuthId = $wallyauthId;
+
         if (!empty($username) && ($displayMode === 'standalone' || $installedVia === 'appinstalled_event')) {
             $shouldNotify = true;
             $notifiedCommish = 1;
@@ -428,12 +438,12 @@ if ($action === 'record_pwa_telemetry') {
         $insertStmt = $pdo->prepare('
             INSERT INTO pwa_installations (
                 client_uuid, user_id, wallyauth_id, username, email,
-                platform, browser, display_mode, installed_via,
+                platform, browser, timezone, display_mode, installed_via,
                 user_agent, ip_address, installed_at, last_seen_at,
                 launch_count, push_enabled, notified_commish
             ) VALUES (
                 :uuid, :uid, :waid, :uname, :email,
-                :plat, :brow, :disp, :via,
+                :plat, :brow, :tz, :disp, :via,
                 :ua, :ip, datetime("now"), datetime("now"),
                 1, :push, :notified
             )
@@ -446,6 +456,7 @@ if ($action === 'record_pwa_telemetry') {
             'email' => $email,
             'plat' => $platform,
             'brow' => $browser,
+            'tz' => $timezone,
             'disp' => $displayMode,
             'via' => $installedVia,
             'ua' => $userAgent,
@@ -454,6 +465,14 @@ if ($action === 'record_pwa_telemetry') {
             'notified' => $notifiedCommish
         ]);
         $instId = (int)$pdo->lastInsertId();
+    }
+
+    // Update user profile timezone across users and preferences
+    if ($finalUserId && !empty($timezone)) {
+        try {
+            $pdo->prepare('UPDATE users SET timezone = :tz WHERE id = :uid')->execute(['tz' => $timezone, 'uid' => $finalUserId]);
+            $pdo->prepare('UPDATE user_notification_preferences SET timezone = :tz WHERE user_id = :uid')->execute(['tz' => $timezone, 'uid' => $finalUserId]);
+        } catch (\Throwable $e) {}
     }
 
     // Log to activity logs

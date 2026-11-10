@@ -71,6 +71,7 @@ interface PwaInstallationRecord {
   email: string | null;
   platform: string;
   browser: string | null;
+  timezone?: string | null;
   display_mode: string;
   installed_via: string;
   user_agent: string | null;
@@ -831,6 +832,7 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
                                 </div>
                                 <div className="install-subline">
                                   <span>{icon} {inst.platform.toUpperCase()} • {inst.browser || 'Browser'}</span>
+                                  <span>• 🕒 {inst.timezone || 'America/New_York'}</span>
                                   <span>• {inst.launch_count} {inst.launch_count === 1 ? 'open' : 'opens'}</span>
                                   <span>• Active: {lastSeen}</span>
                                 </div>
