@@ -52,7 +52,7 @@ export function detectUserTimezone(): string {
 }
 
 export async function sendPWATelemetry(params: {
-  eventType: 'install' | 'launch' | 'auth_link' | 'visit';
+  eventType: 'install' | 'launch' | 'update' | 'auth_link' | 'visit';
   installedVia?: string;
   username?: string;
   pushEnabled?: boolean;
@@ -170,6 +170,7 @@ export function usePWA() {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                   // Proactively skip waiting for automatic instant update
                   setIsUpdating(true);
+                  sendPWATelemetry({ eventType: 'update', installedVia: 'sw_update' });
                   newWorker.postMessage({ type: 'SKIP_WAITING' });
                 }
               });

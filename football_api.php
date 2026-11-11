@@ -120,7 +120,7 @@ function notifyCommissionerPwaInstall(PDO $pdo, array $installData): void {
     $installedVia = $installData['installed_via'] ?? 'standalone_launch';
     $timestamp = date('M j, Y g:i A T');
 
-    $subject = "📱 [PWA Install] {$username} installed the Wally Atkins App!";
+    $subject = "📱 [PWA Install] {$username} installed Wally's NFL Pick'em!";
 
     $htmlBody = <<<HTML
 <!DOCTYPE html>
@@ -141,7 +141,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helve
     <div style="margin-bottom: 16px;"><span class="badge">PWA Installation Alert</span></div>
     <h2 style="color: #38bdf8; margin: 0 0 8px 0;">🎉 App Installed by {$username}!</h2>
     <p style="color: #cbd5e1; font-size: 15px; margin: 0 0 20px 0;">
-        A verified WallyAuth user has installed the <strong>Wally Atkins PWA</strong> to their home screen.
+        A verified WallyAuth user has installed <strong>Wally's NFL Pick'em</strong> to their home screen.
     </p>
     <div style="background: #08101d; border: 1px solid #1e2d42; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px;">
         <div class="row"><span class="label">User</span><span class="val">{$username}</span></div>
@@ -151,7 +151,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helve
         <div class="row" style="border-bottom: none;"><span class="label">Time</span><span class="val">{$timestamp}</span></div>
     </div>
     <p style="color: #64748b; font-size: 12px; margin: 0;">
-        PWA Telemetry Service • Wally Atkins Application Suite
+        PWA Telemetry Service • Wally's NFL Pick'em
     </p>
 </div>
 </body>
@@ -160,20 +160,20 @@ HTML;
 
     // Send Email (single primary to prevent duplicate inbox clutter)
     $headers = [
-        "From: Wally Atkins PWA <noreply@wallyatkins.com>",
+        "From: Wally's NFL Pick'em <noreply@wallyatkins.com>",
         "Reply-To: noreply@wallyatkins.com",
         "MIME-Version: 1.0",
         "Content-Type: text/html; charset=UTF-8",
-        "X-Mailer: WallyAtkinsPWA/1.0"
+        "X-Mailer: WallysNFLPickem/1.0"
     ];
     @mail($adminEmail, $subject, $htmlBody, implode("\r\n", $headers));
 
     // Send SMS
     if (!empty($commishPhone) && !empty($carrierGateway)) {
         $smsTarget = "{$commishPhone}@{$carrierGateway}";
-        $smsMsg = "PWA Alert: {$username} installed the Wally Atkins App on {$platform}!";
+        $smsMsg = "PWA Alert: {$username} installed Wally's NFL Pick'em on {$platform}!";
         $smsHeaders = [
-            "From: Wally Atkins PWA <noreply@wallyatkins.com>",
+            "From: Wally's NFL Pick'em <noreply@wallyatkins.com>",
             "Content-Type: text/plain; charset=UTF-8"
         ];
         @mail($smsTarget, "PWA Install Alert", $smsMsg, implode("\r\n", $smsHeaders));
@@ -372,6 +372,29 @@ if ($action === 'record_pwa_telemetry') {
     $isFirstInstall = false;
     $shouldNotify = false;
 
+    // Check if this user has ALREADY been recorded and notified for an installation on ANY device/session
+    $userAlreadyNotified = false;
+    $lookupUser = $userId;
+    $lookupName = $username ?: $payloadUsername;
+
+    if ($lookupUser || !empty($lookupName)) {
+        $priorCheck = $pdo->prepare('
+            SELECT id FROM pwa_installations 
+            WHERE (
+                (:uid > 0 AND user_id = :uid) 
+                OR (:uname != "" AND lower(username) = lower(:uname))
+            ) AND notified_commish = 1
+            LIMIT 1
+        ');
+        $priorCheck->execute([
+            'uid' => $lookupUser ?: 0,
+            'uname' => $lookupName ?: ''
+        ]);
+        if ($priorCheck->fetch()) {
+            $userAlreadyNotified = true;
+        }
+    }
+
     if ($existing) {
         $instId = (int)$existing['id'];
         
@@ -381,8 +404,12 @@ if ($action === 'record_pwa_telemetry') {
         $finalWallyAuthId = $existing['wallyauth_id'] ?: $wallyauthId;
         $notifiedCommish = (int)$existing['notified_commish'];
 
-        // If user is known, not yet notified, and app is running standalone or installed via event:
-        if (!empty($finalUsername) && $notifiedCommish === 0 && ($displayMode === 'standalone' || $installedVia === 'appinstalled_event')) {
+        // If this installation was not yet notified, but the user was already notified on another device, suppress notification
+        if ($userAlreadyNotified) {
+            $notifiedCommish = 1;
+            $shouldNotify = false;
+        } elseif (!empty($finalUsername) && $notifiedCommish === 0 && ($installedVia === 'appinstalled_event')) {
+            // Only notify on a genuine new install event, never on simple launch/update
             $shouldNotify = true;
             $notifiedCommish = 1;
         }
@@ -423,16 +450,23 @@ if ($action === 'record_pwa_telemetry') {
             'id' => $instId
         ]);
     } else {
-        $isFirstInstall = true;
-        $notifiedCommish = 0;
         $finalUserId = $userId;
         $finalUsername = $username;
         $finalEmail = $email;
         $finalWallyAuthId = $wallyauthId;
 
-        if (!empty($username) && ($displayMode === 'standalone' || $installedVia === 'appinstalled_event')) {
-            $shouldNotify = true;
+        if ($userAlreadyNotified) {
             $notifiedCommish = 1;
+            $shouldNotify = false;
+            $isFirstInstall = false;
+        } else {
+            $isFirstInstall = true;
+            $notifiedCommish = 0;
+            // Only trigger notification if explicitly installed via event or first standalone launch of brand new user
+            if (!empty($username) && ($installedVia === 'appinstalled_event' || $displayMode === 'standalone')) {
+                $shouldNotify = true;
+                $notifiedCommish = 1;
+            }
         }
 
         $insertStmt = $pdo->prepare('
