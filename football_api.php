@@ -575,6 +575,87 @@ if ($action === 'pwa_metrics') {
     exit;
 }
 
+// Action: get_notification_preferences
+if ($action === 'get_notification_preferences') {
+    $uid = $currentUser ? (int)$currentUser['id'] : null;
+    $prefs = [
+        'user_id' => $uid,
+        'timezone' => 'America/New_York',
+        'phone_number' => '',
+        'carrier_gateway' => 'msg.fi.google.com',
+        'email_pick_reminders' => false,
+        'sms_pick_reminders' => false,
+        'push_pick_reminders' => false,
+        'mud_tells' => false,
+        'mud_combat' => false,
+        'task_due_reminders' => false
+    ];
+
+    if ($uid) {
+        $stmt = $pdo->prepare('SELECT * FROM user_notification_preferences WHERE user_id = :uid LIMIT 1');
+        $stmt->execute(['uid' => $uid]);
+        $row = $stmt->fetch();
+        if ($row) {
+            $prefs['timezone'] = $row['timezone'] ?: 'America/New_York';
+            $prefs['phone_number'] = $row['phone_number'] ?: '';
+            $prefs['carrier_gateway'] = $row['carrier_gateway'] ?: 'msg.fi.google.com';
+            $prefs['email_pick_reminders'] = (bool)$row['email_pick_reminders'];
+            $prefs['sms_pick_reminders'] = (bool)$row['sms_pick_reminders'];
+            $prefs['push_pick_reminders'] = (bool)$row['push_pick_reminders'];
+        }
+    }
+
+    echo json_encode(['success' => true, 'preferences' => $prefs]);
+    exit;
+}
+
+// Action: update_notification_preferences
+if ($action === 'update_notification_preferences') {
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+    $uid = $currentUser ? (int)$currentUser['id'] : null;
+
+    if ($uid) {
+        $tz = trim((string)($input['timezone'] ?? 'America/New_York'));
+        $phone = preg_replace('/[^\d+]/', '', (string)($input['phone_number'] ?? ''));
+        $gateway = trim((string)($input['carrier_gateway'] ?? 'msg.fi.google.com'));
+        $emailReminders = !empty($input['email_pick_reminders']) ? 1 : 0;
+        $smsReminders = !empty($input['sms_pick_reminders']) ? 1 : 0;
+        $pushReminders = !empty($input['push_pick_reminders']) ? 1 : 0;
+
+        $stmt = $pdo->prepare('
+            INSERT INTO user_notification_preferences (
+                user_id, email_pick_reminders, sms_pick_reminders, push_pick_reminders, 
+                phone_number, carrier_gateway, timezone, updated_at
+            ) VALUES (
+                :uid, :email, :sms, :push, :phone, :gateway, :tz, CURRENT_TIMESTAMP
+            ) ON CONFLICT(user_id) DO UPDATE SET
+                email_pick_reminders = excluded.email_pick_reminders,
+                sms_pick_reminders = excluded.sms_pick_reminders,
+                push_pick_reminders = excluded.push_pick_reminders,
+                phone_number = excluded.phone_number,
+                carrier_gateway = excluded.carrier_gateway,
+                timezone = excluded.timezone,
+                updated_at = CURRENT_TIMESTAMP
+        ');
+        $stmt->execute([
+            'uid' => $uid,
+            'email' => $emailReminders,
+            'sms' => $smsReminders,
+            'push' => $pushReminders,
+            'phone' => $phone,
+            'gateway' => $gateway,
+            'tz' => $tz
+        ]);
+
+        try {
+            $pdo->prepare('UPDATE users SET timezone = :tz WHERE id = :uid')->execute(['tz' => $tz, 'uid' => $uid]);
+        } catch (\Throwable $e) {}
+    }
+
+    echo json_encode(['success' => true]);
+    exit;
+}
+
 // Action: switch_user
 if ($action === 'switch_user') {
     $input = json_decode(file_get_contents('php://input'), true);

@@ -8,7 +8,7 @@ interface InstallAppPageProps {
 
 type DeviceOS = 'ios' | 'android' | 'desktop';
 
-export const InstallAppPage: React.FC<InstallAppPageProps> = ({ onNavigate }) => {
+export const InstallAppPage: React.FC<InstallAppPageProps> = () => {
   const { canInstall, isStandalone, installApp } = usePWA();
   const [activeTab, setActiveTab] = useState<DeviceOS>(() => {
     if (typeof window === 'undefined') return 'ios';
@@ -23,12 +23,7 @@ export const InstallAppPage: React.FC<InstallAppPageProps> = ({ onNavigate }) =>
   });
 
   const launchApp = () => {
-    localStorage.setItem('wally_app_mode', 'pwa');
-    if (onNavigate) {
-      onNavigate('/pickem');
-    } else {
-      window.location.href = '/?source=pwa';
-    }
+    window.location.href = '/app/';
   };
 
   return (
