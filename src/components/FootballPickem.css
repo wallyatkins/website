@@ -55,6 +55,37 @@ body {
   gap: 0.65rem;
 }
 
+.module-switcher-pill-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 9999px;
+  padding: 4px 12px 4px 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: inherit;
+  text-align: left;
+  user-select: none;
+}
+
+.module-switcher-pill-btn:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(56, 189, 248, 0.45);
+}
+
+.module-switcher-chevron {
+  font-size: 0.85rem;
+  color: var(--fb-text-muted);
+  margin-left: 2px;
+  transition: transform 0.15s ease;
+}
+
+.module-switcher-pill-btn:hover .module-switcher-chevron {
+  color: #38bdf8;
+}
+
 .module-icon {
   font-size: 1.6rem;
   filter: drop-shadow(0 2px 6px var(--fb-gold-glow));

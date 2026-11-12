@@ -111,9 +111,13 @@ interface PwaMetricsData {
 
 interface FootballPickemAppProps {
   onSwitchToWebsite?: () => void;
+  onOpenSwitcher?: () => void;
 }
 
-export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchToWebsite }) => {
+export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({
+  onSwitchToWebsite,
+  onOpenSwitcher,
+}) => {
   const { canInstall, isStandalone, isUpdating, installApp } = usePWA();
 
   const [season, setSeason] = useState<number>(2026);
@@ -431,14 +435,21 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
       {/* 1. TOP BAR */}
       <header className="football-header">
         <div className="football-header-left">
-          {/* Upper left: app logo/icon + module name */}
-          <div className="module-brand-group">
+          {/* Upper left: Interactive Module Switcher Trigger */}
+          <button
+            type="button"
+            className="module-switcher-pill-btn"
+            onClick={onOpenSwitcher}
+            title="Switch Application Module (WallyMUD, Tasks, Settings)"
+            aria-label="Switch Application Module"
+          >
             <span className="module-icon">🏈</span>
             <div className="module-titles">
               <h1 className="module-title">Football Pick'em</h1>
               <span className="module-subtitle">{season} Season</span>
             </div>
-          </div>
+            {onOpenSwitcher && <span className="module-switcher-chevron">▾</span>}
+          </button>
         </div>
 
         <div className="football-header-right">
@@ -866,6 +877,21 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
                       >
                         <span>📊</span>
                         <span>PWA Installs &amp; User Metrics</span>
+                      </button>
+                    )}
+
+                    {onOpenSwitcher && (
+                      <button
+                        type="button"
+                        className="profile-action-btn switch-site-btn"
+                        onClick={() => {
+                          setIsAuthModalOpen(false);
+                          onOpenSwitcher();
+                        }}
+                      >
+                        <span>⚔️</span>
+                        <span>Switch Module (WallyMUD, Tasks)</span>
+                        <span className="btn-external-icon">▾</span>
                       </button>
                     )}
 

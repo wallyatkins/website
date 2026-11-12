@@ -17,6 +17,8 @@ import { InstallAppPage } from './components/InstallAppPage';
 import { FootballPickemApp } from './components/FootballPickemApp';
 import { PrivacyPage } from './components/PrivacyPage';
 import { TermsPage } from './components/TermsPage';
+import { ModuleSwitcherDrawer, type PwaModuleId } from './components/ModuleSwitcherDrawer';
+import { MudTerminal } from './components/MudTerminal';
 
 const SECTION_MAP: Record<string, string> = {
   '/portfolio': 'hero',
@@ -81,6 +83,28 @@ function App() {
     }
     return Boolean(isStandaloneDisplay || isIosStandalone || hasPwaParam || isPwaPath || storedMode === 'pwa');
   });
+
+  const [activeModule, setActiveModule] = useState<PwaModuleId>(() => {
+    if (typeof window !== 'undefined') {
+      const urlModule = new URLSearchParams(window.location.search).get('module') as PwaModuleId;
+      if (urlModule === 'mud' || urlModule === 'tasks' || urlModule === 'account' || urlModule === 'football') {
+        return urlModule;
+      }
+      const saved = localStorage.getItem('wally_last_active_module') as PwaModuleId;
+      if (saved === 'mud' || saved === 'tasks' || saved === 'account' || saved === 'football') {
+        return saved;
+      }
+    }
+    return 'football';
+  });
+  const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
+
+  const handleSelectModule = (modId: PwaModuleId) => {
+    setActiveModule(modId);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('wally_last_active_module', modId);
+    }
+  };
 
   const isNavigatingRef = useRef(false);
   const isInitialRender = useRef(true);
@@ -235,16 +259,29 @@ function App() {
     );
   }
 
-  // PWA APP SUITE VIEW (Football Pick'em as first suite application)
+  // PWA APP SUITE VIEW (Football Pick'em, WallyMUD, Tasks, Account)
   if (isPwaMode || currentPath === '/pickem' || currentPath === '/pwa') {
     return (
-      <FootballPickemApp
-        onSwitchToWebsite={() => {
-          localStorage.setItem('wally_app_mode', 'website');
-          setIsPwaMode(false);
-          navigateTo('/');
-        }}
-      />
+      <>
+        {activeModule === 'mud' ? (
+          <MudTerminal onOpenSwitcher={() => setIsSwitcherOpen(true)} />
+        ) : (
+          <FootballPickemApp
+            onOpenSwitcher={() => setIsSwitcherOpen(true)}
+            onSwitchToWebsite={() => {
+              localStorage.setItem('wally_app_mode', 'website');
+              setIsPwaMode(false);
+              navigateTo('/');
+            }}
+          />
+        )}
+        <ModuleSwitcherDrawer
+          isOpen={isSwitcherOpen}
+          onClose={() => setIsSwitcherOpen(false)}
+          activeModule={activeModule}
+          onSelectModule={handleSelectModule}
+        />
+      </>
     );
   }
 
