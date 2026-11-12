@@ -57,6 +57,7 @@ interface CurrentUserStatus {
   missing_picks: boolean;
   user_picks: Record<number, string>;
   mnf_points: number | null;
+  push_enabled?: boolean;
 }
 
 interface WeekDataResponse {
@@ -126,10 +127,24 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
 
   const [isWizardOpen, setIsWizardOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
-  const [pushStatus, setPushStatus] = useState<NotificationPermission | 'unsupported'>('default');
+  const [pushStatus, setPushStatus] = useState<NotificationPermission | 'unsupported'>(() => {
+    if (typeof window !== 'undefined') {
+      if (localStorage.getItem('pwa_push_enabled') === 'true') {
+        return 'granted';
+      }
+      if ('Notification' in window) {
+        return Notification.permission;
+      }
+    }
+    return 'default';
+  });
   const [isSubscribingPush, setIsSubscribingPush] = useState<boolean>(false);
   const [isNotifBannerDismissed, setIsNotifBannerDismissed] = useState<boolean>(() => {
-    return typeof window !== 'undefined' && sessionStorage.getItem('pwa_notif_banner_dismissed') === '1';
+    return (
+      typeof window !== 'undefined' &&
+      (localStorage.getItem('pwa_notif_banner_dismissed') === '1' ||
+        localStorage.getItem('pwa_push_enabled') === 'true')
+    );
   });
 
   const [isMetricsModalOpen, setIsMetricsModalOpen] = useState<boolean>(false);
@@ -206,6 +221,14 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
         });
       }
 
+      // Sync push status from server subscription status
+      if (data.current_user_status?.push_enabled) {
+        setPushStatus('granted');
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('pwa_push_enabled', 'true');
+        }
+      }
+
       // ONLY auto-launch if:
       // 1. It is the CURRENT week
       // 2. Has not auto-launched in this session
@@ -233,12 +256,34 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
     }
   }, [selectedWeek]);
 
-  // Check initial notification permission
+  // Check initial notification permission and active SW pushManager subscription
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'Notification' in window) {
-      setPushStatus(Notification.permission);
-    } else {
-      setPushStatus('unsupported');
+    if (typeof window !== 'undefined') {
+      if (localStorage.getItem('pwa_push_enabled') === 'true') {
+        setPushStatus('granted');
+      } else if ('Notification' in window) {
+        setPushStatus(Notification.permission);
+      } else {
+        setPushStatus('unsupported');
+      }
+
+      // Proactively inspect active service worker subscription
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready
+          .then((reg) => {
+            reg.pushManager
+              .getSubscription()
+              .then((sub) => {
+                if (sub) {
+                  setPushStatus('granted');
+                  localStorage.setItem('pwa_push_enabled', 'true');
+                  localStorage.setItem('pwa_notif_banner_dismissed', '1');
+                }
+              })
+              .catch(() => {});
+          })
+          .catch(() => {});
+      }
     }
   }, []);
 
@@ -316,7 +361,8 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
         setPushStatus('granted');
         setIsNotifBannerDismissed(true);
         if (typeof window !== 'undefined') {
-          sessionStorage.setItem('pwa_notif_banner_dismissed', '1');
+          localStorage.setItem('pwa_push_enabled', 'true');
+          localStorage.setItem('pwa_notif_banner_dismissed', '1');
         }
         alert('🎉 Lock screen notifications enabled! You will now receive pool alerts directly on your device.');
       } else {
@@ -457,39 +503,50 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
       </header>
 
       {/* Push Notification Top Banner */}
-      {currentUser && !isNotifBannerDismissed && pushStatus !== 'granted' && pushStatus !== 'unsupported' && (
-        <div className="pwa-notif-banner">
-          <div className="pwa-notif-banner-content">
-            <span className="pwa-notif-banner-icon">🔔</span>
-            <span className="pwa-notif-banner-text">
-              Turn on notifications for lock screen pick reminders &amp; pool alerts!
-            </span>
+      {(() => {
+        const isPushActive =
+          pushStatus === 'granted' ||
+          (typeof window !== 'undefined' && localStorage.getItem('pwa_push_enabled') === 'true') ||
+          Boolean(weekData?.current_user_status?.push_enabled);
+
+        if (!currentUser || isNotifBannerDismissed || isPushActive || pushStatus === 'unsupported') {
+          return null;
+        }
+
+        return (
+          <div className="pwa-notif-banner">
+            <div className="pwa-notif-banner-content">
+              <span className="pwa-notif-banner-icon">🔔</span>
+              <span className="pwa-notif-banner-text">
+                Turn on notifications for lock screen pick reminders &amp; pool alerts!
+              </span>
+            </div>
+            <div className="pwa-notif-banner-actions">
+              <button
+                type="button"
+                className="pwa-notif-banner-btn"
+                onClick={handleEnablePushNotifications}
+                disabled={isSubscribingPush}
+              >
+                {isSubscribingPush ? 'Enabling...' : 'Enable Notifications'}
+              </button>
+              <button
+                type="button"
+                className="pwa-notif-banner-dismiss"
+                onClick={() => {
+                  setIsNotifBannerDismissed(true);
+                  if (typeof window !== 'undefined') {
+                    localStorage.setItem('pwa_notif_banner_dismissed', '1');
+                  }
+                }}
+                aria-label="Dismiss banner"
+              >
+                ✕
+              </button>
+            </div>
           </div>
-          <div className="pwa-notif-banner-actions">
-            <button
-              type="button"
-              className="pwa-notif-banner-btn"
-              onClick={handleEnablePushNotifications}
-              disabled={isSubscribingPush}
-            >
-              {isSubscribingPush ? 'Enabling...' : 'Enable Notifications'}
-            </button>
-            <button
-              type="button"
-              className="pwa-notif-banner-dismiss"
-              onClick={() => {
-                setIsNotifBannerDismissed(true);
-                if (typeof window !== 'undefined') {
-                  sessionStorage.setItem('pwa_notif_banner_dismissed', '1');
-                }
-              }}
-              aria-label="Dismiss banner"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* 2. HORIZONTAL WEEKS SLIDER (Right at top, default scrolled to right for current week) */}
       <nav ref={weeksSliderRef} className="weeks-slider-wrapper" aria-label="NFL Weeks Navigation">
@@ -727,35 +784,53 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
 
                   <div className="profile-actions-stack">
                     {/* Native Push Notification Card */}
-                    <div className="profile-notif-box">
-                      <div className="profile-notif-header">
-                        <span className="profile-notif-icon">🔔</span>
-                        <div className="profile-notif-labels">
-                          <span className="profile-notif-title">Lock Screen Notifications</span>
-                          <span className="profile-notif-subtitle">
-                            {pushStatus === 'granted'
-                              ? 'Active on this device'
-                              : pushStatus === 'denied'
-                              ? 'Blocked in device settings'
-                              : 'Kickoff reminders & pool alerts'}
-                          </span>
+                    {(() => {
+                      const isPushActive =
+                        pushStatus === 'granted' ||
+                        (typeof window !== 'undefined' && localStorage.getItem('pwa_push_enabled') === 'true') ||
+                        Boolean(weekData?.current_user_status?.push_enabled);
+
+                      return (
+                        <div className="profile-notif-box">
+                          <div className="profile-notif-header">
+                            <span className="profile-notif-icon">🔔</span>
+                            <div className="profile-notif-labels">
+                              <span className="profile-notif-title">Lock Screen Notifications</span>
+                              <span className="profile-notif-subtitle">
+                                {isPushActive
+                                  ? 'Active on this device'
+                                  : pushStatus === 'denied'
+                                  ? 'Blocked in device settings'
+                                  : 'Kickoff reminders & pool alerts'}
+                              </span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className={`profile-action-btn enable-notif-action-btn ${isPushActive ? 'active-granted' : ''}`}
+                            onClick={handleEnablePushNotifications}
+                            disabled={isSubscribingPush || isPushActive}
+                          >
+                            {isSubscribingPush ? (
+                              <>
+                                <span>⏳</span>
+                                <span>Enabling...</span>
+                              </>
+                            ) : isPushActive ? (
+                              <>
+                                <span>✓</span>
+                                <span>Notifications Enabled</span>
+                              </>
+                            ) : (
+                              <>
+                                <span>🔔</span>
+                                <span>Enable Notifications</span>
+                              </>
+                            )}
+                          </button>
                         </div>
-                      </div>
-                      <button
-                        type="button"
-                        className={`profile-action-btn enable-notif-action-btn ${pushStatus === 'granted' ? 'active-granted' : ''}`}
-                        onClick={handleEnablePushNotifications}
-                        disabled={isSubscribingPush || pushStatus === 'granted'}
-                      >
-                        {isSubscribingPush ? (
-                          <><span>⏳</span><span>Enabling...</span></>
-                        ) : pushStatus === 'granted' ? (
-                          <><span>✓</span><span>Notifications Enabled</span></>
-                        ) : (
-                          <><span>🔔</span><span>Enable Notifications</span></>
-                        )}
-                      </button>
-                    </div>
+                      );
+                    })()}
 
                     <a
                       href="https://auth.wallyatkins.com/account"

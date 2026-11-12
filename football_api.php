@@ -1047,6 +1047,13 @@ if ($action === 'matrix' || $action === 'week_data') {
     $totalGames = count($games);
     $missingPicks = (!$hasSubmitted || $picksCount < $totalGames);
 
+    $hasPushSub = false;
+    if ($currentUser && !empty($currentUser['id'])) {
+        $subCheck = $pdo->prepare('SELECT id FROM user_push_subscriptions WHERE user_id = :uid LIMIT 1');
+        $subCheck->execute(['uid' => (int)$currentUser['id']]);
+        $hasPushSub = (bool)$subCheck->fetch();
+    }
+
     echo json_encode([
         'season' => $season,
         'week' => $requestedWeek,
@@ -1071,7 +1078,8 @@ if ($action === 'matrix' || $action === 'week_data') {
             'total_games' => $totalGames,
             'missing_picks' => $missingPicks,
             'user_picks' => $currentUserPicks,
-            'mnf_points' => $currentUserEntry['mnf_total_points_prediction'] ?? null
+            'mnf_points' => $currentUserEntry['mnf_total_points_prediction'] ?? null,
+            'push_enabled' => $hasPushSub
         ]
     ]);
     exit;
