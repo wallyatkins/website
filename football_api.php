@@ -704,6 +704,27 @@ if ($action === 'get_vapid_public_key') {
     exit;
 }
 
+// Action: get_latest_unread_notification
+if ($action === 'get_latest_unread_notification') {
+    $userId = !empty($currentUser) ? (int)$currentUser['id'] : null;
+    $row = null;
+    if ($userId) {
+        $stmt = $pdo->prepare('SELECT * FROM in_app_notifications WHERE user_id = :uid ORDER BY id DESC LIMIT 1');
+        $stmt->execute(['uid' => $userId]);
+        $row = $stmt->fetch();
+    }
+    if (!$row) {
+        $stmt = $pdo->query('SELECT * FROM in_app_notifications ORDER BY id DESC LIMIT 1');
+        $row = $stmt->fetch();
+    }
+    echo json_encode($row ?: [
+        'title' => "Wally's NFL Pick'em",
+        'message' => "Hey Derek! 👋 Commissioner Wally says test push successful! 🏈",
+        'link' => '/pickem'
+    ]);
+    exit;
+}
+
 // Action: save_push_subscription
 if ($action === 'save_push_subscription') {
     $input = json_decode(file_get_contents('php://input'), true);

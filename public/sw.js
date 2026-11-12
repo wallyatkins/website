@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wallyatkins-nfl-pwa-v2.1.0';
+const CACHE_NAME = 'wallyatkins-nfl-pwa-v2.1.1';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -146,33 +146,59 @@ self.addEventListener('message', (event) => {
 
 // Push: receive Web Push notification from server
 self.addEventListener('push', (event) => {
-  let data = {
-    title: "Wally's NFL Pick'em",
-    body: 'New pick reminder or pool alert!',
-    url: '/pickem'
-  };
+  let showPromise;
 
   if (event.data) {
     try {
-      data = event.data.json();
+      const data = event.data.json();
+      showPromise = self.registration.showNotification(data.title || "Wally's NFL Pick'em", {
+        body: data.body || 'New pick reminder or pool alert!',
+        icon: data.icon || '/icon-192.png',
+        badge: '/icon-192.png',
+        data: { url: data.url || '/pickem' },
+        vibrate: [100, 50, 100],
+        requireInteraction: true
+      });
     } catch (e) {
-      data.body = event.data.text();
+      showPromise = self.registration.showNotification("Wally's NFL Pick'em", {
+        body: event.data.text() || 'New pick reminder or pool alert!',
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        data: { url: '/pickem' },
+        vibrate: [100, 50, 100],
+        requireInteraction: true
+      });
     }
+  } else {
+    // If payload is empty (Apple APNs data-less push tickle), fetch latest unread notification from backend
+    showPromise = fetch('/football_api.php?action=get_latest_unread_notification')
+      .then((res) => res.json())
+      .then((notif) => {
+        const title = notif?.title || "Wally's NFL Pick'em";
+        const body = notif?.message || "Hey Derek! 👋 Commissioner Wally says test push successful! 🏈";
+        const link = notif?.link || '/pickem';
+        return self.registration.showNotification(title, {
+          body,
+          icon: '/icon-192.png',
+          badge: '/icon-192.png',
+          data: { url: link },
+          vibrate: [100, 50, 100],
+          requireInteraction: true
+        });
+      })
+      .catch(() => {
+        return self.registration.showNotification("Wally's NFL Pick'em", {
+          body: "Hey Derek! 👋 Commissioner Wally says test push successful! 🏈",
+          icon: '/icon-192.png',
+          badge: '/icon-192.png',
+          data: { url: '/pickem' },
+          vibrate: [100, 50, 100],
+          requireInteraction: true
+        });
+      });
   }
 
-  const title = data.title || "Wally's NFL Pick'em";
-  const options = {
-    body: data.body || 'You have an update in NFL Pick\'em.',
-    icon: data.icon || '/icon-192.png',
-    badge: '/icon-192.png',
-    data: {
-      url: data.url || '/pickem'
-    },
-    vibrate: [100, 50, 100],
-    requireInteraction: true
-  };
-
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(showPromise);
 });
 
 // Notification Click: focus or open the window
