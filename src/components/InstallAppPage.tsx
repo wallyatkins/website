@@ -23,7 +23,7 @@ export const InstallAppPage: React.FC<InstallAppPageProps> = () => {
   });
 
   const launchApp = () => {
-    window.location.href = '/app/';
+    window.location.href = '/pwa/';
   };
 
   return (
@@ -32,7 +32,7 @@ export const InstallAppPage: React.FC<InstallAppPageProps> = () => {
       {isStandalone && (
         <div className="standalone-installed-banner">
           <span>✅</span>
-          <span>You are currently running the installed app!</span>
+          <span>You are currently running the installed Wally Atkins app!</span>
         </div>
       )}
 
@@ -44,11 +44,11 @@ export const InstallAppPage: React.FC<InstallAppPageProps> = () => {
             alt="Wally Atkins App"
             className="install-app-icon"
           />
-          <span className="install-app-badge">🏈</span>
+          <span className="install-app-badge">📲</span>
         </div>
-        <h1 className="install-title">Get the App</h1>
+        <h1 className="install-title">Get the Wally Atkins App</h1>
         <p className="install-subtitle">
-          Install directly to your iPhone or Android home screen for instant access, full-screen view, and game-day pick reminders.
+          Install directly to your iPhone or Android home screen for instant local access to Football Pick&apos;em, WallyMUD, WallyTasks, and Account Settings with zero load time.
         </p>
 
         {/* Action Buttons */}
@@ -70,7 +70,7 @@ export const InstallAppPage: React.FC<InstallAppPageProps> = () => {
             onClick={launchApp}
           >
             <span>🚀</span>
-            <span>Launch Web App</span>
+            <span>Launch Wally Atkins App</span>
           </button>
         </div>
       </div>
@@ -179,7 +179,7 @@ export const InstallAppPage: React.FC<InstallAppPageProps> = () => {
                   <span>Tap &ldquo;Add&rdquo; in Top Right</span>
                 </h3>
                 <p className="step-desc">
-                  Tap <strong>Add</strong> in the top right corner. The app icon will appear directly on your home screen!
+                  Tap <strong>Add</strong> in the top right corner. The <strong>&ldquo;Wally Atkins&rdquo;</strong> app icon will appear directly on your home screen!
                 </p>
               </div>
             </div>
@@ -251,7 +251,7 @@ export const InstallAppPage: React.FC<InstallAppPageProps> = () => {
                     <span>Confirm &ldquo;Install&rdquo;</span>
                   </h3>
                   <p className="step-desc">
-                    Tap <strong>Install</strong> when prompted. The app will be placed on your home screen and app drawer.
+                    Tap <strong>Install</strong> when prompted. The <strong>&ldquo;Wally Atkins&rdquo;</strong> app will be placed directly on your home screen and app drawer.
                   </p>
                 </div>
               </div>

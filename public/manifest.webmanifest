@@ -1,8 +1,8 @@
 {
   "id": "https://wallyatkins.com/",
-  "name": "Wally's NFL Pick'em",
-  "short_name": "NFL Pick'em",
-  "description": "Atkins NFL Pick'em League - Weekly Picks Matrix, Wizard & Suite",
+  "name": "Wally Atkins",
+  "short_name": "Wally Atkins",
+  "description": "Wally Atkins - Creator & Technologist",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",

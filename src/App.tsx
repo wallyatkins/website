@@ -14,13 +14,8 @@ import { IRCInterface } from './components/IRCInterface';
 import { Fhqwhgads } from './components/easter-eggs/Fhqwhgads';
 import { GamesPage } from './components/GamesPage';
 import { InstallAppPage } from './components/InstallAppPage';
-import { FootballPickemApp } from './components/FootballPickemApp';
 import { PrivacyPage } from './components/PrivacyPage';
 import { TermsPage } from './components/TermsPage';
-import { ModuleSwitcherDrawer, type PwaModuleId } from './components/ModuleSwitcherDrawer';
-import { MudTerminal } from './components/MudTerminal';
-import { TasksModule } from './components/TasksModule';
-import { AccountModule } from './components/AccountModule';
 
 const SECTION_MAP: Record<string, string> = {
   '/portfolio': 'hero',
@@ -65,48 +60,15 @@ function App() {
   const [isLightMode, setIsLightMode] = useState(false);
   const [isCreativeMode, setIsCreativeMode] = useState(false);
 
-  // Distinguish PWA App Suite mode vs Personal Portfolio Website
-  const [isPwaMode, setIsPwaMode] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    const isStandaloneDisplay = window.matchMedia('(display-mode: standalone)').matches;
-    const isIosStandalone = (window.navigator as unknown as { standalone?: boolean }).standalone === true;
-    const searchParams = new URLSearchParams(window.location.search);
-    const hasPwaParam =
-      searchParams.get('source') === 'pwa' ||
-      searchParams.get('pwa') === 'true' ||
-      searchParams.has('app');
-    const isPwaPath =
-      window.location.pathname.startsWith('/pickem') ||
-      window.location.pathname.startsWith('/pwa');
-
-    const storedMode = localStorage.getItem('wally_app_mode');
-    if (storedMode === 'website' && !hasPwaParam && !isPwaPath) {
-      return false;
-    }
-    return Boolean(isStandaloneDisplay || isIosStandalone || hasPwaParam || isPwaPath || storedMode === 'pwa');
-  });
-
-  const [activeModule, setActiveModule] = useState<PwaModuleId>(() => {
+  // Redirect /pickem and /pwa directly to standalone PWA bundle
+  useEffect(() => {
     if (typeof window !== 'undefined') {
-      const urlModule = new URLSearchParams(window.location.search).get('module') as PwaModuleId;
-      if (urlModule === 'mud' || urlModule === 'tasks' || urlModule === 'account' || urlModule === 'football') {
-        return urlModule;
-      }
-      const saved = localStorage.getItem('wally_last_active_module') as PwaModuleId;
-      if (saved === 'mud' || saved === 'tasks' || saved === 'account' || saved === 'football') {
-        return saved;
+      const p = window.location.pathname;
+      if (p === '/pwa' || p === '/pwa/' || p === '/pickem' || p === '/pickem/') {
+        window.location.href = '/pwa/';
       }
     }
-    return 'football';
-  });
-  const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
-
-  const handleSelectModule = (modId: PwaModuleId) => {
-    setActiveModule(modId);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('wally_last_active_module', modId);
-    }
-  };
+  }, []);
 
   const isNavigatingRef = useRef(false);
   const isInitialRender = useRef(true);
@@ -155,8 +117,8 @@ function App() {
     if (path === '/hero') path = '/';
 
     if (path === '/pickem' || path === '/pwa') {
-      setIsPwaMode(true);
-      localStorage.setItem('wally_app_mode', 'pwa');
+      window.location.href = '/pwa/';
+      return;
     }
 
     isNavigatingRef.current = true;
@@ -187,21 +149,18 @@ function App() {
 
   // Title and Analytics tracking
   useEffect(() => {
-    let title = PAGE_TITLES[currentPath] || 'Wally Atkins | Creator & Technologist';
-    if (isPwaMode) {
-      title = "Wally Atkins | NFL Pick'em";
-    }
+    const title = PAGE_TITLES[currentPath] || 'Wally Atkins | Creator & Technologist';
     document.title = title;
 
     if (!isInitialRender.current) {
       trackPageView(currentPath, title);
     }
     isInitialRender.current = false;
-  }, [currentPath, isPwaMode]);
+  }, [currentPath]);
 
   // Scroll spy / IntersectionObserver for home page sections to keep clean paths in address bar
   useEffect(() => {
-    if (isPwaMode || currentPath.startsWith('/app') || currentPath.startsWith('/games') || currentPath.startsWith('/privacy') || currentPath.startsWith('/terms')) {
+    if (currentPath.startsWith('/app') || currentPath.startsWith('/games') || currentPath.startsWith('/privacy') || currentPath.startsWith('/terms')) {
       return;
     }
 
@@ -234,7 +193,7 @@ function App() {
 
     sectionElements.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, [currentPath, isPwaMode]);
+  }, [currentPath]);
 
   const toggleTheme = () => {
     setIsLightMode(!isLightMode);
@@ -258,53 +217,6 @@ function App() {
       <div className="chat-fullscreen-wrapper">
         <IRCInterface ircId={ircId} token={token} />
       </div>
-    );
-  }
-
-  // PWA APP SUITE VIEW (Football Pick'em, WallyMUD, Tasks, Account)
-  if (isPwaMode || currentPath === '/pickem' || currentPath === '/pwa') {
-    const renderActiveModule = () => {
-      switch (activeModule) {
-        case 'mud':
-          return <MudTerminal onOpenSwitcher={() => setIsSwitcherOpen(true)} />;
-        case 'tasks':
-          return <TasksModule onOpenSwitcher={() => setIsSwitcherOpen(true)} />;
-        case 'account':
-          return (
-            <AccountModule
-              onOpenSwitcher={() => setIsSwitcherOpen(true)}
-              onSwitchToWebsite={() => {
-                localStorage.setItem('wally_app_mode', 'website');
-                setIsPwaMode(false);
-                navigateTo('/');
-              }}
-            />
-          );
-        case 'football':
-        default:
-          return (
-            <FootballPickemApp
-              onOpenSwitcher={() => setIsSwitcherOpen(true)}
-              onSwitchToWebsite={() => {
-                localStorage.setItem('wally_app_mode', 'website');
-                setIsPwaMode(false);
-                navigateTo('/');
-              }}
-            />
-          );
-      }
-    };
-
-    return (
-      <>
-        {renderActiveModule()}
-        <ModuleSwitcherDrawer
-          isOpen={isSwitcherOpen}
-          onClose={() => setIsSwitcherOpen(false)}
-          activeModule={activeModule}
-          onSelectModule={handleSelectModule}
-        />
-      </>
     );
   }
 
