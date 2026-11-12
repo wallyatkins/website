@@ -819,6 +819,47 @@ if ($action === 'save_push_subscription') {
     exit;
 }
 
+// Action: test_push (Send an instant test push notification to user's device)
+if ($action === 'test_push') {
+    $userId = !empty($currentUser) ? (int)$currentUser['id'] : null;
+    $input = json_decode(file_get_contents('php://input'), true);
+    $clientUuid = trim($input['client_uuid'] ?? $_GET['client_uuid'] ?? '');
+
+    if (!$userId && $clientUuid) {
+        $lookupStmt = $pdo->prepare('SELECT user_id, username FROM pwa_installations WHERE client_uuid = :uuid AND user_id IS NOT NULL LIMIT 1');
+        $lookupStmt->execute(['uuid' => $clientUuid]);
+        $row = $lookupStmt->fetch();
+        if ($row) {
+            $userId = (int)$row['user_id'];
+            if (empty($currentUser)) {
+                $currentUser = ['id' => $userId, 'username' => $row['username']];
+            }
+        }
+    }
+
+    if (!$userId) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Authentication or registered installation required']);
+        exit;
+    }
+
+    $webPushFile = '/home4/multili2/public_html/football/src/Services/WebPushService.php';
+    if (!file_exists($webPushFile)) {
+        $webPushFile = __DIR__ . '/football/src/Services/WebPushService.php';
+    }
+    if (file_exists($webPushFile)) {
+        require_once dirname($webPushFile) . '/../Database/Connection.php';
+        require_once $webPushFile;
+        $wps = new \WallyFootball\Services\WebPushService();
+        $name = $currentUser['username'] ?? 'Player';
+        $res = $wps->sendPushNotification($userId, "Wally's NFL Pick'em", "Hello {$name}! 👋 Test push notification received successfully on your device.", "/pickem");
+        echo json_encode(['success' => true, 'result' => $res]);
+        exit;
+    }
+    echo json_encode(['error' => 'WebPushService not configured on this host']);
+    exit;
+}
+
 // Action: switch_user (Disabled per league integrity / security request)
 if ($action === 'switch_user') {
     http_response_code(403);

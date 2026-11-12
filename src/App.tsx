@@ -19,6 +19,8 @@ import { PrivacyPage } from './components/PrivacyPage';
 import { TermsPage } from './components/TermsPage';
 import { ModuleSwitcherDrawer, type PwaModuleId } from './components/ModuleSwitcherDrawer';
 import { MudTerminal } from './components/MudTerminal';
+import { TasksModule } from './components/TasksModule';
+import { AccountModule } from './components/AccountModule';
 
 const SECTION_MAP: Record<string, string> = {
   '/portfolio': 'hero',
@@ -261,20 +263,41 @@ function App() {
 
   // PWA APP SUITE VIEW (Football Pick'em, WallyMUD, Tasks, Account)
   if (isPwaMode || currentPath === '/pickem' || currentPath === '/pwa') {
+    const renderActiveModule = () => {
+      switch (activeModule) {
+        case 'mud':
+          return <MudTerminal onOpenSwitcher={() => setIsSwitcherOpen(true)} />;
+        case 'tasks':
+          return <TasksModule onOpenSwitcher={() => setIsSwitcherOpen(true)} />;
+        case 'account':
+          return (
+            <AccountModule
+              onOpenSwitcher={() => setIsSwitcherOpen(true)}
+              onSwitchToWebsite={() => {
+                localStorage.setItem('wally_app_mode', 'website');
+                setIsPwaMode(false);
+                navigateTo('/');
+              }}
+            />
+          );
+        case 'football':
+        default:
+          return (
+            <FootballPickemApp
+              onOpenSwitcher={() => setIsSwitcherOpen(true)}
+              onSwitchToWebsite={() => {
+                localStorage.setItem('wally_app_mode', 'website');
+                setIsPwaMode(false);
+                navigateTo('/');
+              }}
+            />
+          );
+      }
+    };
+
     return (
       <>
-        {activeModule === 'mud' ? (
-          <MudTerminal onOpenSwitcher={() => setIsSwitcherOpen(true)} />
-        ) : (
-          <FootballPickemApp
-            onOpenSwitcher={() => setIsSwitcherOpen(true)}
-            onSwitchToWebsite={() => {
-              localStorage.setItem('wally_app_mode', 'website');
-              setIsPwaMode(false);
-              navigateTo('/');
-            }}
-          />
-        )}
+        {renderActiveModule()}
         <ModuleSwitcherDrawer
           isOpen={isSwitcherOpen}
           onClose={() => setIsSwitcherOpen(false)}

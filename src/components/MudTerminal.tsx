@@ -1,11 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Terminal as TermIcon, ShieldAlert, RefreshCw } from 'lucide-react';
+import { Send, Terminal as TermIcon, ShieldAlert, RefreshCw, Heart, Zap, Footprints } from 'lucide-react';
 
 interface MudLog {
   id: number;
   text: string;
   type?: string;
   created_at?: string;
+}
+
+interface MudCharacter {
+  id?: number;
+  name?: string;
+  level?: number;
+  hp?: number;
+  max_hp?: number;
+  mana?: number;
+  max_mana?: number;
+  move?: number;
+  max_move?: number;
+  room_vnum?: number;
 }
 
 interface MudTerminalProps {
@@ -16,7 +29,7 @@ export const MudTerminal: React.FC<MudTerminalProps> = ({ onOpenSwitcher }) => {
   const [logs, setLogs] = useState<MudLog[]>([
     {
       id: 1,
-      text: "\x1b[1;36m=== Welcome to WallyMUD (PWA Mobile Terminal) ===\x1b[0m\nConnected to the realm of WallyMUD.\nType 'help' for commands, or use the quick action buttons below."
+      text: "\x1b[1;36m=== Welcome to WallyMUD (PWA Mobile Terminal) ===\x1b[0m\nInitializing connection to realm..."
     }
   ]);
   const [inputCommand, setInputCommand] = useState('');
@@ -26,6 +39,7 @@ export const MudTerminal: React.FC<MudTerminalProps> = ({ onOpenSwitcher }) => {
   const [token, setToken] = useState<string | null>(() => {
     return typeof window !== 'undefined' ? localStorage.getItem('wallymud_token') : null;
   });
+  const [characterInfo, setCharacterInfo] = useState<MudCharacter | null>(null);
   const [characterName, setCharacterName] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
@@ -42,11 +56,31 @@ export const MudTerminal: React.FC<MudTerminalProps> = ({ onOpenSwitcher }) => {
     scrollToBottom();
   }, [logs]);
 
-  // Convert basic ANSI colors to HTML styled spans
-  const parseAnsi = (text: string): React.ReactNode => {
-    const lines = text.split('\n');
+  // Convert ANSI escape sequences and Merc/ROM MUD color codes to styled spans
+  const formatMudText = (text: string): React.ReactNode => {
+    // 1. Merc/ROM color codes replacement
+    const converted = text
+      .replace(/\{R/g, '\x1b[1;31m')
+      .replace(/\{r/g, '\x1b[31m')
+      .replace(/\{G/g, '\x1b[1;32m')
+      .replace(/\{g/g, '\x1b[32m')
+      .replace(/\{Y/g, '\x1b[1;33m')
+      .replace(/\{y/g, '\x1b[33m')
+      .replace(/\{B/g, '\x1b[1;34m')
+      .replace(/\{b/g, '\x1b[34m')
+      .replace(/\{M/g, '\x1b[1;35m')
+      .replace(/\{m/g, '\x1b[35m')
+      .replace(/\{C/g, '\x1b[1;36m')
+      .replace(/\{c/g, '\x1b[36m')
+      .replace(/\{W/g, '\x1b[1;37m')
+      .replace(/\{w/g, '\x1b[37m')
+      .replace(/\{D/g, '\x1b[1;30m')
+      .replace(/\{x/g, '\x1b[0m');
+
+    const lines = converted.split('\n');
     return lines.map((line, idx) => {
       const styledSegments = line
+        .replace(/\x1b\[1;30m/g, '<span style="color:#64748b;font-weight:bold;">')
         .replace(/\x1b\[1;31m/g, '<span style="color:#ef4444;font-weight:bold;">')
         .replace(/\x1b\[31m/g, '<span style="color:#f87171;">')
         .replace(/\x1b\[1;32m/g, '<span style="color:#10b981;font-weight:bold;">')
@@ -72,6 +106,77 @@ export const MudTerminal: React.FC<MudTerminalProps> = ({ onOpenSwitcher }) => {
       );
     });
   };
+
+  // Auto-connect guest session on initial mount
+  useEffect(() => {
+    let isMounted = true;
+
+    const initMUD = async () => {
+      let activeToken = token;
+      if (!activeToken) {
+        try {
+          const userGuess = (typeof window !== 'undefined' && localStorage.getItem('wally_user_name')) || 'WallyGuest';
+          const authRes = await fetch('https://mud.wallyatkins.com/api/auth.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'guest', name: userGuess, class: 3, sex: 1 })
+          });
+          if (authRes.ok) {
+            const authData = await authRes.json();
+            if (authData.success && authData.token) {
+              const resToken: string = authData.token;
+              activeToken = resToken;
+              if (isMounted) {
+                setToken(resToken);
+                localStorage.setItem('wallymud_token', resToken);
+                if (authData.character) {
+                  setCharacterInfo(authData.character);
+                  setCharacterName(authData.character.name || userGuess);
+                }
+                if (authData.prompt) setPromptStr(authData.prompt);
+                if (authData.last_log_id) setLastLogId(authData.last_log_id);
+              }
+            }
+          }
+        } catch {
+          // offline fallback
+        }
+      }
+
+      // Initial look command to display current room
+      if (activeToken && isMounted) {
+        try {
+          const lookRes = await fetch('https://mud.wallyatkins.com/api/command.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: activeToken, command: 'look', last_log_id: 0, cols: 80 })
+          });
+          if (lookRes.ok) {
+            const lookData = await lookRes.json();
+            if (lookData.success && isMounted) {
+              if (lookData.output) {
+                setLogs((prev) => [
+                  ...prev,
+                  { id: Date.now(), text: lookData.output }
+                ]);
+              }
+              if (lookData.prompt) setPromptStr(lookData.prompt);
+              if (lookData.character) {
+                setCharacterInfo(lookData.character);
+                if (lookData.character.name) setCharacterName(lookData.character.name);
+              }
+              if (lookData.last_log_id) setLastLogId(lookData.last_log_id);
+            }
+          }
+        } catch {
+          // offline
+        }
+      }
+    };
+
+    initMUD();
+    return () => { isMounted = false; };
+  }, []);
 
   // Background poller
   useEffect(() => {
@@ -100,6 +205,7 @@ export const MudTerminal: React.FC<MudTerminalProps> = ({ onOpenSwitcher }) => {
             if (data.prompt) setPromptStr(data.prompt);
             if (data.in_combat !== undefined) setInCombat(data.in_combat);
             if (data.character?.name) setCharacterName(data.character.name);
+            if (data.character) setCharacterInfo((prev) => ({ ...prev, ...data.character }));
           }
         }
       } catch {
@@ -128,11 +234,30 @@ export const MudTerminal: React.FC<MudTerminalProps> = ({ onOpenSwitcher }) => {
 
     setIsLoading(true);
     try {
+      let currentToken = token;
+      // Auto-reconnect if token is missing
+      if (!currentToken) {
+        const authRes = await fetch('https://mud.wallyatkins.com/api/auth.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'guest', name: characterName || 'WallyGuest', class: 3, sex: 1 })
+        });
+        if (authRes.ok) {
+          const authData = await authRes.json();
+          if (authData.success && authData.token) {
+            const freshToken: string = authData.token;
+            currentToken = freshToken;
+            setToken(freshToken);
+            localStorage.setItem('wallymud_token', freshToken);
+          }
+        }
+      }
+
       const res = await fetch('https://mud.wallyatkins.com/api/command.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          token: token || '',
+          token: currentToken || '',
           command: cmd,
           last_log_id: lastLogId,
           cols: 80
@@ -148,11 +273,20 @@ export const MudTerminal: React.FC<MudTerminalProps> = ({ onOpenSwitcher }) => {
           if (data.prompt) setPromptStr(data.prompt);
           if (data.in_combat !== undefined) setInCombat(data.in_combat);
           if (data.last_log_id && data.last_log_id > lastLogId) setLastLogId(data.last_log_id);
+          if (data.character) {
+            setCharacterInfo((prev) => ({ ...prev, ...data.character }));
+            if (data.character.name) setCharacterName(data.character.name);
+          }
           if (data.token) {
             setToken(data.token);
             localStorage.setItem('wallymud_token', data.token);
           }
         } else {
+          // If session expired, reset token so next command auto-reconnects
+          if (data.error && data.error.includes('Unauthorized')) {
+            localStorage.removeItem('wallymud_token');
+            setToken(null);
+          }
           setLogs((prev) => [
             ...prev,
             { id: Date.now() + 2, text: `\x1b[31m[MUD System]: ${data.error || 'Command rejected'}\x1b[0m` }
@@ -161,13 +295,13 @@ export const MudTerminal: React.FC<MudTerminalProps> = ({ onOpenSwitcher }) => {
       } else {
         setLogs((prev) => [
           ...prev,
-          { id: Date.now() + 2, text: `\x1b[33m[Offline Echo]: Executed '${cmd}'. Connect to live realm at mud.wallyatkins.com\x1b[0m` }
+          { id: Date.now() + 2, text: `\x1b[33m[Offline Echo]: Executed '${cmd}'. Live realm is temporarily unreachable.\x1b[0m` }
         ]);
       }
     } catch {
       setLogs((prev) => [
         ...prev,
-        { id: Date.now() + 2, text: `\x1b[33m[Local Echo]: '${cmd}'. Live realm unreachable directly from client.\x1b[0m` }
+        { id: Date.now() + 2, text: `\x1b[33m[Local Echo]: '${cmd}'. Network timeout to mud.wallyatkins.com.\x1b[0m` }
       ]);
     } finally {
       setIsLoading(false);
@@ -229,7 +363,7 @@ export const MudTerminal: React.FC<MudTerminalProps> = ({ onOpenSwitcher }) => {
         <button
           type="button"
           onClick={onOpenSwitcher}
-          aria-label="Switch Module"
+          aria-label="Switch Application Module"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -248,7 +382,7 @@ export const MudTerminal: React.FC<MudTerminalProps> = ({ onOpenSwitcher }) => {
               WallyMUD
             </h1>
             <span style={{ fontSize: '0.7rem', color: '#38bdf8', fontWeight: 700 }}>
-              Live Terminal
+              Live Realm
             </span>
           </div>
           <span style={{ fontSize: '0.8rem', color: '#94a3b8', marginLeft: '2px' }}>▾</span>
@@ -297,7 +431,7 @@ export const MudTerminal: React.FC<MudTerminalProps> = ({ onOpenSwitcher }) => {
           boxSizing: 'border-box'
         }}
       >
-        {/* Terminal Title Bar */}
+        {/* Terminal Title Bar & Stats Strip */}
         <div
           style={{
             display: 'flex',
@@ -308,7 +442,9 @@ export const MudTerminal: React.FC<MudTerminalProps> = ({ onOpenSwitcher }) => {
             borderBottom: 'none',
             borderTopLeftRadius: '12px',
             borderTopRightRadius: '12px',
-            padding: '8px 14px'
+            padding: '8px 14px',
+            flexWrap: 'wrap',
+            gap: '8px'
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -317,18 +453,32 @@ export const MudTerminal: React.FC<MudTerminalProps> = ({ onOpenSwitcher }) => {
               Realm Console
             </span>
             {characterName && (
-              <span style={{ fontSize: '11px', backgroundColor: '#1e293b', color: '#10b981', padding: '1px 6px', borderRadius: '4px' }}>
+              <span style={{ fontSize: '11px', backgroundColor: '#1e293b', color: '#10b981', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
                 {characterName}
               </span>
             )}
           </div>
+
+          {characterInfo && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '11px', fontFamily: 'JetBrains Mono, monospace' }}>
+              <span style={{ color: '#ef4444', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                <Heart size={12} /> {characterInfo.hp ?? 28}/{characterInfo.max_hp ?? 28}
+              </span>
+              <span style={{ color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                <Zap size={12} /> {characterInfo.mana ?? 50}/{characterInfo.max_mana ?? 50}
+              </span>
+              <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                <Footprints size={12} /> {characterInfo.move ?? 100}/{characterInfo.max_move ?? 100}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Terminal Screen */}
         <div
           style={{
             flex: 1,
-            minHeight: '260px',
+            minHeight: '280px',
             backgroundColor: '#050a12',
             border: '1px solid #1e3a5f',
             padding: '14px',
@@ -341,7 +491,7 @@ export const MudTerminal: React.FC<MudTerminalProps> = ({ onOpenSwitcher }) => {
         >
           {logs.map((log) => (
             <div key={log.id} style={{ marginBottom: '4px' }}>
-              {parseAnsi(log.text)}
+              {formatMudText(log.text)}
             </div>
           ))}
           <div ref={logsEndRef} />
@@ -388,7 +538,7 @@ export const MudTerminal: React.FC<MudTerminalProps> = ({ onOpenSwitcher }) => {
 
           <div style={{ width: '1px', height: '18px', backgroundColor: '#334155', margin: '0 4px', flexShrink: 0 }} />
 
-          {['score', 'inventory', 'flee'].map((act) => (
+          {['score', 'inventory', 'who', 'help', 'flee'].map((act) => (
             <button
               key={act}
               type="button"
