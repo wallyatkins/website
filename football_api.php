@@ -690,23 +690,118 @@ if ($action === 'update_notification_preferences') {
     exit;
 }
 
-// Action: switch_user
-if ($action === 'switch_user') {
-    $input = json_decode(file_get_contents('php://input'), true);
-    $targetUsername = trim($input['username'] ?? $_GET['username'] ?? '');
-    if ($targetUsername) {
-        $stmt = $pdo->prepare('SELECT id, username, email, role, avatar_url FROM users WHERE username = :u OR id = :uid LIMIT 1');
-        $stmt->execute(['u' => $targetUsername, 'uid' => (int)$targetUsername]);
-        $u = $stmt->fetch();
-        if ($u) {
-            $currentUser = $u;
-            $_SESSION['user'] = $u;
-            echo json_encode(['success' => true, 'user' => $u]);
-            exit;
+// Action: get_vapid_public_key
+if ($action === 'get_vapid_public_key') {
+    $vapidPath = '/home4/multili2/public_html/football/data/vapid_keys.json';
+    $pubKey = 'BFBW-Tuv08pmgvrWRwOqtB-pzFt5FJlSzeJmh__L2Xj_Ox-0stAajePOhPJJGSgYERBxwzrCqyMZskP0hZu9xwY';
+    if (file_exists($vapidPath)) {
+        $keys = json_decode(file_get_contents($vapidPath), true);
+        if (!empty($keys['public_key'])) {
+            $pubKey = $keys['public_key'];
         }
     }
-    http_response_code(400);
-    echo json_encode(['error' => 'User not found']);
+    echo json_encode(['success' => true, 'publicKey' => $pubKey]);
+    exit;
+}
+
+// Action: save_push_subscription
+if ($action === 'save_push_subscription') {
+    $input = json_decode(file_get_contents('php://input'), true);
+    $endpoint = trim($input['endpoint'] ?? '');
+    $p256dh = trim($input['keys']['p256dh'] ?? $input['p256dh'] ?? '');
+    $auth = trim($input['keys']['auth'] ?? $input['auth'] ?? '');
+    $clientUuid = trim($input['client_uuid'] ?? '');
+    $ua = $_SERVER['HTTP_USER_AGENT'] ?? null;
+
+    if (empty($endpoint) || empty($p256dh) || empty($auth)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Missing endpoint or encryption keys']);
+        exit;
+    }
+
+    $userId = !empty($currentUser) ? (int)$currentUser['id'] : null;
+
+    // Fallback: match via client_uuid in pwa_installations if session cookie was lost
+    if (!$userId && $clientUuid) {
+        $lookupStmt = $pdo->prepare('SELECT user_id, username FROM pwa_installations WHERE client_uuid = :uuid AND user_id IS NOT NULL LIMIT 1');
+        $lookupStmt->execute(['uuid' => $clientUuid]);
+        $row = $lookupStmt->fetch();
+        if ($row) {
+            $userId = (int)$row['user_id'];
+            if (empty($currentUser)) {
+                $currentUser = ['id' => $userId, 'username' => $row['username']];
+            }
+        }
+    }
+
+    if ($userId) {
+        $stmt = $pdo->prepare('
+            INSERT INTO user_push_subscriptions (user_id, endpoint, p256dh, auth, user_agent, created_at)
+            VALUES (:uid, :ep, :p256, :auth, :ua, datetime("now"))
+            ON CONFLICT(endpoint) DO UPDATE SET
+                user_id = excluded.user_id,
+                p256dh = excluded.p256dh,
+                auth = excluded.auth,
+                user_agent = excluded.user_agent
+        ');
+        $stmt->execute([
+            'uid' => $userId,
+            'ep' => $endpoint,
+            'p256' => $p256dh,
+            'auth' => $auth,
+            'ua' => $ua
+        ]);
+
+        // Update push_enabled in pwa_installations
+        $updInst = $pdo->prepare('UPDATE pwa_installations SET push_enabled = 1, last_seen_at = datetime("now") WHERE user_id = :uid OR client_uuid = :uuid');
+        $updInst->execute(['uid' => $userId, 'uuid' => $clientUuid]);
+
+        // Ensure user notification preferences record push enabled
+        $updPrefs = $pdo->prepare('
+            INSERT INTO user_notification_preferences (user_id, push_pick_reminders)
+            VALUES (:uid, 1)
+            ON CONFLICT(user_id) DO UPDATE SET push_pick_reminders = 1, updated_at = datetime("now")
+        ');
+        $updPrefs->execute(['uid' => $userId]);
+
+        // Log to activity logs
+        $logStmt = $pdo->prepare('
+            INSERT INTO pwa_activity_logs (user_id, username, event_type, details, created_at)
+            VALUES (:uid, :uname, "push_subscribed", :details, datetime("now"))
+        ');
+        $logStmt->execute([
+            'uid' => $userId,
+            'uname' => $currentUser['username'] ?? 'User #' . $userId,
+            'details' => json_encode(['platform' => 'ios_web_push', 'user_agent' => $ua])
+        ]);
+
+        // Send a test welcome push notification right to their device!
+        try {
+            $webPushFile = '/home4/multili2/public_html/football/src/Services/WebPushService.php';
+            if (file_exists($webPushFile)) {
+                require_once '/home4/multili2/public_html/football/src/Database/Connection.php';
+                require_once $webPushFile;
+                $wps = new \WallyFootball\Services\WebPushService();
+                $displayName = $currentUser['username'] ?? 'there';
+                $wps->sendPushNotification($userId, "Wally's NFL Pick'em", "Hey {$displayName}! 👋 Lock screen notifications are now active on your device!", "/pickem");
+            }
+        } catch (\Throwable $t) {
+            error_log('[WebPush Init] ' . $t->getMessage());
+        }
+
+        echo json_encode(['success' => true, 'user_id' => $userId]);
+        exit;
+    }
+
+    http_response_code(401);
+    echo json_encode(['error' => 'Authentication required to activate push notifications']);
+    exit;
+}
+
+// Action: switch_user (Disabled per league integrity / security request)
+if ($action === 'switch_user') {
+    http_response_code(403);
+    echo json_encode(['error' => 'Profile switching for testing has been disabled']);
     exit;
 }
 

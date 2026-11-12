@@ -1,7 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { usePWA, sendPWATelemetry } from '../hooks/usePWA';
+import { usePWA, sendPWATelemetry, getPWAClientUuid } from '../hooks/usePWA';
 import { FootballPickWizard, type FootballGame } from './FootballPickWizard';
 import './FootballPickem.css';
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
 
 interface Participant {
   entry_id: number;
@@ -55,12 +70,6 @@ interface WeekDataResponse {
   current_user_status: CurrentUserStatus;
 }
 
-interface LeagueUser {
-  id: number;
-  username: string;
-  role: string;
-  avatar_url?: string;
-}
 
 interface PwaInstallationRecord {
   id: number;
@@ -117,8 +126,11 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
 
   const [isWizardOpen, setIsWizardOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
-  const [leagueUsers, setLeagueUsers] = useState<LeagueUser[]>([]);
-  const [isSwitchingUser, setIsSwitchingUser] = useState<boolean>(false);
+  const [pushStatus, setPushStatus] = useState<NotificationPermission | 'unsupported'>('default');
+  const [isSubscribingPush, setIsSubscribingPush] = useState<boolean>(false);
+  const [isNotifBannerDismissed, setIsNotifBannerDismissed] = useState<boolean>(() => {
+    return typeof window !== 'undefined' && sessionStorage.getItem('pwa_notif_banner_dismissed') === '1';
+  });
 
   const [isMetricsModalOpen, setIsMetricsModalOpen] = useState<boolean>(false);
   const [metricsData, setMetricsData] = useState<PwaMetricsData | null>(null);
@@ -221,20 +233,17 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
     }
   }, [selectedWeek]);
 
-  // Load league users list for quick in-PWA participant switcher
-  const openAuthModal = async () => {
-    setIsAuthModalOpen(true);
-    if (leagueUsers.length === 0) {
-      try {
-        const res = await fetch('/football_api.php?action=users_list');
-        const data = await res.json();
-        if (data.users) {
-          setLeagueUsers(data.users);
-        }
-      } catch {
-        // Fallback
-      }
+  // Check initial notification permission
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setPushStatus(Notification.permission);
+    } else {
+      setPushStatus('unsupported');
     }
+  }, []);
+
+  const openAuthModal = () => {
+    setIsAuthModalOpen(true);
   };
 
   const fetchPwaMetrics = async () => {
@@ -254,23 +263,72 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
     }
   };
 
-  const handleSwitchUser = async (username: string) => {
-    setIsSwitchingUser(true);
+  const handleEnablePushNotifications = async () => {
+    setIsSubscribingPush(true);
     try {
-      const res = await fetch('/football_api.php?action=switch_user', {
+      if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+        alert('Push notifications are not supported on this browser or platform.');
+        return;
+      }
+
+      // 1. Prompt native system permission
+      const permission = await Notification.requestPermission();
+      setPushStatus(permission);
+
+      if (permission !== 'granted') {
+        alert('Notification permission was not granted. If you previously blocked notifications, please enable them in iPhone Settings > Safari > Notifications.');
+        return;
+      }
+
+      // 2. Fetch VAPID public key
+      const vapidRes = await fetch('/football_api.php?action=get_vapid_public_key');
+      const vapidData = await vapidRes.json();
+      if (!vapidData.publicKey) {
+        throw new Error('VAPID public key not found on server');
+      }
+
+      // 3. Register push subscription with active service worker
+      const reg = await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        const convertedKey = urlBase64ToUint8Array(vapidData.publicKey);
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: convertedKey as unknown as BufferSource
+        });
+      }
+
+      const subJson = sub.toJSON();
+
+      // 4. Save subscription to server
+      const saveRes = await fetch('/football_api.php?action=save_push_subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username }),
+        credentials: 'include',
+        body: JSON.stringify({
+          endpoint: sub.endpoint,
+          keys: subJson.keys,
+          client_uuid: getPWAClientUuid()
+        })
       });
-      if (res.ok) {
-        setIsAuthModalOpen(false);
-        hasAutoLaunchedRef.current = false;
-        await fetchWeekMatrix(selectedWeek);
+
+      if (saveRes.ok) {
+        setPushStatus('granted');
+        setIsNotifBannerDismissed(true);
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('pwa_notif_banner_dismissed', '1');
+        }
+        alert('🎉 Lock screen notifications enabled! You will now receive pool alerts directly on your device.');
+      } else {
+        const errData = await saveRes.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to save subscription on server');
       }
-    } catch {
-      // Ignored
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('Failed to enable push notifications:', err);
+      alert('Could not enable push notifications: ' + msg);
     } finally {
-      setIsSwitchingUser(false);
+      setIsSubscribingPush(false);
     }
   };
 
@@ -397,6 +455,41 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
           )}
         </div>
       </header>
+
+      {/* Push Notification Top Banner */}
+      {currentUser && !isNotifBannerDismissed && pushStatus !== 'granted' && pushStatus !== 'unsupported' && (
+        <div className="pwa-notif-banner">
+          <div className="pwa-notif-banner-content">
+            <span className="pwa-notif-banner-icon">🔔</span>
+            <span className="pwa-notif-banner-text">
+              Turn on notifications for lock screen pick reminders &amp; pool alerts!
+            </span>
+          </div>
+          <div className="pwa-notif-banner-actions">
+            <button
+              type="button"
+              className="pwa-notif-banner-btn"
+              onClick={handleEnablePushNotifications}
+              disabled={isSubscribingPush}
+            >
+              {isSubscribingPush ? 'Enabling...' : 'Enable Notifications'}
+            </button>
+            <button
+              type="button"
+              className="pwa-notif-banner-dismiss"
+              onClick={() => {
+                setIsNotifBannerDismissed(true);
+                if (typeof window !== 'undefined') {
+                  sessionStorage.setItem('pwa_notif_banner_dismissed', '1');
+                }
+              }}
+              aria-label="Dismiss banner"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 2. HORIZONTAL WEEKS SLIDER (Right at top, default scrolled to right for current week) */}
       <nav ref={weeksSliderRef} className="weeks-slider-wrapper" aria-label="NFL Weeks Navigation">
@@ -633,6 +726,37 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
                   </div>
 
                   <div className="profile-actions-stack">
+                    {/* Native Push Notification Card */}
+                    <div className="profile-notif-box">
+                      <div className="profile-notif-header">
+                        <span className="profile-notif-icon">🔔</span>
+                        <div className="profile-notif-labels">
+                          <span className="profile-notif-title">Lock Screen Notifications</span>
+                          <span className="profile-notif-subtitle">
+                            {pushStatus === 'granted'
+                              ? 'Active on this device'
+                              : pushStatus === 'denied'
+                              ? 'Blocked in device settings'
+                              : 'Kickoff reminders & pool alerts'}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className={`profile-action-btn enable-notif-action-btn ${pushStatus === 'granted' ? 'active-granted' : ''}`}
+                        onClick={handleEnablePushNotifications}
+                        disabled={isSubscribingPush || pushStatus === 'granted'}
+                      >
+                        {isSubscribingPush ? (
+                          <><span>⏳</span><span>Enabling...</span></>
+                        ) : pushStatus === 'granted' ? (
+                          <><span>✓</span><span>Notifications Enabled</span></>
+                        ) : (
+                          <><span>🔔</span><span>Enable Notifications</span></>
+                        )}
+                      </button>
+                    </div>
+
                     <a
                       href="https://auth.wallyatkins.com/account"
                       target="_blank"
@@ -698,29 +822,6 @@ export const FootballPickemApp: React.FC<FootballPickemAppProps> = ({ onSwitchTo
                   </p>
                 </div>
               )}
-
-              {/* League Participant Switcher Grid (Available for testing / commissioner) */}
-              <div className="auth-section">
-                <span className="auth-section-label">Switch League Profile (Testing)</span>
-                <div className="profile-switcher-grid">
-                  {leagueUsers.map((u) => {
-                    const isSelected = currentUser?.username === u.username;
-                    return (
-                      <button
-                        key={u.id}
-                        type="button"
-                        className={`profile-switch-btn ${isSelected ? 'active' : ''}`}
-                        onClick={() => handleSwitchUser(u.username)}
-                        disabled={isSwitchingUser}
-                      >
-                        <span className="profile-dot"></span>
-                        <span className="profile-name">{u.username}</span>
-                        {isSelected && <span className="profile-check">✓</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
             </div>
           </div>
         </div>

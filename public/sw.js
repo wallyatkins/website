@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wallyatkins-nfl-pwa-v2.0.0';
+const CACHE_NAME = 'wallyatkins-nfl-pwa-v2.1.0';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -142,4 +142,54 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
+});
+
+// Push: receive Web Push notification from server
+self.addEventListener('push', (event) => {
+  let data = {
+    title: "Wally's NFL Pick'em",
+    body: 'New pick reminder or pool alert!',
+    url: '/pickem'
+  };
+
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data.body = event.data.text();
+    }
+  }
+
+  const title = data.title || "Wally's NFL Pick'em";
+  const options = {
+    body: data.body || 'You have an update in NFL Pick\'em.',
+    icon: data.icon || '/icon-192.png',
+    badge: '/icon-192.png',
+    data: {
+      url: data.url || '/pickem'
+    },
+    vibrate: [100, 50, 100],
+    requireInteraction: true
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Notification Click: focus or open the window
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || '/pickem';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes(targetUrl) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
+  );
 });
