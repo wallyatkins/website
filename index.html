@@ -3,6 +3,29 @@
 
 <head>
   <meta charset="UTF-8" />
+  <script>
+    (function() {
+      try {
+        var isStandalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+        var isIosStandalone = window.navigator.standalone === true;
+        var search = window.location.search || '';
+        var searchParams = new URLSearchParams(search);
+        var hasPwaParam = searchParams.get('source') === 'pwa' ||
+                          searchParams.get('pwa') === 'true' ||
+                          searchParams.has('app');
+        var pwaStored = localStorage.getItem('wally_app_mode') === 'pwa';
+        var pathname = window.location.pathname || '/';
+
+        var isAppGuide = pathname === '/app' || pathname === '/apps';
+        var isPwaRoute = pathname === '/pickem' || pathname === '/pickem/' || pathname === '/pwa' || pathname === '/pwa/';
+        var isPwaPath = pathname.startsWith('/pwa');
+
+        if (isPwaRoute || ((isStandalone || isIosStandalone || hasPwaParam || pwaStored) && !isAppGuide && !isPwaPath)) {
+          window.location.replace('/pwa/' + search);
+        }
+      } catch (e) {}
+    })();
+  </script>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <meta name="theme-color" content="#07090e" />

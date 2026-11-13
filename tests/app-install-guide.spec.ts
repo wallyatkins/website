@@ -67,4 +67,17 @@ test.describe('App Installation Guide & Route Separation Tests', () => {
     const heroTitle = page.locator('h1').first();
     await expect(heroTitle).toBeVisible();
   });
+
+  test('5. Launching from installed PWA icon (?source=pwa) redirects immediately to /pwa/', async ({ page }) => {
+    await page.route('**/pwa/**', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: '<!DOCTYPE html><html><head><title>Wally Atkins</title></head><body><h1>Wally Atkins PWA Suite</h1></body></html>'
+      });
+    });
+
+    await page.goto('/?source=pwa');
+    expect(page.url()).toContain('/pwa/');
+  });
 });

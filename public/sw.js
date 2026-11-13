@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wallyatkins-nfl-pwa-v2.1.1';
+const CACHE_NAME = 'wallyatkins-nfl-pwa-v2.1.2';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -176,7 +176,7 @@ self.addEventListener('push', (event) => {
       .then((notif) => {
         const title = notif?.title || "Wally's NFL Pick'em";
         const body = notif?.message || "Hey Derek! 👋 Commissioner Wally says test push successful! 🏈";
-        const link = notif?.link || '/pickem';
+        const link = notif?.link || '/pwa/';
         return self.registration.showNotification(title, {
           body,
           icon: '/icon-192.png',
@@ -191,7 +191,7 @@ self.addEventListener('push', (event) => {
           body: "Hey Derek! 👋 Commissioner Wally says test push successful! 🏈",
           icon: '/icon-192.png',
           badge: '/icon-192.png',
-          data: { url: '/pickem' },
+          data: { url: '/pwa/' },
           vibrate: [100, 50, 100],
           requireInteraction: true
         });
@@ -204,7 +204,7 @@ self.addEventListener('push', (event) => {
 // Notification Click: focus or open the window
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const targetUrl = event.notification.data?.url || '/pickem';
+  const targetUrl = event.notification.data?.url || '/pwa/';
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {

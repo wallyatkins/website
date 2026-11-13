@@ -60,12 +60,23 @@ function App() {
   const [isLightMode, setIsLightMode] = useState(false);
   const [isCreativeMode, setIsCreativeMode] = useState(false);
 
-  // Redirect /pickem and /pwa directly to standalone PWA bundle
+  // Redirect standalone PWA launches, /pickem, and /pwa directly to standalone PWA bundle
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const p = window.location.pathname;
-      if (p === '/pwa' || p === '/pwa/' || p === '/pickem' || p === '/pickem/') {
-        window.location.href = '/pwa/';
+      const p = window.location.pathname || '/';
+      const searchParams = new URLSearchParams(window.location.search);
+      const isStandaloneDisplay = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+      const isIosStandalone = (window.navigator as unknown as { standalone?: boolean }).standalone === true;
+      const hasPwaParam =
+        searchParams.get('source') === 'pwa' ||
+        searchParams.get('pwa') === 'true' ||
+        searchParams.has('app');
+      const pwaStored = localStorage.getItem('wally_app_mode') === 'pwa';
+      const isAppGuide = p === '/app' || p === '/apps';
+      const isPwaRoute = p === '/pwa' || p === '/pwa/' || p === '/pickem' || p === '/pickem/';
+
+      if (isPwaRoute || ((isStandaloneDisplay || isIosStandalone || hasPwaParam || pwaStored) && !isAppGuide && !p.startsWith('/pwa'))) {
+        window.location.replace('/pwa/' + window.location.search);
       }
     }
   }, []);

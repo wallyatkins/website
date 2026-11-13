@@ -1,9 +1,9 @@
 {
-  "id": "https://wallyatkins.com/",
+  "id": "https://wallyatkins.com/pwa/",
   "name": "Wally Atkins",
   "short_name": "Wally Atkins",
-  "description": "Wally Atkins - Creator & Technologist",
-  "start_url": "/?source=pwa",
+  "description": "Wally Atkins Application Suite - Football Pick'em, WallyMUD, Tasks & Settings",
+  "start_url": "/pwa/",
   "scope": "/",
   "display": "standalone",
   "display_override": [
@@ -53,7 +53,7 @@
       "name": "🏈 NFL Pick'em",
       "short_name": "Pick'em",
       "description": "Make weekly picks and view full league matrix",
-      "url": "/?source=pwa&app=football",
+      "url": "/pwa/?module=football",
       "icons": [
         {
           "src": "/icon-192.png",
@@ -65,7 +65,7 @@
       "name": "⚔️ WallyMUD",
       "short_name": "WallyMUD",
       "description": "Retro live fantasy MUD",
-      "url": "https://mud.wallyatkins.com",
+      "url": "/pwa/?module=mud",
       "icons": [
         {
           "src": "/icon-192.png",
@@ -77,7 +77,7 @@
       "name": "📋 Wally Tasks",
       "short_name": "Tasks",
       "description": "Agentic task orchestration and productivity",
-      "url": "https://tasks.wallyatkins.com",
+      "url": "/pwa/?module=tasks",
       "icons": [
         {
           "src": "/icon-192.png",
@@ -89,7 +89,7 @@
       "name": "🔐 WallyAuth Profile",
       "short_name": "Profile",
       "description": "Manage account security, passkeys, and settings",
-      "url": "https://auth.wallyatkins.com/account",
+      "url": "/pwa/?module=account",
       "icons": [
         {
           "src": "/icon-192.png",
